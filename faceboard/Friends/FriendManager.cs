@@ -34,7 +34,7 @@ namespace Friends
 
         public static int NoOfFriendRequestFriendManager = 10;
         public static bool Friends_AcceptFriends_Female = false;
-        public static bool Friends_AcceptFriends_Male= false;
+        public static bool Friends_AcceptFriends_Male = false;
         public static bool Friends_AcceptSendFrndToSuggestions = false;
         public static string Friends_AcceptSendFrndProcessUsing = string.Empty;
         public static bool Friends_AcceptFriends_CheckTargeted = false;
@@ -176,7 +176,7 @@ namespace Friends
                                                 //tempCounterAccounts++; 
                                             }
                                         }
-                                        catch(Exception ex)
+                                        catch (Exception ex)
                                         {
                                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
@@ -216,41 +216,41 @@ namespace Friends
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    }                           
-                            try
-                            {
-                                    Array paramsArray = new object[1];
-                                    paramsArray = (Array)parameters;
+                    }
+                    try
+                    {
+                        Array paramsArray = new object[1];
+                        paramsArray = (Array)parameters;
 
-                                    FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
-                                    if (!objFacebookUser.isloggedin)
-                                    {
-                                        GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
-                                        objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+                        FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+                        if (!objFacebookUser.isloggedin)
+                        {
+                            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+                            objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
 
-                                        //Login Process
-                                        Accounts.AccountManager objAccountManager = new AccountManager();
-                                        objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
-                                    }
+                            //Login Process
+                            Accounts.AccountManager objAccountManager = new AccountManager();
+                            objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                        }
 
-                                    if (objFacebookUser.isloggedin)
-                                    {
-                                        // Call SendFriendRequests
-                                        SendFriendRequests(ref objFacebookUser);
-                                    }
-                                    else
-                                    {
-                                       // GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                                        GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
-                                    }                               
+                        if (objFacebookUser.isloggedin)
+                        {
+                            // Call SendFriendRequests
+                            SendFriendRequests(ref objFacebookUser);
+                        }
+                        else
+                        {
+                            // GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                            GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                        }
 
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }
-                            //GlobusLogHelper.log.Debug("Process completed !!");
-                            //GlobusLogHelper.log.Info("Process completed !!");
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                    //GlobusLogHelper.log.Debug("Process completed !!");
+                    //GlobusLogHelper.log.Info("Process completed !!");
 
                 }
             }
@@ -263,14 +263,14 @@ namespace Friends
             {
                 try
                 {
-                   // if (!isRequestFriendsStop)
+                    // if (!isRequestFriendsStop)
                     {
                         lock (requestFriendsThreadControllerlockr)
                         {
                             requestFriendsThreadControllerCount--;
                             Monitor.Pulse(requestFriendsThreadControllerlockr);
 
-                            
+
                         }
                     }
                 }
@@ -396,12 +396,12 @@ namespace Friends
                 }
                 else if (lstRequestFriendsKeywords.Count > 0)
                 {
-               
+
                     try
                     {
                         keyword = lstRequestFriendsKeywords[Utils.GenerateRandom(0, lstRequestFriendsKeywords.Count)];
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
@@ -415,6 +415,11 @@ namespace Friends
                     string searchURL = FBGlobals.Instance.urlGetSearchFriendsFriendManager + item_keyword + "&type=users&__a=1&__user=" + UserId + "";//"https://www.facebook.com/search/results.php?q=" + Location + "&type=users&init=quick";
 
                     string resGetRequestFriends = httpHelper.getHtmlfromUrl(new Uri(searchURL));
+
+                    if (resGetRequestFriends.Contains("redirect\":\"\\/search\\/results\\/?q"))
+                    {
+                        resGetRequestFriends = httpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/search/results/?q=" + item_keyword));
+                    }
                     List<string> list = new List<string>();
                     #region for find friend Reqest Link
                     list.Clear();
@@ -522,10 +527,10 @@ namespace Friends
 
 
 
-                              //  if (countFriendRequestsSent == NoOfFriendsRequestPerUser && NoOfFriendsRequestPerUser != 0)
-                              //  {
-                              //      return;
-                              //  }
+                                //  if (countFriendRequestsSent == NoOfFriendsRequestPerUser && NoOfFriendsRequestPerUser != 0)
+                                //  {
+                                //      return;
+                                //  }
 
                             }
                             else
@@ -561,12 +566,232 @@ namespace Friends
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
-                    } 
+                    }
                 }
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+        }
+
+
+        public void SendFriendRequestViaKeywordsNew(ref FacebookUser fbUser)
+        {
+            try
+            {
+                GlobusHttpHelper httpHelper = fbUser.globusHttpHelper;
+                int countFriendRequestsSentAllKeyWord = 0;
+
+
+
+                string UserId = string.Empty;
+
+                string pageSource_HomePage = httpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
+                if (string.IsNullOrEmpty(UserId))
+                {
+                    UserId = GlobusHttpHelper.ParseJson(pageSource_HomePage, "user");
+                }
+
+                if (string.IsNullOrEmpty(UserId) || UserId == "0" || UserId.Length < 3)
+                {
+                    GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
+
+
+
+                    return;
+                }
+
+                string keyword = string.Empty;
+
+                if (!string.IsNullOrEmpty(Keywords))
+                {
+                    keyword = FriendManager.Keywords;
+                    lstRequestFriendsKeywords.Add(keyword);
+                }
+                else if (lstRequestFriendsKeywords.Count > 0)
+                {
+
+                    try
+                    {
+                        keyword = lstRequestFriendsKeywords[new Random().Next(0, lstRequestFriendsKeywords.Count)];
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Error : " + ex.StackTrace);
+                        //GlobusFileHelper.AppendStringToTextfileNewLine (ex.Message + "  SendFriendRequestViaKeywords  in FriendManager ", FBGlobals.AllExceptionLoggerFilePath);
+                        GlobusLogHelper.log.Error(ex.Message);
+                    }
+                }
+
+
+                lstRequestFriendsKeywords = lstRequestFriendsKeywords.Distinct().ToList();
+
+                foreach (var item_keyword in lstRequestFriendsKeywords)
+                {
+                    List<string> list = new List<string>();
+                    List<string> FriendLink = new List<string>();
+
+                    {
+
+
+                        string searchURL = FBGlobals.Instance.urlGetSearchFriendsFriendManager + item_keyword + "&type=users&__a=1&__user=" + UserId + "";//"https://www.facebook.com/search/results.php?q=" + Location + "&type=users&init=quick";
+
+                        string resGetRequestFriends = httpHelper.getHtmlfromUrl(new Uri(searchURL));
+                        #region for find friend Reqest Link
+                        list.Clear();
+                        List<string> lstLinkData = new List<string>();
+                        lstLinkData.Clear();
+
+
+
+                        if (resGetRequestFriends.Contains("href="))
+                        {
+                            string[] Linklist = System.Text.RegularExpressions.Regex.Split(resGetRequestFriends, "href=");
+                            string profileID = string.Empty;
+                            foreach (string itemurl in Linklist)
+                            {
+                                try
+                                {
+                                    if (!itemurl.Contains("<!DOCTYPE html"))
+                                    {
+                                        if (itemurl.Contains("is_friend&quot;:false"))
+                                        {
+                                            lstLinkData.Add(itemurl);
+                                            try
+                                            {
+                                                if (itemurl.Contains("&quot;"))
+                                                {
+                                                    try
+                                                    {
+                                                        profileID = GlobusHttpHelper.ParseEncodedJson(itemurl, "id");
+                                                        profileID = profileID.Replace(",", "");
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error(ex.Message);
+
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    profileID = GlobusHttpHelper.ParseJson(itemurl, "id");
+                                                }
+
+                                                string profileURL = FBGlobals.Instance.fbProfileUrl + profileID;
+                                                list.Add(profileURL);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Console.WriteLine("Error : " + ex.StackTrace);
+                                                GlobusLogHelper.log.Error(ex.Message);
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Error : " + ex.StackTrace);
+                                }
+                            }
+                        }
+                        else
+                        {
+
+                            try
+                            {
+                                searchURL = "https://www.facebook.com/search/results/more/?q=" + item_keyword + "&offset=100&type=users&init=quick&sid=0f97d94583873abc7f90fcc57e5a7799&tas=0.5925079600419849&ents=1550194641%2C100006787369032%2C537061133%2C100004130585779%2C100006428708468%2C100003035998791%2C100003628923293%2C426409467370453%2C580376905363617%2C344128252278047%2C259937417472502%2C16889167127%2C1538972489718839%2C647024468742026%2C496761667097140%2C135399539827629%2C113060895374516%2C107624392600504%2C8666024051%2C112377502107994&__user=" + UserId + "&__a=1&__dyn=7AmajEyl35xKt2u6aEyx90BCxO4oKAdDgZ9LHwxBxCbzEeAq68K5Uc-dwIxbxjx27W88y98uyk4EKUyVWz9E&__req=j&__rev=1813502";
+                                resGetRequestFriends = httpHelper.getHtmlfromUrl(new Uri(searchURL));
+                                string[] profileIdList = Regex.Split(resGetRequestFriends, "profileid=");
+                                try
+                                {
+                                    profileIdList = (string[])profileIdList.Skip(0);
+                                }
+                                catch { };
+
+                                foreach (string item in profileIdList)
+                                {
+                                    string profileId = FBUtils.getBetween(item, "\"", "\"");
+                                    if (string.IsNullOrEmpty(profileId) || profileId.Contains("__ar"))
+                                    {
+                                        continue;
+                                    }
+                                    else if (profileId.Contains("\\"))
+                                    {
+                                        profileId = profileId.Replace("\\", "");
+                                    }
+
+                                    string profileURL = FBGlobals.Instance.fbProfileUrl + profileId;
+                                    list.Add(profileURL);
+
+                                }
+                            }
+                            catch { };
+
+                        }
+
+
+
+                        FriendLink = list.Distinct().ToList();
+                    }
+
+                        #endregion
+
+
+
+
+                    GlobusLogHelper.log.Info(FriendLink.Count + " Search Friend Requests Url with Email " + fbUser.username);
+
+                    int countFriendRequestsSent = 0;
+                    int counterforblockedFriendrequest = 0;
+                    foreach (string FriendRequestLink in FriendLink)
+                    {
+                        try
+                        {
+                            if (countFriendRequestsSentAllKeyWord >= NoOfFriendsRequestPerUser)
+                            {
+                                return;
+                            }
+
+                            if (countFriendRequestsSent >= NoOfFriendsRequest)
+                            {
+                                break;
+                            }
+
+                            GlobusLogHelper.log.Info(" Friend Requests sending with Url :" + FriendRequestLink + " and Email " + fbUser.username);
+                            bool requeststatus = SendFriendRequestUpdated(FriendRequestLink, UserId, ref fbUser);
+
+                            if (requeststatus)
+                            {
+                                countFriendRequestsSent++;
+                                countFriendRequestsSentAllKeyWord++;
+                                counterforblockedFriendrequest = 1;
+                                GlobusLogHelper.log.Info(countFriendRequestsSent + " => Request Sent With Username : " + fbUser.username);
+
+
+                            }
+                            else
+                            {
+                                //counterforblockedFriendrequest++;
+                                //if (counterforblockedFriendrequest == 3)
+                                //{
+                                //    break;
+                                //}
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error : " + ex.StackTrace);
+                            GlobusLogHelper.log.Error(ex.Message);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.Message);
             }
         }
 
@@ -655,7 +880,7 @@ namespace Friends
                         //                    }
                         //                    else
                         //                    {
-                 
+
                         //                        profileID = GlobusHttpHelper.ParseJson(itemurl, "id");
                         //                    }
 
@@ -676,7 +901,7 @@ namespace Friends
                         //}
                         #endregion
 
-                       // GetMemberViaLocation
+                        // GetMemberViaLocation
 
                         List<string> FriendLink = GetMemberViaLocation(ref fbUser, Location_item);
 
@@ -684,13 +909,13 @@ namespace Friends
                         FriendLink = FriendLink.Distinct().ToList();
 
 
-                        if (FriendLink.Count()==0)
+                        if (FriendLink.Count() == 0)
                         {
-                            FriendLink = GetProfileIdViaKeyWord(ref fbUser, Location_item,UserId);
+                            FriendLink = GetProfileIdViaKeyWord(ref fbUser, Location_item, UserId);
                         }
 
-                        GlobusLogHelper.log.Info("Find "+FriendLink.Count +" Number Of Friends From "+ " Keyword : " + Location_item + " Search Friend Requests Url with Email " + fbUser.username);
-                        GlobusLogHelper.log.Debug("Find " + FriendLink.Count + " Number Of Friends From " + " Keyword : " + Location_item + " Search Friend Requests Url with Email " + fbUser.username); 
+                        GlobusLogHelper.log.Info("Find " + FriendLink.Count + " Number Of Friends From " + " Keyword : " + Location_item + " Search Friend Requests Url with Email " + fbUser.username);
+                        GlobusLogHelper.log.Debug("Find " + FriendLink.Count + " Number Of Friends From " + " Keyword : " + Location_item + " Search Friend Requests Url with Email " + fbUser.username);
 
                         int countFriendRequestsSent = 0;
                         int counterforblockedFriendrequest = 0;
@@ -782,20 +1007,235 @@ namespace Friends
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    } 
+                    }
                 }
 
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            } 
-	
+            }
+
         }
 
 
+        public void SendFriendRequestViaLocationNew(ref FacebookUser fbUser)
+        {
+            try
+            {
+                GlobusHttpHelper httpHelper = fbUser.globusHttpHelper;
 
-        public List<string> GetMemberViaLocation(ref FacebookUser fbUser,string KeyWord)
+                if (!IsSearchViaLocation)
+                {
+                    return;
+                }
+                string UserId = string.Empty;
+                string pageSource_HomePage = httpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+                UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
+                if (string.IsNullOrEmpty(UserId))
+                {
+                    UserId = GlobusHttpHelper.ParseJson(pageSource_HomePage, "user");
+                }
+
+                if (string.IsNullOrEmpty(UserId) || UserId == "0" || UserId.Length < 3)
+                {
+                    GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
+                    GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
+
+                    return;
+                }
+
+                string Location = string.Empty;
+
+                if (!string.IsNullOrEmpty(FriendManager.Location))
+                {
+                    lstRequestFriendsLocation.Clear();
+                    Location = FriendManager.Location;
+                    lstRequestFriendsLocation.Add(Location);
+                }
+                else if (lstRequestFriendsLocation.Count > 0)
+                {
+                    Location = lstRequestFriendsLocation[Utils.GenerateRandom(0, lstRequestFriendsLocation.Count)];
+                }
+                int countFriendRequestsSentKeywordAll = 1;
+
+                foreach (var Location_item in lstRequestFriendsLocation)
+                {
+                    try
+                    {
+                        List<string> FriendLink = new List<string>();
+
+                        int countFriendRequestsSent = 0;
+
+                        int counterforblockedFriendrequest = 0;
+                        string sessionId = string.Empty;
+                        string LocationUid = string.Empty;
+                        try
+                        {
+                            string LocationResp = httpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/places/typeahead?value=" + Location_item + "&existing_ids=&include_address=2&include_subtext=true&exact_match=false&use_unicorn=true&allow_places=false&allow_cities=true&render_map=false&limit=15&city_bias=false&use_city_id=true&__user=" + UserId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xN6yUgByVbGAEGt7DirZo8popyui9zob4q8zUK5Uc-dwIxbxjy9A8GqcEwy8ACxt7oiyXSiVWz9E&__req=14&__rev=1819463"));
+
+                            LocationUid = Utils.getBetween(LocationResp, "uid\":", ",");
+                            string FilterPage = httpHelper.postFormData(new Uri("https://www.facebook.com/search/results/filter/?q=" + Location_item + "&type=users&tas=0.6276148124597967&filters[lo]=" + LocationUid), "__user=" + UserId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xN6yUgByVbGAEGt7DirZo8popyui9zob4q8zUK5Uc-dwIxbxjy9A8GqcEwy8ACxt7oiyXSiVWz9E&__req=15&fb_dtsg=AQF-bBXRSZwW&ttstamp=26581704598668882839011987&__rev=1819463");
+                            if (FilterPage.Contains("Sorry, your request could not be processed."))
+                            {
+                                lstRequestFriendsKeywords.Clear();
+                                lstRequestFriendsKeywords.Add(Location_item);
+                                SendFriendRequestViaKeywordsNew(ref fbUser);
+                                break;
+                            }
+                            FilterPage = FilterPage.Replace("\\", string.Empty);
+                            string[] Userdata = Regex.Split(FilterPage, "href=");
+                            foreach (var data in Userdata)
+                            {
+                                string temp = data;
+                                temp = Utils.getBetween(data, "\"", "\"");
+                                if (temp.Contains("https://www.facebook.com") && !temp.Contains("pages") && !temp.Contains("ref"))
+                                {
+                                    FriendLink.Add(temp);
+                                }
+                            }
+                            //FilterPage = 
+                            FriendLink = FriendLink.Distinct().ToList();
+                            FilterPage = System.Web.HttpUtility.HtmlDecode(FilterPage);
+                            sessionId = Utils.getBetween(FilterPage, "session_id\":\"", "\"");
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.Message);
+                        }
+                        int offset = 10;
+                        while (true)
+                        {
+                            if (FriendLink.Count < NoOfFriendsRequestParKeyWord)
+                            {
+                                string AjaxRequest = "https://www.facebook.com/search/results/more/?q=" + Location_item + "&offset=" + offset.ToString() + "&type=users&init=filter&sid=" + sessionId + "&tas=0.29218898713588715&ents=100002683269002%2C100009485858227%2C100002447296372%2C655042588%2C100000627363633%2C100000083916246%2C658555687%2C100007551855726%2C1676104327%2C1460150633&filters[lo]=" + LocationUid + "&__user=" + UserId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xN6yUgByVbGAEGt7DirZo8popyui9zob4q8zUK5Uc-dwIxbxjy9A8GqcEwy8ACxt7oiyXSiVWz9E&__req=4i&__rev=1819463";
+                                offset = offset + 10;
+                                string AjaxResp = httpHelper.getHtmlfromUrl(new Uri(AjaxRequest));
+                                AjaxResp = AjaxResp.Replace("\\", string.Empty);
+                                string[] Userdata = Regex.Split(AjaxResp, "href=");
+                                foreach (var data in Userdata)
+                                {
+                                    string temp = data;
+                                    temp = Utils.getBetween(data, "\"", "\"");
+                                    if (temp.Contains("https://www.facebook.com") && !temp.Contains("pages"))
+                                    {
+                                        FriendLink.Add(temp);
+                                    }
+                                }
+                                //FilterPage = 
+                                FriendLink = FriendLink.Distinct().ToList();
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        FriendLink = FriendLink.Distinct().ToList();
+
+
+                        GlobusLogHelper.log.Info("Find " + FriendLink.Count + " Number Of Friends From " + " Keyword : " + Location_item + " Search Friend Requests Url with Email " + fbUser.username);
+                        GlobusLogHelper.log.Debug("Find " + FriendLink.Count + " Number Of Friends From " + " Keyword : " + Location_item + " Search Friend Requests Url with Email " + fbUser.username);
+
+
+                        foreach (string FriendRequestLink in FriendLink)
+                        {
+
+                            if (NoOfFriendsRequestParKeyWord <= countFriendRequestsSent)
+                            {
+                                break;
+                            }
+
+
+                            GlobusLogHelper.log.Info(" Friend Requests sending with Url :" + FriendRequestLink + " and Email " + fbUser.username + "Keyword : " + Location_item);
+                            GlobusLogHelper.log.Debug(" Friend Requests sending with Url :" + FriendRequestLink + " and Email " + fbUser.username + "Keyword : " + Location_item);
+                            bool requeststatus = SendFriendRequestUpdated(FriendRequestLink, UserId, ref fbUser);
+
+                            if (requeststatus)
+                            {
+                                countFriendRequestsSent++;
+                                counterforblockedFriendrequest = 0;
+                                GlobusLogHelper.log.Info(countFriendRequestsSent + " => Request Sent With Username : " + fbUser.username + "Keyword : " + Location_item);
+                                GlobusLogHelper.log.Debug(countFriendRequestsSent + " => Request Sent With Username : " + fbUser.username + "Keyword : " + Location_item);
+
+                                if (!string.IsNullOrEmpty(FilePathFriendrequestFilePath))
+                                {
+
+
+                                    string CSVHeader = "UserName" + "," + "FriendId" + ", " + "Stautus";
+                                    string CSV_Content = fbUser.username + "," + FriendRequestLink + ", " + "Request Sent";
+                                    try
+                                    {
+
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, FilePathFriendrequestFilePath);
+                                        GlobusLogHelper.log.Debug("Data Saved In CSV ." + CSV_Content);
+                                        GlobusLogHelper.log.Info("Data Saved In CSV ." + CSV_Content);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+
+
+
+                                int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+                            }
+                            else
+                            {
+                                int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+                                //counterforblockedFriendrequest++;
+                                //if (counterforblockedFriendrequest == 3)
+                                //{
+                                //    break;
+                                //}
+
+
+                                if (!string.IsNullOrEmpty(FilePathFailedFriendRequestFilePath))
+                                {
+
+
+                                    string CSVHeader = "UserName" + "," + "FriendId" + ", " + "Stautus";
+                                    string CSV_Content = fbUser.username + "," + FriendRequestLink + ", " + "Failed Request Sent";
+                                    try
+                                    {
+
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, FilePathFailedFriendRequestFilePath);
+                                        GlobusLogHelper.log.Debug("Data Saved In CSV ." + CSV_Content);
+                                        GlobusLogHelper.log.Info("Data Saved In CSV ." + CSV_Content);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+
+        }
+
+
+        public List<string> GetMemberViaLocation(ref FacebookUser fbUser, string KeyWord)
         {
             List<string> FriendsList = new List<string>();
             string pageSource_Home = string.Empty;
@@ -808,7 +1248,7 @@ namespace Friends
             {
                 UserId = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
             }
-           // foreach (string KeyWordLstCustomAudiencesscraper_item in KeyWordLstCustomAudiencesscraper)
+            // foreach (string KeyWordLstCustomAudiencesscraper_item in KeyWordLstCustomAudiencesscraper)
             {
                 try
                 {
@@ -831,8 +1271,8 @@ namespace Friends
                     }
 
 
-                  FriendsList=  GetGrpMember_Ajax(CustPageSource, ref fbUser, UserId, searchResult);
-                  FriendsList = FriendsList.Distinct().ToList();
+                    FriendsList = GetGrpMember_Ajax(CustPageSource, ref fbUser, UserId, searchResult);
+                    FriendsList = FriendsList.Distinct().ToList();
                 }
                 catch (Exception ex)
                 {
@@ -897,7 +1337,7 @@ namespace Friends
                                     string ProfileLinkUrl = Utils.getBetween(arrId_item, "_7kf _8o _8s lfloat _ohe", "?ref").Replace("\"", "").Replace("href=", "");
                                     ProfileLinkUrl = ProfileLinkUrl;
                                     ProfileUrlList.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                   
+
                                 }
                                 catch (Exception ex)
                                 {
@@ -917,7 +1357,7 @@ namespace Friends
                     ProfileUrlList = ProfileUrlList.Distinct().ToList();
                     ProfileUrlList.Remove("");
 
-                 
+
 
 
                 }
@@ -1004,7 +1444,7 @@ namespace Friends
                     }
                     //return ProfileUrlList;
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -1070,9 +1510,9 @@ namespace Friends
                                 GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                 Thread.Sleep(delayInSeconds);
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
-                                GlobusLogHelper.log.Error("Error : "+ex.StackTrace);
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                             countFriendRequestsSent++;
                         }
@@ -1096,11 +1536,11 @@ namespace Friends
                 GlobusHttpHelper httpHelper = fbUser.globusHttpHelper;
 
                 GlobusLogHelper.log.Info("Sending Friend Request using Friend Profile Link with Email : " + fbUser.username);
-              //  GlobusLogHelper.log.Debug("Sending Friend Request using Friend Profile Link with Email : " + fbUser.username);
+                //  GlobusLogHelper.log.Debug("Sending Friend Request using Friend Profile Link with Email : " + fbUser.username);
 
                 string UserId = string.Empty;
 
-                string pageSource_HomePage = httpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+                string pageSource_HomePage = httpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/home.php"));
 
                 UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
                 if (string.IsNullOrEmpty(UserId))
@@ -1111,13 +1551,13 @@ namespace Friends
                 if (string.IsNullOrEmpty(UserId) || UserId == "0" || UserId.Length < 3)
                 {
                     GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
-                  //  GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
+                    //  GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
 
                     return;
                 }
                 bool Check = false;
                 int countFriendRequestsSent = 1;
-                
+
                 foreach (string FriendRequesttUrl in lstRequestFriendsProfileURLs)
                 {
                     string FriendRequesttUrl1 = string.Empty;
@@ -1134,7 +1574,7 @@ namespace Friends
                         }
 
                         GlobusLogHelper.log.Info(" Friend Requests sending with Url :" + FriendRequesttUrl + " and Email " + fbUser.username);
-                       // GlobusLogHelper.log.Debug(" Friend Requests sending with Url :" + FriendRequesttUrl + " and Email " + fbUser.username);
+                        // GlobusLogHelper.log.Debug(" Friend Requests sending with Url :" + FriendRequesttUrl + " and Email " + fbUser.username);
                         bool requeststatus = false;
                         if (Check == true)
                         {
@@ -1148,16 +1588,16 @@ namespace Friends
                         if (requeststatus)
                         {
                             GlobusLogHelper.log.Info(countFriendRequestsSent + " => Request Sent With Username : " + fbUser.username);
-                          //  GlobusLogHelper.log.Debug(countFriendRequestsSent + " => Request Sent With Username : " + fbUser.username);
+                            //  GlobusLogHelper.log.Debug(countFriendRequestsSent + " => Request Sent With Username : " + fbUser.username);
 
                             int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
                             GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                             GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                             Thread.Sleep(delayInSeconds);
 
-                            if (countFriendRequestsSent == NoOfFriendsRequestPerUser && NoOfFriendsRequestPerUser!=0)
+                            if (countFriendRequestsSent == NoOfFriendsRequestPerUser && NoOfFriendsRequestPerUser != 0)
                             {
-                                
+
                                 return;
                             }
 
@@ -1184,11 +1624,13 @@ namespace Friends
                 {
                     if (!string.IsNullOrEmpty(Keywords))
                     {
-                        SendFriendRequestViaKeywords(ref fbUser);
+                        //SendFriendRequestViaKeywords(ref fbUser);
+                        SendFriendRequestViaKeywordsNew(ref fbUser);
                     }
                     else if (lstRequestFriendsKeywords.Count > 0)
                     {
-                        SendFriendRequestViaKeywords(ref fbUser);
+                        //SendFriendRequestViaKeywords(ref fbUser);
+                        SendFriendRequestViaKeywordsNew(ref fbUser);
                     }
 
                 }
@@ -1196,11 +1638,13 @@ namespace Friends
                 {
                     if (!string.IsNullOrEmpty(Location))
                     {
-                        SendFriendRequestViaLocation(ref fbUser);
+                        // SendFriendRequestViaLocation(ref fbUser);
+                        SendFriendRequestViaLocationNew(ref fbUser);
                     }
                     else if (lstRequestFriendsLocation.Count > 0)
                     {
-                        SendFriendRequestViaLocation(ref fbUser);
+                        //SendFriendRequestViaLocation(ref fbUser);
+                        SendFriendRequestViaLocationNew(ref fbUser);
                     }
                 }
                 else if (IsSearchViaFanPageURLs)
@@ -1327,7 +1771,7 @@ namespace Friends
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
 
-                                    
+
                                 }
                             }
                         }
@@ -1338,7 +1782,7 @@ namespace Friends
                     }
                 }
 
-                
+
 
                 string fb_dtsg = GlobusHttpHelper.GetParamValue(pageSrcFriendProfileUrl, "fb_dtsg");
 
@@ -1352,7 +1796,7 @@ namespace Friends
                 string ResponseFriendRequestFirst = httpHelper.postFormData(new Uri(PostUrlFriendRequestFirst), PostDataFriendRequestFirst);
 
                 ///** Second Post For Friend Request *******************************************///
-              
+
 
                 string PostUrlFriendRequestSecond = FBGlobals.Instance.urlPostUrlFriendRequestSecondFriendManager;
 
@@ -1364,7 +1808,7 @@ namespace Friends
 
                 //string FriendId = FriendRequestByUrl.Split('=')[1];
 
-                string PostUrlFriendRequestThird = FBGlobals.Instance.urlPostUrlFriendRequestThirdFriendManager;  
+                string PostUrlFriendRequestThird = FBGlobals.Instance.urlPostUrlFriendRequestThirdFriendManager;
                 string PostDataFriendRequestThird = string.Empty;
                 if (pageSrcFriendProfileUrl.Contains("TimelineCapsule"))
                 {
@@ -1382,6 +1826,7 @@ namespace Friends
                     try
                     {
                         PostDataFriendRequestThird = "to_friend=" + FriendId + "&action=add_friend&how_found=profile_button&ref_param=none&&&outgoing_id=js_0&logging_location=&no_flyout_on_click=false&ego_log_data=&http_referer=&fb_dtsg=" + fb_dtsg + "&__user=" + UserId + "&phstamp=";
+                        PostDataFriendRequestThird = "to_friend=" + FriendId + "&action=add_friend&how_found=profile_button&ref_param=none&&link_data[gt][profile_owner]=" + FriendId + "&link_data[gt][ref]=timeline%3Atimeline&outgoing_id=&logging_location=&no_flyout_on_click=true&ego_log_data&http_referer&floc=profile_button&frefs[0]=none&__user=" + UserId + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bHbgWCueyp9Esx6iqA8Ay9VCC-K26m6oKezob4q68K5Uc-dy88Ukxjx27W88z4q5UDGezUyVWz9Hxmfw&__req=d&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170888111498110687212076&__rev=1862940";
                     }
                     catch (Exception ex)
                     {
@@ -1413,7 +1858,7 @@ namespace Friends
                     GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                     GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                     Thread.Sleep(delayInSeconds);
-                    
+
                     return true;
 
                 }
@@ -1432,7 +1877,7 @@ namespace Friends
                 }
                 else if (ResponseFriendRequestThird.Contains("You've been blocked from using this feature because you may have violated Facebook's Terms."))
                 {
-                    GlobusLogHelper.log.Info("You've been blocked from using this feature because you may have violated Facebook's Terms.."+"With Account" + fbUser.username);
+                    GlobusLogHelper.log.Info("You've been blocked from using this feature because you may have violated Facebook's Terms.." + "With Account" + fbUser.username);
                     GlobusLogHelper.log.Debug("You've been blocked from using this feature because you may have violated Facebook's Terms.." + "With Account" + fbUser.username);
 
                     int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
@@ -1440,9 +1885,9 @@ namespace Friends
                     GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                     Thread.Sleep(delayInSeconds);
                 }
-                else if(ResponseFriendRequestThird.Contains("You&#039;re blocked from sending friend requests for"))
+                else if (ResponseFriendRequestThird.Contains("You&#039;re blocked from sending friend requests for"))
                 {
-                    GlobusLogHelper.log.Info("You are blocked from sending friend requests "+fbUser.username );
+                    GlobusLogHelper.log.Info("You are blocked from sending friend requests " + fbUser.username);
                     GlobusLogHelper.log.Debug("You are blocked from sending friend requests " + fbUser.username);
 
                     int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
@@ -1452,12 +1897,12 @@ namespace Friends
                 }
                 else if (ResponseFriendRequestThird.Contains("\"errorSummary\":") && !ResponseFriendRequestThird.Contains("Already requested"))
                 {
-                    string errorSummary=FBUtils.GetErrorSummary(ResponseFriendRequestThird);
+                    string errorSummary = FBUtils.GetErrorSummary(ResponseFriendRequestThird);
                     GlobusLogHelper.log.Info("Error Summary : " + errorSummary + " with Url :" + FriRequestUrl + " with Account " + fbUser.username);
                     GlobusLogHelper.log.Debug("Error Summary : " + errorSummary + " with Url :" + FriRequestUrl + " with Account " + fbUser.username);
 
                 }
-                else 
+                else
                 {
                     GlobusLogHelper.log.Info("Some Problem with Url :" + FriRequestUrl + " with Account " + fbUser.username);
                     GlobusLogHelper.log.Debug("Some Problem with Url :" + FriRequestUrl + " with Account " + fbUser.username);
@@ -1473,7 +1918,7 @@ namespace Friends
 
         public static string CancelSentFriendRequestExprotFilePath = string.Empty;
         public static string CancelFriendRequestExportFilePath = string.Empty;
-        public static string AcceptFriendRequestExportFilePath = string.Empty; 
+        public static string AcceptFriendRequestExportFilePath = string.Empty;
 
         public void StartAcceptFriendRequest()
         {
@@ -1566,58 +2011,58 @@ namespace Friends
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                        
-                            try
+
+                    try
+                    {
+                        Array paramsArray = new object[1];
+                        paramsArray = (Array)parameters;
+
+                        FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+
+                        if (!objFacebookUser.isloggedin)
+                        {
+                            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+
+                            objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+
+                            //Login Process
+
+                            Accounts.AccountManager objAccountManager = new AccountManager();
+
+                            objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                        }
+
+                        if (objFacebookUser.isloggedin)
+                        {
+                            // Call AcceptFriendRequests
+                            if (Friends_AcceptSendFrndProcessUsing == "Accept Friends Request")
                             {
-                                    Array paramsArray = new object[1];
-                                    paramsArray = (Array)parameters;
-
-                                    FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
-
-                                    if (!objFacebookUser.isloggedin)
-                                    {
-                                        GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
-
-                                        objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
-
-                                        //Login Process
-
-                                        Accounts.AccountManager objAccountManager = new AccountManager();
-
-                                        objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
-                                    }
-
-                                    if (objFacebookUser.isloggedin)
-                                    {
-                                        // Call AcceptFriendRequests
-                                        if (Friends_AcceptSendFrndProcessUsing == "Accept Friends Request")
-                                        {
-                                             AcceptFriendRequests(ref objFacebookUser);
-                                        }
-                                        else if (Friends_AcceptSendFrndProcessUsing == "Cancel Friends Request")
-                                        {
-                                            CancelFriendRequests(ref objFacebookUser);
-                                        }
-                                        else if (Friends_AcceptSendFrndProcessUsing == "Cancel Sent Friends Request")
-                                        {
-                                            CancelSentFriendRequests(ref objFacebookUser);
-                                        }
-                                        else if (Friends_AcceptSendFrndProcessUsing == "Suggest Friends")
-                                        {
-                                            SuggestFriends(ref objFacebookUser);
-                                        }                                      
-                                       
-                                    }
-                                    else
-                                    {
-                                        GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                                        GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
-                                    }
+                                AcceptFriendRequests(ref objFacebookUser);
                             }
-                            catch (Exception ex)
+                            else if (Friends_AcceptSendFrndProcessUsing == "Cancel Friends Request")
                             {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                CancelFriendRequests(ref objFacebookUser);
                             }
+                            else if (Friends_AcceptSendFrndProcessUsing == "Cancel Sent Friends Request")
+                            {
+                                CancelSentFriendRequests(ref objFacebookUser);
+                            }
+                            else if (Friends_AcceptSendFrndProcessUsing == "Suggest Friends")
+                            {
+                                SuggestFriends(ref objFacebookUser);
+                            }
+
+                        }
+                        else
+                        {
+                            GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                            GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
                 }
             }
             catch (Exception ex)
@@ -1629,7 +2074,7 @@ namespace Friends
             {
                 try
                 {
-                  //  if (!isRequestFriendsStop)
+                    //  if (!isRequestFriendsStop)
                     {
                         lock (requestFriendsThreadControllerlockr)
                         {
@@ -1689,16 +2134,16 @@ namespace Friends
 
                 string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSource_HomePage);
 
-                string pageSourceFriendRequests=string.Empty;
-                
-                List<string> listFriend_Requests=new List<string>();
-                List<string> listFriend_Suggestions=new List<string>();
+                string pageSourceFriendRequests = string.Empty;
+
+                List<string> listFriend_Requests = new List<string>();
+                List<string> listFriend_Suggestions = new List<string>();
 
 
-               // Friends_AcceptFriends_CheckTargeted
-                 
+                // Friends_AcceptFriends_CheckTargeted
+
                 string FrinedId = string.Empty;
-              
+
                 int tempCount_CheckRequests = 0;
                 //code to double check if all FRs have been accepted
                 while (CheckFriendCount(ref HttpHelper, ref UserId, ref pageSourceFriendRequests, ref listFriend_Requests, ref listFriend_Suggestions) > 0)
@@ -1714,8 +2159,8 @@ namespace Friends
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
 
-                   
-                  
+
+
                     if (tempCount_CheckRequests >= NoOfFriendRequestFriendManager)
                     {
                         break;
@@ -1726,7 +2171,7 @@ namespace Friends
                     }
                     tempCount_CheckRequests++;
                     var itemId = listFriend_Requests.Distinct().ToList();
-                    
+
                     //GlobusLogHelper.log.Info(itemId.Count() + " Friend Request With Username : "+fbUser.username);
                     //GlobusLogHelper.log.Debug(itemId.Count() + " Friend Request With Username : " + fbUser.username);
 
@@ -1768,8 +2213,9 @@ namespace Friends
                         {
                             string ProfileUrl = item.Replace("?fref=%2Freqs.php", "") + "/about" + "?section=contact-info".Trim(); ;
                             PageSource = HttpHelper.getHtmlfromUrl(new Uri(ProfileUrl));
-                            Gender = Utils.getBetween(PageSource, "Gender", "</div></div>")+"@";
-                            Gender = Utils.getBetween(Gender, "<div>","@");
+
+                            Gender = Utils.getBetween(PageSource, "Gender", "</div></div>") + "@";
+                            Gender = Utils.getBetween(Gender, "<div>", "@");
                             if (string.IsNullOrEmpty(Gender))
                             {
                                 try
@@ -1782,22 +2228,22 @@ namespace Friends
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
                             }
-                            if (Gender == "Male")
+                            if (Gender.Contains("Male"))
                             {
                                 CheckGenderMale = true;
                             }
-                            else 
+                            else
                             {
                                 CheckGenderFeMale = true;
                             }
-                          
+
                         }
 
                         if (CheckGenderMale && !Friends_AcceptFriends_Male)
                         {
                             continue;
                         }
-                        else if (CheckGenderFeMale&&!Friends_AcceptFriends_Female)
+                        else if (CheckGenderFeMale && !Friends_AcceptFriends_Female)
                         {
                             continue;
                         }
@@ -1806,20 +2252,10 @@ namespace Friends
                         {
                             if (item != UserId)
                             {
-                                FrinedId = item;
+                                FrinedId = Utils.getBetween(PageSource, "\"profile_id\":", ",");
                                 //string pagesource = HttpHelper.getHtmlfromUrl(new Uri(FrinedId));
                                 //string fb_dtsg = Globussoft.GlobusHttpHelper.GetParamValue(pagesource, "fb_dtsg");
-                                if (FrinedId.Contains("facebook.com/"))
-                                {
-                                    try
-                                    {
-                                        FrinedId = HttpHelper.ExtractIDUsingGraphAPI(FrinedId, ref HttpHelper);
-                                    }
-                                    catch
-                                    {
-                                        FrinedId = HttpHelper.ExtractIDOfNonTimeLine(FrinedId, ref HttpHelper);
-                                    }
-                                }
+
 
                                 string posturl = FBGlobals.Instance.urlPostAddFriendUrlFriendManager;
                                 string postdata = "to_friend=" + FrinedId + "&action=confirm&ref_param=/profile.php&__user=" + UserId + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816652574510967111";//"fb_dtsg=" + fb_dtsg + "&confirm=" + FrinedId + "&type=friend_connect&request_id=" + FrinedId + "&list_item_id=" + FrinedId + "_1_req&status_div_id=" + FrinedId + "_1_req_status&sce=1&inline=1&ref=%2Freqs.php&actions[accept]=Confirm&__user=" + UsreId + "&__a=1&phstamp=165816652574510967249";//"post_form_id="+post_form_id+"&fb_dtsg="+fb_dtsg+"&confirm="+FrinedId+"&type=friend_connect&request_id="+FrinedId+"&list_item_id="+FrinedId+"_1_req&status_div_id="+FrinedId+"_1_req_status&sce=&inline=1&ref=jewel&num_visible_requests=1&actions[accept]=Confirm&lsd&post_form_id_source=AsyncRequest&__user="+UsreId
@@ -1845,14 +2281,14 @@ namespace Friends
                                 }
 
                                 if (ResponsefriendRequest.Contains(":\"Sorry"))
-                                {                                  
+                                {
 
                                     GlobusLogHelper.log.Info("Couldn't Accept Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Couldn't Accept Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
 
                                     //if (!IsFastFRAccept)
                                     {
-                                       
+
 
                                         int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
                                         GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
@@ -1879,7 +2315,7 @@ namespace Friends
                                 else if (ResponsefriendRequest.Contains("success"))
                                 {
                                     AcceptFrndCount = AcceptFrndCount + 1;
-                                   
+
                                     GlobusLogHelper.log.Info("Friend Request accepted with friend id :" + FrinedId + " & Username: " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Friend Request accepted with friend id :" + FrinedId + " & Username: " + fbUser.username);
 
@@ -1928,8 +2364,8 @@ namespace Friends
                                     GlobusLogHelper.log.Info("Couldn't Accept Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Couldn't Accept Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
 
-                                    
-                                    GlobusLogHelper.log.Info("Response : " + ResponsefriendRequest+"  Username : "+fbUser.username);
+
+                                    GlobusLogHelper.log.Info("Response : " + ResponsefriendRequest + "  Username : " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Response : " + ResponsefriendRequest + "  Username : " + fbUser.username);
 
                                     //if (!IsFastFRAccept)
@@ -1944,12 +2380,12 @@ namespace Friends
 
                             }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
                     }
-                }               
+                }
 
                 #region FR Suggestions Confirms
 
@@ -1965,7 +2401,7 @@ namespace Friends
                                 if (item != UserId)
                                 {
                                     FrinedId = item;
-                                    
+
                                     if (FrinedId.Contains("facebook.com/"))
                                     {
                                         try
@@ -2023,7 +2459,7 @@ namespace Friends
                                         GlobusLogHelper.log.Info("Suggestion: Couldn't Send Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
                                         GlobusLogHelper.log.Info("Suggestion: Couldn't Send Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
 
-                                        GlobusLogHelper.log.Info("Response : " + ResponsefriendRequest+" & Username: " + fbUser.username);
+                                        GlobusLogHelper.log.Info("Response : " + ResponsefriendRequest + " & Username: " + fbUser.username);
                                         GlobusLogHelper.log.Debug("Response : " + ResponsefriendRequest + " & Username: " + fbUser.username);
 
                                         //if (!IsFastFRAccept)
@@ -2150,9 +2586,9 @@ namespace Friends
                         string PageSource = string.Empty;
                         if (item.Contains("profile.php?id"))
                         {
-                            string ProfileUrl = item.Replace("?fref=%2Freqs.php", "") + "&sk=about"+"&section=contact-info".Trim();
+                            string ProfileUrl = item.Replace("?fref=%2Freqs.php", "") + "&sk=about" + "&section=contact-info".Trim();
                             PageSource = HttpHelper.getHtmlfromUrl(new Uri(ProfileUrl));
-                            fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSource);
+                            // fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSource);
                             Gender = Utils.getBetween(PageSource, "Gender", "</div></div>") + "@";
                             Gender = Utils.getBetween(Gender, "<div>", "@");
                             if (Gender.Contains("Male"))
@@ -2168,7 +2604,7 @@ namespace Friends
                         {
                             string ProfileUrl = item.Replace("?fref=%2Freqs.php", "") + "/about";
                             PageSource = HttpHelper.getHtmlfromUrl(new Uri(ProfileUrl));
-                            fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSource);
+                            // fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSource);
                             Gender = Utils.getBetween(PageSource, "Gender", "</div></div>") + "@";
                             Gender = Utils.getBetween(Gender, "<div>", "@");
                             if (Gender.Contains("Male"))
@@ -2195,29 +2631,14 @@ namespace Friends
                         {
                             if (item != UserId)
                             {
-                                FrinedId = item;
+                                //FrinedId = item;
                                 //string pagesource = HttpHelper.getHtmlfromUrl(new Uri(FrinedId));
                                 //string fb_dtsg = Globussoft.GlobusHttpHelper.GetParamValue(pagesource, "fb_dtsg");
-                                if (FrinedId.Contains("facebook.com/"))
-                                {
-                                    try
-                                    {
-                                        FrinedId = HttpHelper.ExtractIDUsingGraphAPI(FrinedId, ref HttpHelper);
-                                    }
-                                    catch
-                                    {
-                                        FrinedId = HttpHelper.ExtractIDOfNonTimeLine(FrinedId, ref HttpHelper);
-                                    }
-                                }
-
-                                if (FrinedId.Contains("&amp;"))
-                                {
-                                    FrinedId = FrinedId.Replace("&amp;fref=%2Freqs.php",string.Empty).Trim();
-                                }
+                                FrinedId = Utils.getBetween(PageSource, "\"profile_id\":", ",");
 
                                 string posturl = "https://www.facebook.com/ajax/profile/connect/reject.php";
-                             //   string postdata = "fb_dtsg=" + fb_dtsg + "&confirm=" + FrinedId + "&type=friend_connect&request_id=" + FrinedId + "&list_item_id=" + FrinedId + "_1_req&status_div_id=" + FrinedId + "_1_req_status&inline=1&ref=jewel&ego_log=AT7GmywcDNmeS_xqAxpj4TPYn7qNEf9X8-kgoeHeumv146pw0_PGpbIiZXqVNNELH3zHFQOREbUBq-bQsh5FLG90NQyCR-AS1ZeZaAQJtQyeuQDKOblffDgoa093y-eIiVhEt1rnXGVWdKdPY3BBDb69D5kMC7xwDXMz-AcmhcSwJDcDae3VhwgY0TL49Q5fHhe64TYBeag0vnqdyavYAaXSQnO5xShI7xUqzAGOBCquWI0w&actions[hide]=1&nctr[_mod]=pagelet_bluebar&__user="+UserId+"&__a=1&__dyn=7n8anEAMCBynzpQ9UoHFaeFDzECQqbx2mbACFaaGGzCC_826m6oDAyoSnx2ubhHAG8Kl1e&__req=9&ttstamp=2658172785657997097118106116&__rev=1398717";
-                                string postdata = "profile_id="+FrinedId+"&ref=%2Fprofile.php&floc=profile_box&frefs[0]=none&nctr[_mod]=pagelet_above_header_timeline&__user="+UserId+"&__a=1&__dyn=7n8ahyj2qm9udDgDxyF4EihUtCxO4p9GgyiGGfirWo8pojByUWdDx2ubhHx2Vokw&__req=9&fb_dtsg="+fb_dtsg+"&ttstamp=26581691006953529980894871&__rev=1398717";
+                                //   string postdata = "fb_dtsg=" + fb_dtsg + "&confirm=" + FrinedId + "&type=friend_connect&request_id=" + FrinedId + "&list_item_id=" + FrinedId + "_1_req&status_div_id=" + FrinedId + "_1_req_status&inline=1&ref=jewel&ego_log=AT7GmywcDNmeS_xqAxpj4TPYn7qNEf9X8-kgoeHeumv146pw0_PGpbIiZXqVNNELH3zHFQOREbUBq-bQsh5FLG90NQyCR-AS1ZeZaAQJtQyeuQDKOblffDgoa093y-eIiVhEt1rnXGVWdKdPY3BBDb69D5kMC7xwDXMz-AcmhcSwJDcDae3VhwgY0TL49Q5fHhe64TYBeag0vnqdyavYAaXSQnO5xShI7xUqzAGOBCquWI0w&actions[hide]=1&nctr[_mod]=pagelet_bluebar&__user="+UserId+"&__a=1&__dyn=7n8anEAMCBynzpQ9UoHFaeFDzECQqbx2mbACFaaGGzCC_826m6oDAyoSnx2ubhHAG8Kl1e&__req=9&ttstamp=2658172785657997097118106116&__rev=1398717";
+                                string postdata = "profile_id=" + FrinedId + "&ref=%2Fprofile.php&floc=profile_box&frefs[0]=none&nctr[_mod]=pagelet_above_header_timeline&__user=" + UserId + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyF4EihUtCxO4p9GgyiGGfirWo8pojByUWdDx2ubhHx2Vokw&__req=9&fb_dtsg=" + fb_dtsg + "&ttstamp=26581691006953529980894871&__rev=1398717";
 
                                 string ResponsefriendRequest = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/profile/connect/reject.php"), postdata);
 
@@ -2278,7 +2699,7 @@ namespace Friends
 
                                     GlobusLogHelper.log.Info("Cancel Friend request - friend id :" + FrinedId + " & Username: " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Cancel Friend request - friend id :" + FrinedId + " & Username: " + fbUser.username);
-                                    
+
                                     if (!string.IsNullOrEmpty(CancelFriendRequestExportFilePath))
                                     {
 
@@ -2307,7 +2728,7 @@ namespace Friends
                                         break;
                                     }
                                 }
-                               
+
                                 else
                                 {
                                     GlobusLogHelper.log.Info("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
@@ -2336,7 +2757,7 @@ namespace Friends
                     }
                 }
 
-              
+
             }
             catch (Exception ex)
             {
@@ -2351,220 +2772,236 @@ namespace Friends
 
         public void CancelSentFriendRequests(ref FacebookUser fbUser)
         {
-           
-                int AcceptFrndCount = 0;
-                #region FR Requests Acceptins
-                try
+
+            int AcceptFrndCount = 0;
+            #region FR Requests Acceptins
+            try
+            {
+                lstRequestFriendsThreads.Add(Thread.CurrentThread);
+                lstRequestFriendsThreads.Distinct();
+                Thread.CurrentThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+
+            try
+            {
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+
+                GlobusLogHelper.log.Info("Start Cancel Sent Friend Request With Username : " + fbUser.username);
+                GlobusLogHelper.log.Debug("Start Cancel Sent Friend Request With Username : " + fbUser.username);
+
+                string UserId = string.Empty;
+
+                string pageSource_HomePage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
+
+                if (string.IsNullOrEmpty(UserId))
                 {
-                    lstRequestFriendsThreads.Add(Thread.CurrentThread);
-                    lstRequestFriendsThreads.Distinct();
-                    Thread.CurrentThread.IsBackground = true;
+                    UserId = GlobusHttpHelper.ParseJson(pageSource_HomePage, "user");
                 }
-                catch (Exception ex)
+
+                if (string.IsNullOrEmpty(UserId) || UserId == "0" || UserId.Length < 3)
                 {
-                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
+                    GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
+
+                    return;
                 }
 
+                string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSource_HomePage);
 
-                try
+                string pageSourceFriendRequests = string.Empty;
+
+                List<string> listFriend_Requests = new List<string>();
+                List<string> listFriend_Suggestions = new List<string>();
+
+
+                string FrinedId = string.Empty;
+
+                int tempCount_CheckRequests = 0;
+                //code to double check if all FRs have been accepted
+                //while (CheckSentFriendCount(ref HttpHelper, ref UserId, ref pageSourceFriendRequests, ref listFriend_Requests, ref listFriend_Suggestions) > 0)
+                while (CheckSentFriendRequestCountNew(ref HttpHelper, ref UserId, ref pageSourceFriendRequests, ref listFriend_Requests) > 0)
                 {
-                    GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-
-                    GlobusLogHelper.log.Info("Start Cancel Sent Friend Request With Username : " + fbUser.username);
-                    GlobusLogHelper.log.Debug("Start Cancel Sent Friend Request With Username : " + fbUser.username);
-
-                    string UserId = string.Empty;
-
-                    string pageSource_HomePage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
-
-                    UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
-
-                    if (string.IsNullOrEmpty(UserId))
+                    try
                     {
-                        UserId = GlobusHttpHelper.ParseJson(pageSource_HomePage, "user");
+                        lstRequestFriendsThreads.Add(Thread.CurrentThread);
+                        lstRequestFriendsThreads.Distinct();
+                        Thread.CurrentThread.IsBackground = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
 
-                    if (string.IsNullOrEmpty(UserId) || UserId == "0" || UserId.Length < 3)
+
+                    tempCount_CheckRequests++;
+                    if (tempCount_CheckRequests >= 10)
                     {
-                        GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
-                        GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
-
-                        return;
+                        // break;
                     }
-
-                    string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSource_HomePage);
-
-                    string pageSourceFriendRequests = string.Empty;
-
-                    List<string> listFriend_Requests = new List<string>();
-                    List<string> listFriend_Suggestions = new List<string>();
+                    if (AcceptFrndCount >= NoOfFriendRequestFriendManager)
+                    {
+                        break;
+                    }
+                    var itemId = listFriend_Requests.Distinct().ToList();
 
 
-                    string FrinedId = string.Empty;
-
-                    int tempCount_CheckRequests = 0;
-                    //code to double check if all FRs have been accepted
-                    //while (CheckSentFriendCount(ref HttpHelper, ref UserId, ref pageSourceFriendRequests, ref listFriend_Requests, ref listFriend_Suggestions) > 0)
-                    while (CheckSentFriendRequestCountNew(ref HttpHelper, ref UserId, ref pageSourceFriendRequests, ref listFriend_Requests) > 0)
+                    foreach (var item in itemId)
                     {
                         try
                         {
-                            lstRequestFriendsThreads.Add(Thread.CurrentThread);
-                            lstRequestFriendsThreads.Distinct();
-                            Thread.CurrentThread.IsBackground = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-
-
-                        tempCount_CheckRequests++;
-                        if (tempCount_CheckRequests >= 10)
-                        {
-                            // break;
-                        }
-                        if (AcceptFrndCount >= NoOfFriendRequestFriendManager)
-                        {
-                            break;
-                        }
-                        var itemId = listFriend_Requests.Distinct().ToList();
-
-
-                        foreach (var item in itemId)
-                        {
-                            try
+                            if (item != UserId)
                             {
-                                if (item != UserId)
+                                string Gender = string.Empty;
+                                bool CheckGenderMale = false;
+                                bool CheckGenderFeMale = false;
+                                string FreindPage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/" + item));
+
+                                FreindPage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/profile.php?id=" + item + "&sk=about&section=contact-info&pnref=about"));
+
+                                Gender = Utils.getBetween(FreindPage, "Gender", "</div></div>") + "@";
+                                Gender = Utils.getBetween(Gender, "<div>", "@");
+                                if (Gender.Contains("Male"))
                                 {
-                                    FrinedId = item;
-                                    string posturl = "https://www.facebook.com/ajax/friends/requests/cancel.php";
-                                    string postdata = "friend=" + FrinedId + "&cancel_ref=outgoing_requests&__user=" + UserId + "&__a=1&__dyn=7n8ahyj35zoSt2u6aAix90BCxO4oKAdBGfirWo8pojByUW5ogxd6K4bBxi&__req=q&fb_dtsg=" + fb_dtsg + "&ttstamp=26581705111797677668726673&__rev=1398717&confirmed=1";
+                                    CheckGenderMale = true;
+                                }
+                                else
+                                {
+                                    CheckGenderFeMale = true;
+                                }
 
-                                    string ResponsefriendRequest = string.Empty;
-                                    try
+                                FrinedId = item;
+                                string posturl = "https://www.facebook.com/ajax/friends/requests/cancel.php";
+                                string postdata = "friend=" + FrinedId + "&cancel_ref=outgoing_requests&__user=" + UserId + "&__a=1&__dyn=7n8ahyj35zoSt2u6aAix90BCxO4oKAdBGfirWo8pojByUW5ogxd6K4bBxi&__req=q&fb_dtsg=" + fb_dtsg + "&ttstamp=26581705111797677668726673&__rev=1398717&confirmed=1";
+
+                                string ResponsefriendRequest = string.Empty;
+                                try
+                                {
+                                    ResponsefriendRequest = HttpHelper.postFormData(new Uri(posturl), postdata);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error(ex.Message);
+                                    GlobusLogHelper.log.Info("Unable To Cancel Sent Friend Request For UserID" + item);
+                                }
+
+                                if (ResponsefriendRequest.Contains(":\"Sorry"))
+                                {
+
+                                    GlobusLogHelper.log.Info("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
+
+                                    //if (!IsFastFRAccept)
                                     {
-                                        ResponsefriendRequest = HttpHelper.postFormData(new Uri(posturl), postdata);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error(ex.Message);
-                                        GlobusLogHelper.log.Info("Unable To Cancel Sent Friend Request For UserID"+item);
-                                    }
-
-                                    if (ResponsefriendRequest.Contains(":\"Sorry"))
-                                    {
-
-                                        GlobusLogHelper.log.Info("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
-
-                                        //if (!IsFastFRAccept)
-                                        {
-
-
-                                            int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
-                                              GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                              GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            Thread.Sleep(delayInSeconds);
-                                        }
-                                        continue;
-                                    }
-                                    else if (ResponsefriendRequest.Contains(":\"Error"))
-                                    {
-                                        GlobusLogHelper.log.Info("Couldn'tCancel Request with friend id : " + FrinedId + " & Username: " + fbUser.username);
-                                         GlobusLogHelper.log.Debug("Couldn't Cancel Request with friend id : " + FrinedId + " & Username: " + fbUser.username);
-                                        //if (!IsFastFRAccept)
-                                        {
-                                            int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
-                                           GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                           GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            Thread.Sleep(delayInSeconds);
-                                        }
-                                        continue;
-                                    }
-
-                                    else if (ResponsefriendRequest.Contains("[\"FriendRequest\\/cancel\""))
-                                    {
-                                        AcceptFrndCount = AcceptFrndCount + 1;
-
-                                        GlobusLogHelper.log.Info("Friend request cancelled  - friend id :" + FrinedId + " & Username: " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Friend request cancelled  - friend id :" + FrinedId + " & Username: " + fbUser.username);
-
-                                        if (!string.IsNullOrEmpty(CancelSentFriendRequestExprotFilePath))
-                                        {
-
-
-                                            string CSVHeader = "UserName" + "," + "FriendId" + ", " + "Stautus";
-                                            string CSV_Content = fbUser.username + "," + FrinedId + ", " + "Friend request cancelled";
-                                            try
-                                            {
-
-                                                Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, CancelSentFriendRequestExprotFilePath);
-                                                GlobusLogHelper.log.Debug("Data Saved In CSV ." + CSV_Content);
-                                                GlobusLogHelper.log.Info("Data Saved In CSV ." + CSV_Content);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-
-
 
 
                                         int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
                                         GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                         GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                         Thread.Sleep(delayInSeconds);
-                                        //You are friends with this person
-                                        if (AcceptFrndCount >= NoOfFriendRequestFriendManager)
-                                        {
-                                            break;
-                                        }
                                     }
-
-                                    else
-                                    {
-                                         GlobusLogHelper.log.Info("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
-                                         GlobusLogHelper.log.Debug("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
-
-
-                                          GlobusLogHelper.log.Info("Response : " + ResponsefriendRequest + "  Username : " + fbUser.username);
-                                           GlobusLogHelper.log.Debug("Response : " + ResponsefriendRequest + "  Username : " + fbUser.username);
-
-                                        //if (!IsFastFRAccept)
-                                        {
-
-                                            int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
-                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            Thread.Sleep(delayInSeconds);
-                                        }
-                                    }
-
-
-
-
+                                    continue;
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                else if (ResponsefriendRequest.Contains(":\"Error"))
+                                {
+                                    GlobusLogHelper.log.Info("Couldn'tCancel Request with friend id : " + FrinedId + " & Username: " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Couldn't Cancel Request with friend id : " + FrinedId + " & Username: " + fbUser.username);
+                                    //if (!IsFastFRAccept)
+                                    {
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                    }
+                                    continue;
+                                }
+
+                                else if (ResponsefriendRequest.Contains("[\"FriendRequest\\/cancel\""))
+                                {
+                                    AcceptFrndCount = AcceptFrndCount + 1;
+
+                                    GlobusLogHelper.log.Info("Friend request cancelled  - friend id :" + FrinedId + " & Username: " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Friend request cancelled  - friend id :" + FrinedId + " & Username: " + fbUser.username);
+
+                                    if (!string.IsNullOrEmpty(CancelSentFriendRequestExprotFilePath))
+                                    {
+
+
+                                        string CSVHeader = "UserName" + "," + "FriendId" + ", " + "Stautus";
+                                        string CSV_Content = fbUser.username + "," + FrinedId + ", " + "Friend request cancelled";
+                                        try
+                                        {
+
+                                            Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, CancelSentFriendRequestExprotFilePath);
+                                            GlobusLogHelper.log.Debug("Data Saved In CSV ." + CSV_Content);
+                                            GlobusLogHelper.log.Info("Data Saved In CSV ." + CSV_Content);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+
+                                    int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+                                    //You are friends with this person
+                                    if (AcceptFrndCount >= NoOfFriendRequestFriendManager)
+                                    {
+                                        break;
+                                    }
+                                }
+
+                                else
+                                {
+                                    GlobusLogHelper.log.Info("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Couldn't Cancel Request with friend id :" + FrinedId + " & Username: " + fbUser.username);
+
+
+                                    GlobusLogHelper.log.Info("Response : " + ResponsefriendRequest + "  Username : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Response : " + ResponsefriendRequest + "  Username : " + fbUser.username);
+
+                                    //if (!IsFastFRAccept)
+                                    {
+
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayFriendManager * 1000, maxDelayFriendManager * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                    }
+                                }
+
+
+
+
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
                     }
-
-
                 }
-                catch (Exception ex)
-                {
-                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                }
-                #endregion
 
-                GlobusLogHelper.log.Info("Process Completed Of Cancel sent Friends Request With Username : " + fbUser.username);
-                GlobusLogHelper.log.Debug("Process Completed Of Cancel sent Friends Request With Username : " + fbUser.username);
-            
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+            #endregion
+
+            GlobusLogHelper.log.Info("Process Completed Of Cancel sent Friends Request With Username : " + fbUser.username);
+            GlobusLogHelper.log.Debug("Process Completed Of Cancel sent Friends Request With Username : " + fbUser.username);
+
         }
 
 
@@ -2609,51 +3046,52 @@ namespace Friends
                 }
                 List<string> lstSuggestFriendsId = new List<string>();
                 foreach (string ItemFriendUrl in lstFriendsUrlToSuggestFriends)
-                { 
-                  string FriendsPageSrc=HttpHelper.getHtmlfromUrl(new Uri(ItemFriendUrl));
-                  string[] urlData = ItemFriendUrl.Split('/');
-                  FriendName = urlData[urlData.Length - 1];
-                  string graphResp = HttpHelper.getHtmlfromUrl(new Uri("https://graph.facebook.com/" + FriendName));
-                  FriendID = Utils.getBetween(graphResp, "id\": \"", "\"");
-                  string postDataToGetSuggestion = "__user="+UserId+"&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxCbzESu49UJ6K59poW8xHzoyfw&__req=11&fb_dtsg="+fb_dtsg+"&ttstamp=2658169975683103119106817079&__rev=1549264";
-                  string friendSuggestionResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/chooser/list/friends/suggest/?filter=all&newcomer=" + FriendID),postDataToGetSuggestion);
-                  string suggestData = Utils.getBetween(friendSuggestionResp, "[", "]");
-                  string[] splitIds = suggestData.Split(',');
-                  foreach (string item in splitIds)
-                  {
-                      string temp = Utils.getBetween(item, "\"", "\"");
-                      lstSuggestFriendsId.Add(temp);
-                  }
-                  lstSuggestFriendsId = lstSuggestFriendsId.Distinct().ToList();
+                {
+                    string FriendsPageSrc = HttpHelper.getHtmlfromUrl(new Uri(ItemFriendUrl));
+                    string[] urlData = ItemFriendUrl.Split('/');
+                    FriendName = urlData[urlData.Length - 1];
+                    // string graphResp = HttpHelper.getHtmlfromUrl(new Uri("https://graph.facebook.com/" + FriendName));
+                    // FriendID = Utils.getBetween(graphResp, "id\": \"", "\"");
+                    FriendID = Utils.getBetween(FriendsPageSrc, "\"profile_id\":", ",");
+                    string postDataToGetSuggestion = "__user=" + UserId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxCbzESu49UJ6K59poW8xHzoyfw&__req=11&fb_dtsg=" + fb_dtsg + "&ttstamp=2658169975683103119106817079&__rev=1549264";
+                    string friendSuggestionResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/chooser/list/friends/suggest/?filter=all&newcomer=" + FriendID), postDataToGetSuggestion);
+                    string suggestData = Utils.getBetween(friendSuggestionResp, "[", "]");
+                    string[] splitIds = suggestData.Split(',');
+                    foreach (string item in splitIds)
+                    {
+                        string temp = Utils.getBetween(item, "\"", "\"");
+                        lstSuggestFriendsId.Add(temp);
+                    }
+                    lstSuggestFriendsId = lstSuggestFriendsId.Distinct().ToList();
 
-                  foreach (string suggestId in lstSuggestFriendsId)
-                  {
-                      suggestionCounter++;
-                      try
-                      {
-                          string postSuggextion = "receiver=" + suggestId + "&newcomer=" + FriendID + "&attempt_id=013473d158fa55456cc53f253c8c8431&ref=profile_others_dropdown&__user="+UserId+"&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxCbzESu49UJ6K59poW8xHzoyfw&__req=y&fb_dtsg=" + fb_dtsg + "&ttstamp=2658169545354106991215011056&__rev=1549264";
-                          string suggestionResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/friends/suggest"), postSuggextion);
+                    foreach (string suggestId in lstSuggestFriendsId)
+                    {
+                        suggestionCounter++;
+                        try
+                        {
+                            string postSuggextion = "receiver=" + suggestId + "&newcomer=" + FriendID + "&attempt_id=013473d158fa55456cc53f253c8c8431&ref=profile_others_dropdown&__user=" + UserId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxCbzESu49UJ6K59poW8xHzoyfw&__req=y&fb_dtsg=" + fb_dtsg + "&ttstamp=2658169545354106991215011056&__rev=1549264";
+                            string suggestionResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/friends/suggest"), postSuggextion);
 
-                          if (suggestionResp.Contains("for (;;);{\"__ar\":1,\"payload\":null,\"bootloadable\":{},\"ixData\":{}}"))
-                          {
-                              GlobusLogHelper.log.Info("Friend Suggestion Id : " + suggestId + " To Friend " + ItemFriendUrl);
-                              GlobusLogHelper.log.Debug("Start Suggestion Id : : " + suggestId + "To Friend " + ItemFriendUrl);
-                          }
-                          if (suggestionCounter == NoOfFriendRequestFriendManager)
-                          {
-                              break;
-                          }
-                          int delay = new Random().Next(minDelayFriendManager, maxDelayFriendManager);
-                          GlobusLogHelper.log.Info("Delaying For"+delay+"Seconds");
-                          GlobusLogHelper.log.Debug("Delaying For" + delay + "Seconds");
-                          Thread.Sleep(delay*1000);
-                      }
-                      catch (Exception ex)
-                      {
-                          GlobusLogHelper.log.Error(ex.Message);
-                      }
-                  }
-                
+                            if (suggestionResp.Contains("for (;;);{\"__ar\":1,\"payload\":null,\"bootloadable\":{},\"ixData\":{}}"))
+                            {
+                                GlobusLogHelper.log.Info("Friend Suggestion Id : " + suggestId + " To Friend " + ItemFriendUrl);
+                                GlobusLogHelper.log.Debug("Start Suggestion Id : : " + suggestId + "To Friend " + ItemFriendUrl);
+                            }
+                            if (suggestionCounter == NoOfFriendRequestFriendManager)
+                            {
+                                break;
+                            }
+                            int delay = new Random().Next(minDelayFriendManager, maxDelayFriendManager);
+                            GlobusLogHelper.log.Info("Delaying For" + delay + "Seconds");
+                            GlobusLogHelper.log.Debug("Delaying For" + delay + "Seconds");
+                            Thread.Sleep(delay * 1000);
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.Message);
+                        }
+                    }
+
                 }
             }
             catch (Exception ex)
@@ -2662,7 +3100,7 @@ namespace Friends
             }
         }
 
-        private int CheckFriendCount(ref GlobusHttpHelper HttpHelper,ref string UsreId, ref string pageSourceFriendRequests, ref List<string> listFriend_Requests, ref List<string> listFriend_Suggestions)
+        private int CheckFriendCount(ref GlobusHttpHelper HttpHelper, ref string UsreId, ref string pageSourceFriendRequests, ref List<string> listFriend_Requests, ref List<string> listFriend_Suggestions)
         {
             listFriend_Requests = new List<string>();
             if (Friends_AcceptFriends_CheckTargeted)
@@ -2672,22 +3110,22 @@ namespace Friends
             else
             {
 
-            try
-            {
-                pageSourceFriendRequests = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.urlGetReqsurlFriendManager));
+                try
+                {
+                    pageSourceFriendRequests = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.urlGetReqsurlFriendManager));
 
-                 string ProFilePost = string.Empty;
+                    string ProFilePost = string.Empty;
 
-                listFriend_Requests = new List<string>();
+                    listFriend_Requests = new List<string>();
 
-                listFriend_Suggestions = new List<string>();
+                    listFriend_Suggestions = new List<string>();
 
-                listFriend_Requests = HttpHelper.ExtractFriendIDs_URLSpecific(ref HttpHelper, ref UsreId, FBGlobals.Instance.urlGetReqsurlFriendManager, ref listFriend_Suggestions);
-            }
-            catch (Exception ex)
-            {
-                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }
+                    listFriend_Requests = HttpHelper.ExtractFriendIDs_URLSpecific(ref HttpHelper, ref UsreId, FBGlobals.Instance.urlGetReqsurlFriendManager, ref listFriend_Suggestions);
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
             }
 
             if (Friends_AcceptFriends_CheckTargeted)
@@ -2729,6 +3167,7 @@ namespace Friends
             try
             {
                 string SentRequestPagesrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/friends/requests/?fcref=jwl&outgoing=1"));
+
                 HtmlDocument result = new HtmlDocument();
                 result.LoadHtml(SentRequestPagesrc);
                 List<HtmlNode> SentRequestMainDiv = result.DocumentNode.Descendants().Where
@@ -2740,79 +3179,92 @@ namespace Friends
                     {
                         HtmlDocument result1 = new HtmlDocument();
                         result1.LoadHtml(hln);
-                    List<HtmlNode> SentRequestDiv = result1.DocumentNode.Descendants().Where
-                       (x => (x.Name == "div" && x.Attributes["class"] != null && x.Attributes["class"].Value.Contains("_6-_"))).ToList();
-                    foreach (HtmlNode hlNode in SentRequestDiv)
-                    {
-                        //string hln = hlNode.OuterHtml.ToString();
-                        //if (!hln.Contains("u_jsonp"))
+                        List<HtmlNode> SentRequestDiv = result1.DocumentNode.Descendants().Where
+                           (x => (x.Name == "div" && x.Attributes["class"] != null && x.Attributes["class"].Value.Contains("_6-_"))).ToList();
+                        foreach (HtmlNode hlNode in SentRequestDiv)
                         {
-
-                            string FriendsUrl = Utils.getBetween(hlNode.InnerHtml.ToString(), "<a href=\"", "\"");
-
-                            if (FriendsUrl.Contains("profile.php"))
+                            //string hln = hlNode.OuterHtml.ToString();
+                            //if (!hln.Contains("u_jsonp"))
                             {
-                                string FriendId = Utils.getBetween(FriendsUrl, "id=", "&");
-                                listFriend_Requests.Add(FriendId);
-                            }
-                            else
-                            {
-                                string[] splitsData = FriendsUrl.Split('/');
-                                string UserName = splitsData[splitsData.Length - 1].Split('?')[0];
-                                //http://graph.facebook.com/preeti.madav.9
-                                string graphResp = HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/" + UserName));
-                                string UserId = Utils.getBetween(graphResp, "id\": \"", "\"");
-                                if (!string.IsNullOrEmpty(UserId))
+
+                                string FriendsUrl = Utils.getBetween(hlNode.InnerHtml.ToString(), "<a href=\"", "\"");
+
+                                if (FriendsUrl.Contains("profile.php"))
                                 {
-                                    listFriend_Requests.Add(UserId);  
-                                }
-                                
-                            }
+                                    string FriendId = Utils.getBetween(FriendsUrl, "id=", "&");
 
+                                    if (Utils.IsNumeric(FriendId))
+                                    {
+                                        listFriend_Requests.Add(FriendId);
+                                    }
+                                }
+                                else
+                                {
+                                    string ProfilePage = HttpHelper.getHtmlfromUrl(new Uri(FriendsUrl));
+                                    string FriendId = Utils.getBetween(ProfilePage, "\"uid\":", "}");
+                                    if (!Utils.IsNumeric(FriendId))
+                                    {
+                                        FriendId = Utils.getBetween(ProfilePage, "\"profile_id\":", ",");
+                                    }
+                                    if (Utils.IsNumeric(FriendId) || string.IsNullOrEmpty(FriendId))
+                                    {
+                                        listFriend_Requests.Add(FriendId);
+                                    }
+                                }
+
+                            }
                         }
                     }
-                }
                 }
                 //clearfix mtm uiMorePager stat_elem _646 _52jv  pager_id
                 string[] splitsPage = Regex.Split(SentRequestPagesrc, "ajaxify=\"/friends/requests/outgoing/more/?");
                 string NextPAgeData = Utils.getBetween(splitsPage[1], "=outgoing_reqs_pager_", "\"");
-                bool isVAlidUrl=true;
+                bool isVAlidUrl = true;
                 int i = 2;
-                while(isVAlidUrl)
+                while (isVAlidUrl)
                 {
-                    if(!string.IsNullOrEmpty(NextPAgeData))
+                    if (!string.IsNullOrEmpty(NextPAgeData))
                     {
-                    string NextPageUrl = "https://www.facebook.com/friends/requests/outgoing/more/?page="+i+"&page_size=10&pager_id=outgoing_reqs_pager_" + NextPAgeData + "&__user="+UsreId+"&__a=1&__dyn=7nmajEyl35zoSt2u6aEyx90BCxO4oKAdBGfirWo8popyUW5ogxd6K59poW8xOdy8-&__req=a&__rev=1543964";
-                    string NextPageSrc=HttpHelper.getHtmlfromUrl(new Uri(NextPageUrl));
-                    NextPAgeData = Utils.getBetween(NextPageSrc, "pager_id=outgoing_reqs_pager_", "\\");
-                    i++;
+                        string NextPageUrl = "https://www.facebook.com/friends/requests/outgoing/more/?page=" + i + "&page_size=10&pager_id=outgoing_reqs_pager_" + NextPAgeData + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl35zoSt2u6aEyx90BCxO4oKAdBGfirWo8popyUW5ogxd6K59poW8xOdy8-&__req=a&__rev=1543964";
+                        string NextPageSrc = HttpHelper.getHtmlfromUrl(new Uri(NextPageUrl));
+                        NextPAgeData = Utils.getBetween(NextPageSrc, "pager_id=outgoing_reqs_pager_", "\\");
+                        i++;
 
-                    string[] UserData = Regex.Split(NextPageSrc, "_8o _8t lfloat _ohe");
-                    foreach (string item in UserData)
-                    {
-                        if (item.Contains("www.facebook.com"))
+                        string[] UserData = Regex.Split(NextPageSrc, "_8o _8t lfloat _ohe");
+                        foreach (string item in UserData)
                         {
-                            string ProfileUrl = Utils.getBetween(item, "href=\\\"", "\"");
-                            if (ProfileUrl.Contains("profile.php"))
+                            if (item.Contains("www.facebook.com"))
                             {
-                                string FriendId = Utils.getBetween(ProfileUrl, "id=", "&");
-                                listFriend_Requests.Add(FriendId);
-                            }
-                            else
-                            {
-                                string FriendsName = Utils.getBetween(ProfileUrl, "www.facebook.com\\/", "?");
-                                string graphResp = HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/" + FriendsName));
-                                string UserId = Utils.getBetween(graphResp, "id\": \"", "\"");
-                                listFriend_Requests.Add(UserId);
+                                string ProfileUrl = Utils.getBetween(item, "href=\\\"", "\"");
+                                if (ProfileUrl.Contains("profile.php"))
+                                {
+                                    string FriendId = Utils.getBetween(ProfileUrl, "id=", "&");
+                                    if (Utils.IsNumeric(FriendId))
+                                    {
+                                        listFriend_Requests.Add(FriendId);
+                                    }
+                                }
+                                else
+                                {
+                                    string ProfilePage = HttpHelper.getHtmlfromUrl(new Uri(ProfileUrl));
+                                    string FriendId = Utils.getBetween(ProfilePage, "\"uid\":", "}");
+                                    if (!Utils.IsNumeric(FriendId) || string.IsNullOrEmpty(FriendId))
+                                    {
+                                        FriendId = Utils.getBetween(ProfilePage, "\"profile_id\":", ",");
+                                    }
+                                    if (Utils.IsNumeric(FriendId))
+                                    {
+                                        listFriend_Requests.Add(FriendId);
+                                    }
 
+                                }
                             }
+
                         }
-
-                    }
                     }
                     else
                     {
-                     isVAlidUrl=false;
+                        isVAlidUrl = false;
                     }
                 }
 
@@ -3024,10 +3476,10 @@ namespace Friends
         {
             try
             {
-              
 
-                    SendFriendRequestViaEmals(ref fbUser);
-        
+
+                SendFriendRequestViaEmals(ref fbUser);
+
             }
 
 
@@ -3048,7 +3500,7 @@ namespace Friends
             try
             {
                 GlobusHttpHelper httpHelper = fbUser.globusHttpHelper;
-               
+
 
                 string UserId = string.Empty;
 
@@ -3069,7 +3521,7 @@ namespace Friends
                 }
 
                 string fb_dtsg = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "fb_dtsg");
-              
+
 
                 lstInviteYourFriendsEmails = lstInviteYourFriendsEmails.Distinct().ToList();
                 int countFriendRequestsSent = 1;
@@ -3077,7 +3529,7 @@ namespace Friends
                 {
                     string PostUrl = "https://www.facebook.com/invite.php";
                     string PostData = "fb_dtsg=" + fb_dtsg + "&email_list=" + Uri.EscapeDataString(item_Emails) + "&personal=" + InviteYourFriendsWithTxtMessage + "&invite_lang%5B0%5D=en_US&invite_lang%5B1%5D=0&locales%5B0%5D=en_US&locales%5B1%5D=0";
-                    string PostResponce=httpHelper.postFormData(new Uri(PostUrl),PostData);
+                    string PostResponce = httpHelper.postFormData(new Uri(PostUrl), PostData);
                     if (PostResponce.Contains("Invite More Friends"))
                     {
 
@@ -3094,7 +3546,7 @@ namespace Friends
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
-                        countFriendRequestsSent = countFriendRequestsSent+1;
+                        countFriendRequestsSent = countFriendRequestsSent + 1;
 
                     }
                     else
@@ -3112,7 +3564,7 @@ namespace Friends
                         }
                     }
                 }
-                   
+
             }
             catch (Exception ex)
             {
@@ -3120,6 +3572,7 @@ namespace Friends
             }
         }
     }
+
 
 
 }

@@ -30,7 +30,7 @@ namespace Accounts
         public static List<string> lstRemoveDuplicate = new List<string>();
         public static string FilePath = string.Empty;
 
-    
+
 
         public int countCreatedAccount = 0;
 
@@ -132,7 +132,7 @@ namespace Accounts
                 Thread.CurrentThread.IsBackground = true;
 
                 // RaiseEvent(new string[] { "hi", "hello"});
-                    
+
                 string dob = string.Empty;
                 string postformid = string.Empty;
                 string lsd = string.Empty;
@@ -289,7 +289,7 @@ namespace Accounts
                 {
                     sex = (1).ToString();
                 }
-               // Password = reg_passwd__;
+                // Password = reg_passwd__;
                 //string url_Registration = "https://www.facebook.com/ajax/register.php?lsd=AVocM3fL&firstname=andrew&lastname=mathews&reg_email__=dustiveloz%2B67%40hotmail.com&reg_email_confirmation__=dustiveloz%2B3%40hotmail.com&reg_passwd__=QwErTyAsDfG12&birthday_month=5&birthday_day=5&birthday_year=1984&sex=1&referrer=&asked_to_login=&terms=on&ab_test_data=&reg_instance="+reg_instance+"&contactpoint_label=email_only&locale=en_US&abtest_registration_group=1&validate_mx_records=1&captcha_persist_data="+captcha_persist_data+"&captcha_session="+captcha_session+"&extra_challenge_params="+extra_challenge_params+"&recaptcha_type=password&captcha_response=&ignore=captcha%7Cpc&__user=0&__a=1&__dyn=7wiU&__req=jsonp_2&__adt=2";
                 string urlRegistration = FBGlobals.Instance.fbsignupurl + postformid + "&lsd=" + lsd + "&reg_instance=" + reginstance + "&locale=en_US&terms=on&abtest_registration_group=1&referrer=&md5pass=&validate_mx_records=1&asked_to_login=0&ab_test_data=AAAAAAAAAAAA%2FA%2FAAAAA%2FAAAAAAAAAAAAAAAAAAAA%2FAA%2FfAAfABAAD&firstname=" + firstname + "&lastname=" + lastname + "&reg_email__=" + regemail + "&reg_email_confirmation__=" + regemail + "&reg_passwd__=" + regpasswd + "&sex=" + sex + "&birthday_month=" + birthdaymonth + "&birthday_day=" + birthdayday + "&birthday_year=" + birthdayyear + "&captcha_persist_data=" + captchapersistdata + "&captcha_session=" + captchasession + "&extra_challenge_params=" + extrachallengeparams + "&recaptcha_type=password&captcha_response=" + "" + "&ignore=captcha%7Cpc&__user=0&__a=1&__adt=3";
                 string resRegistration = httpHelper.getHtmlfromUrl(new Uri(urlRegistration));
@@ -297,7 +297,7 @@ namespace Accounts
                 if (resRegistration.Contains(FBGlobals.Instance.registrationSuccessString))
                 {
 
-                 
+
                     countCreatedAccount++;
                     GlobusLogHelper.log.Info("Account Created Successfully via email " + Uri.UnescapeDataString(regemail));
                     GlobusLogHelper.log.Debug("Account Created Successfully via email " + Uri.UnescapeDataString(regemail));
@@ -310,13 +310,13 @@ namespace Accounts
                     {
                         try
                         {
-                             string Proxy = proxyAddress + ":" + proxyPort + ":" + proxyUsername + ":" + proxyPassword;
-                                
+                            string Proxy = proxyAddress + ":" + proxyPort + ":" + proxyUsername + ":" + proxyPassword;
+
                             string dateOfBirth = birthdaymonth + ":" + birthdayday + ":" + birthdayyear;
 
-                            string CSVHeader = "Email" + "," + "Password" + "," + "FirstName" + ", " + "LastName" + "," + "DateOfBirth" + "," + "sex"+ "," + "proxy";
+                            string CSVHeader = "Email" + "," + "Password" + "," + "FirstName" + ", " + "LastName" + "," + "DateOfBirth" + "," + "sex" + "," + "proxy";
 
-                            string CSVData =Uri.UnescapeDataString(regemail) + "," + regpasswd + "," + firstname + "," + lastname + "," + dateOfBirth + "," + sex.Replace("1", "female").Replace("2", "Male") + "," + Proxy;
+                            string CSVData = Uri.UnescapeDataString(regemail) + "," + regpasswd + "," + firstname + "," + lastname + "," + dateOfBirth + "," + sex.Replace("1", "female").Replace("2", "Male") + "," + Proxy;
 
                             Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSVData, AccountExprotFilePath);
 
@@ -337,7 +337,7 @@ namespace Accounts
 
                     #endregion
 
-                    if(string.IsNullOrEmpty(Email))
+                    if (string.IsNullOrEmpty(Email))
                     {
                         Email = regemail;
                         Password = regpasswd;
@@ -399,7 +399,7 @@ namespace Accounts
                             // GlobusFileHelper.AppendStringToTextfileNewLine(email + ":" + password + ":" + proxyAddress + ":" + proxyPort + ":" + proxyUser + ":" + proxyPassword + "<>" + DOB, Path.Combine(Globals.FD_DesktopPath, "CreatedAccountsPlusType.txt"));
                         }
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
@@ -434,7 +434,7 @@ namespace Accounts
         {
             if (email.Contains("%"))
             {
-                email = email.Replace("%40","@");
+                email = email.Replace("%40", "@");
             }
 
             try
@@ -775,7 +775,7 @@ namespace Accounts
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
         }
-        
+
 
         public void updateAccountProfile(FacebookUser fbUser)
         {
@@ -829,7 +829,7 @@ namespace Accounts
 
                 GlobusLogHelper.log.Info("Starting Change Fb TimeLine ...!");
                 GlobusLogHelper.log.Debug("Starting Change Fb TimeLine ...!");
-               
+
 
                 if (UpdateOnlyProfile == "Profile Details")
                 {
@@ -1150,60 +1150,60 @@ namespace Accounts
                 //strReligion = "i am indian";
                 religion_text = fbUser.religion.Replace(" ", "%20");
                 text_languages = fbUser.language;
-                
+
 
                 //for Religion 
 
-                string religionPostDada = "fb_dtsg="+fb_dtsg+"&religion=109523995740640&religion_text="+religion_text+"&audience[8787645733][value]=50&religion_desc=&save=1&nctr[_mod]=pagelet_basic&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDh8St2u6aOQUGyyEC9ACwKyaF299qzCAjFDw&__req=1e&ttstamp=265816811410995115120&__rev=1142402";
+                string religionPostDada = "fb_dtsg=" + fb_dtsg + "&religion=109523995740640&religion_text=" + religion_text + "&audience[8787645733][value]=50&religion_desc=&save=1&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDh8St2u6aOQUGyyEC9ACwKyaF299qzCAjFDw&__req=1e&ttstamp=265816811410995115120&__rev=1142402";
 
                 string ResposceReligion = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/save/religion/"), religionPostDada, "");
 
-                Thread.Sleep(1*2*100);
+                Thread.Sleep(1 * 2 * 100);
 
 
 
                 //b'day
 
-                string profileEditPostData = "field_type=birthday&nctr[_mod]=pagelet_basic&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=t&fb_dtsg="+fb_dtsg+"&ttstamp=265816811410995115120&__rev=1142402";
+                string profileEditPostData = "field_type=birthday&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=t&fb_dtsg=" + fb_dtsg + "&ttstamp=265816811410995115120&__rev=1142402";
                 string ResposceprofileEditPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/forms/"), profileEditPostData, "");
                 Thread.Sleep(1 * 2 * 100);
 
-                string DateOfBirthPostData = "fb_dtsg="+fb_dtsg+"&audience[8787510733][value]=10&audience[8787805733][value]=10&birthday_month=" + birthday_month + "&birthday_day=" + birthday_day + "&birthday_year=" + birthday_year + "&birthday_confirmation=1&save=1&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=m&ttstamp=265816811410995115120&__rev=1142402";
+                string DateOfBirthPostData = "fb_dtsg=" + fb_dtsg + "&audience[8787510733][value]=10&audience[8787805733][value]=10&birthday_month=" + birthday_month + "&birthday_day=" + birthday_day + "&birthday_year=" + birthday_year + "&birthday_confirmation=1&save=1&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=m&ttstamp=265816811410995115120&__rev=1142402";
 
                 string ResposceDateOfBirthPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/save/birthday/"), DateOfBirthPostData, "");
                 Thread.Sleep(1 * 2 * 100);
 
 
                 //ForGender
-                if(string.IsNullOrEmpty(sex))
+                if (string.IsNullOrEmpty(sex))
                 {
-                     sex = "1";
+                    sex = "1";
                 }
-                string GenderEditPostData = "field_type=gender&nctr[_mod]=pagelet_basic&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=h&fb_dtsg="+fb_dtsg+"&ttstamp=265816811410995115120&__rev=1142402";
+                string GenderEditPostData = "field_type=gender&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=h&fb_dtsg=" + fb_dtsg + "&ttstamp=265816811410995115120&__rev=1142402";
                 string responceGenderEditPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/forms/"), GenderEditPostData, "");
                 Thread.Sleep(1 * 2 * 100);
-                string GenderFinalPostData = "fb_dtsg="+fb_dtsg+"&sex="+sex+"&audience[237760973066217][value]=40&sex_preferred_pronouns=1&sex_visibility=on&save=1&nctr[_mod]=pagelet_basic&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=i&ttstamp=265816811410995115120&__rev=1142402";
-                string responce = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/save/gender/"),GenderFinalPostData,"");
+                string GenderFinalPostData = "fb_dtsg=" + fb_dtsg + "&sex=" + sex + "&audience[237760973066217][value]=40&sex_preferred_pronouns=1&sex_visibility=on&save=1&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=i&ttstamp=265816811410995115120&__rev=1142402";
+                string responce = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/save/gender/"), GenderFinalPostData, "");
 
                 Thread.Sleep(1 * 2 * 100);
 
                 //for Interested_In
 
-                string InterestedEditPostData = "field_type=interested_in&nctr[_mod]=pagelet_basic&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=f&fb_dtsg="+fb_dtsg+"&ttstamp=265816811410995115120&__rev=1142402";
-                string responceInterestedEditPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/forms/"), InterestedEditPostData,"");
+                string InterestedEditPostData = "field_type=interested_in&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=f&fb_dtsg=" + fb_dtsg + "&ttstamp=265816811410995115120&__rev=1142402";
+                string responceInterestedEditPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/forms/"), InterestedEditPostData, "");
                 Thread.Sleep(1 * 2 * 100);
-                string InterestedFinalPostData = "fb_dtsg="+fb_dtsg+"&meeting_sex1=on&meeting_sex2=on&audience[8787590733][value]=10&save=1&nctr[_mod]=pagelet_basic&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=g&ttstamp=265816811410995115120&__rev=1142402";
-                string responceInterestedFinalPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/save/interested_in/"), InterestedFinalPostData,"");
+                string InterestedFinalPostData = "fb_dtsg=" + fb_dtsg + "&meeting_sex1=on&meeting_sex2=on&audience[8787590733][value]=10&save=1&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=g&ttstamp=265816811410995115120&__rev=1142402";
+                string responceInterestedFinalPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/save/interested_in/"), InterestedFinalPostData, "");
 
                 Thread.Sleep(1 * 2 * 100);
 
                 //for languages
-           
-                string GetEdit="https://www.facebook.com/profile/edit/infotab/forms/?field_type=languages&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=c&__rev=1142402";
+
+                string GetEdit = "https://www.facebook.com/profile/edit/infotab/forms/?field_type=languages&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=c&__rev=1142402";
                 string PageSource = HttpHelper.getHtmlfromUrl(new Uri(GetEdit));
 
 
-                string languagesFInalPostData = "fb_dtsg="+fb_dtsg+"&audience[8787625733][value]=80&languages[0]=106059522759137&text_languages[0]="+text_languages+"&save=1&nctr[_mod]=pagelet_basic&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=12&ttstamp=265816811410995115120&__rev=1142402";
+                string languagesFInalPostData = "fb_dtsg=" + fb_dtsg + "&audience[8787625733][value]=80&languages[0]=106059522759137&text_languages[0]=" + text_languages + "&save=1&nctr[_mod]=pagelet_basic&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=12&ttstamp=265816811410995115120&__rev=1142402";
                 string responcelanguagesProfileEditPostData = HttpHelper.postFormData(new Uri("https://www.facebook.com/profile/edit/infotab/save/languages/"), languagesFInalPostData, "");
                 Thread.Sleep(1 * 2 * 100);
 
@@ -1359,7 +1359,7 @@ namespace Accounts
                     }
                 }
 
-                                                                                                          //https://www.facebook.com/ajax/typeahead/search.php?__a=1&value=TCS&category=2200&filter[0]=page&viewer=100002506557020&page_categories[0]=2201&page_categories[1]=2202&page_categories[2]=1006&page_categories[3]=1013&context=hub_work&services_mask=1&section=2002&sid=377559032945&__user=100002506557020
+                //https://www.facebook.com/ajax/typeahead/search.php?__a=1&value=TCS&category=2200&filter[0]=page&viewer=100002506557020&page_categories[0]=2201&page_categories[1]=2202&page_categories[2]=1006&page_categories[3]=1013&context=hub_work&services_mask=1&section=2002&sid=377559032945&__user=100002506557020
                 WorkId = GlobusHttpHelper.ParseEncodedJson(PageSrcProfileBasicInfoEdit1, "uid");
 
                 string newWorkName = GlobusHttpHelper.ParseJson(PageSrcProfileBasicInfoEdit1, "\"text");
@@ -1408,16 +1408,16 @@ namespace Accounts
 
                 try
                 {
-                  //  string postDataWork = "fb_dtsg=" + fb_dtsg + "&action_type=add&experience_id=&employer_id=" + WorkId + "&position_id=0&position_text=&location_id=0&location_text=&description=&date[current]=on&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&save=Add%20Job&nctr[_mod]=pagelet_edit_eduwork&__user=" + UserId + "&phstamp=";
-                    string postDataWork = "fb_dtsg="+fb_dtsg+"&ref=about_tab&action_type=add&experience_id=&employer_id="+WorkId+"&position_id=0&position_text=&location_id=0&location_text=&description=&date[current]=on&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&audience[8787685733][value]=80&save=Add%20Job&nctr[_mod]=pagelet_edit_eduwork&__user="+UserId+"&__a=1&__dyn=7n88Oq9c9FpBudDgDxyIJeaEFoW9J6yUgByVbGAFpaGEVF4YxU&__req=1k&ttstamp=265816811410995115120&__rev=1142402&";
-                    string PostUrlWork = FBGlobals.Instance.urlPostUrlWorkManageProfile;                                               
+                    //  string postDataWork = "fb_dtsg=" + fb_dtsg + "&action_type=add&experience_id=&employer_id=" + WorkId + "&position_id=0&position_text=&location_id=0&location_text=&description=&date[current]=on&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&save=Add%20Job&nctr[_mod]=pagelet_edit_eduwork&__user=" + UserId + "&phstamp=";
+                    string postDataWork = "fb_dtsg=" + fb_dtsg + "&ref=about_tab&action_type=add&experience_id=&employer_id=" + WorkId + "&position_id=0&position_text=&location_id=0&location_text=&description=&date[current]=on&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&audience[8787685733][value]=80&save=Add%20Job&nctr[_mod]=pagelet_edit_eduwork&__user=" + UserId + "&__a=1&__dyn=7n88Oq9c9FpBudDgDxyIJeaEFoW9J6yUgByVbGAFpaGEVF4YxU&__req=1k&ttstamp=265816811410995115120&__rev=1142402&";
+                    string PostUrlWork = FBGlobals.Instance.urlPostUrlWorkManageProfile;
                     string ResposceWork = string.Empty;
                     try
                     {
-                       // ResposceWork = HttpHelper.postFormData(new Uri(PostUrlWork), postDataWork, "");
+                        // ResposceWork = HttpHelper.postFormData(new Uri(PostUrlWork), postDataWork, "");
 
-                        ResposceWork = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/profile/edit/infotab/save_work.php "), postDataWork, "");         
-                        
+                        ResposceWork = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/profile/edit/infotab/save_work.php "), postDataWork, "");
+
                     }
                     catch (Exception ex)
                     {
@@ -1427,13 +1427,13 @@ namespace Accounts
                     try
                     {
 
-                        string PostRequestData = "__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=8&__rev=1142402&__user="+UserId+"&fb_dtsg="+fb_dtsg+"&ph=V3&q=%5B%7B%22user%22%3A%22100001006024349%22%2C%22page_id%22%3A%22lvbptt%22%2C%22posts%22%3A%5B%5B%22time_spent_bit_array%22%2C%7B%22tos_id%22%3A%22lvbptt%22%2C%22start_time%22%3A1393668722%2C%22tos_array%22%3A%5B287%2C0%5D%2C%22tos_len%22%3A9%2C%22tos_seq%22%3A0%2C%22tos_cum%22%3A6%7D%2C1393668730566%2C0%5D%5D%2C%22trigger%22%3A%22time_spent_bit_array%22%7D%5D&ts=1393668730568&ttstamp=265816811410995115120";
+                        string PostRequestData = "__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=8&__rev=1142402&__user=" + UserId + "&fb_dtsg=" + fb_dtsg + "&ph=V3&q=%5B%7B%22user%22%3A%22100001006024349%22%2C%22page_id%22%3A%22lvbptt%22%2C%22posts%22%3A%5B%5B%22time_spent_bit_array%22%2C%7B%22tos_id%22%3A%22lvbptt%22%2C%22start_time%22%3A1393668722%2C%22tos_array%22%3A%5B287%2C0%5D%2C%22tos_len%22%3A9%2C%22tos_seq%22%3A0%2C%22tos_cum%22%3A6%7D%2C1393668730566%2C0%5D%5D%2C%22trigger%22%3A%22time_spent_bit_array%22%7D%5D&ts=1393668730568&ttstamp=265816811410995115120";
                         string Resposce = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/bz"), PostRequestData, "");
- 
+
 
                         string postDataEducation = "fb_dtsg=" + fb_dtsg + "&ref=about_tab&action_type=add&experience_id=&school_id=123824504308517&school_text=" + School_text + "&experience_type=2004&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&graduated=on&description=&concentration_ids[0]=0&concentration_ids[1]=0&concentration_ids[2]=0&concentration_text[0]=&concentration_text[1]=&concentration_text[2]=&school_type=college&degree_id=0&degree_text=&audience[210686432304281][value]=80&save=Add%20School&nctr[_mod]=pagelet_edit_eduwork&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGeqheCu&__req=e&ttstamp=265816811410995115120&__rev=1142402";
                         ResposceWork = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/profile/edit/infotab/save_edu.php"), postDataEducation, "");
- 
+
                     }
                     catch (Exception ex)
                     {
@@ -1479,9 +1479,9 @@ namespace Accounts
                     // new post data by ajay yadav 08-02-2014
 
                     try
-                    { 
+                    {
 
-                        string PostData="fb_dtsg="+fb_dtsg+"&ref=about_tab&action_type=add&experience_id=&employer_id="+WorkId+"&position_id=0&position_text=&location_id=0&location_text=&description=&date[current]=on&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&audience[8787685733][value]=80&save=Add%20Job&nctr[_mod]=pagelet_edit_eduwork&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGejheC&__req=w&ttstamp=2658167451111227269&__rev=1114696";
+                        string PostData = "fb_dtsg=" + fb_dtsg + "&ref=about_tab&action_type=add&experience_id=&employer_id=" + WorkId + "&position_id=0&position_text=&location_id=0&location_text=&description=&date[current]=on&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&audience[8787685733][value]=80&save=Add%20Job&nctr[_mod]=pagelet_edit_eduwork&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGejheC&__req=w&ttstamp=2658167451111227269&__rev=1114696";
                         string PostUrl = FBGlobals.Instance.urlPostDataUrlBasicInfoManageAjaxTypeaheadSearch;                  //"https://www.facebook.com/ajax/profile/edit/infotab/save_work.php"
                         ResposceWorkDone = HttpHelper.postFormData(new Uri(PostUrl), PostData, "");
                     }
@@ -1635,7 +1635,7 @@ namespace Accounts
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
-                                                                                                                                                                                              //https://www.facebook.com/ajax/timeline/edit_profile/bio.php?__a=1&__user=100002506557020
+                //https://www.facebook.com/ajax/timeline/edit_profile/bio.php?__a=1&__user=100002506557020
 
                 if (string.IsNullOrEmpty(PageSrcAboutYouEdit))
                 {
@@ -1846,7 +1846,7 @@ namespace Accounts
 
                 }
 
-                                                                                
+
                 string PageSrcMusicEdit = string.Empty;
                 try
                 {
@@ -1892,7 +1892,7 @@ namespace Accounts
 
                 }
 
-                                                                                         //https://www.facebook.com/ajax/timeline/edit_profile/favorites.php?start_edit=1&__a=1&__user=100002506557020 
+                //https://www.facebook.com/ajax/timeline/edit_profile/favorites.php?start_edit=1&__a=1&__user=100002506557020 
 
                 string fb_dtsg = string.Empty;
 
@@ -2515,7 +2515,7 @@ namespace Accounts
 
                 try
                 {
-                    string postdataHome = "fb_dtsg="+fb_dtsg+"&hometown="+HomeTownId+"&audience[8787655733][value]=50&save=1&nctr[_mod]=pagelet_hometown&__user="+UserId+"&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGejheC&__req=l&ttstamp=2658167451111227269&__rev=1114696";
+                    string postdataHome = "fb_dtsg=" + fb_dtsg + "&hometown=" + HomeTownId + "&audience[8787655733][value]=50&save=1&nctr[_mod]=pagelet_hometown&__user=" + UserId + "&__a=1&__dyn=7n88SkAMCBDBzpQ9UoHbjyGa58Ciq2W8GA8ABGejheC&__req=l&ttstamp=2658167451111227269&__rev=1114696";
                     string PostUrl = FBGlobals.Instance.urlPostDataUrlBasicInfoManageAjaxTimeLineEditProfileAboutTabFieldTypeHomeTownUrl;                                  //"https://www.facebook.com/ajax/timeline/edit_profile/hometown.php?ref=about_tab&field_type=hometown"
                     ResposceCurrentCityAndHomeTown = HttpHelper.postFormData(new Uri(PostUrl), postdataHome, "");
                 }
@@ -2650,7 +2650,7 @@ namespace Accounts
 
                 EducationId = GlobusHttpHelper.ParseEncodedJson(PageSrcProfileEducationEdit1, "uid");
 
-                                                                                                                                   //https://www.facebook.com/ajax/typeahead/search.php?__a=1&value=bit%20bhilai&category=2602&filter[0]=page&viewer=100002506557020&page_categories[0]=2602&page_categories[1]=2250&context=hub_college&services_mask=1&section=2004&sid=1272808678776&existing_ids=116113428402524%2C137810362975954%2C131394250284859&__user=100002506557020
+                //https://www.facebook.com/ajax/typeahead/search.php?__a=1&value=bit%20bhilai&category=2602&filter[0]=page&viewer=100002506557020&page_categories[0]=2602&page_categories[1]=2250&context=hub_college&services_mask=1&section=2004&sid=1272808678776&existing_ids=116113428402524%2C137810362975954%2C131394250284859&__user=100002506557020
 
 
                 string postDataEduction = "fb_dtsg=" + fb_dtsg + "&action_type=add&experience_id=&school_id=" + EducationId + "&school_text=" + EducationName + "&date_start[year]=&date_start[month]=&date_start[day]=&date_end[year]=&date_end[month]=&date_end[day]=&graduated=on&description=&concentration_ids[0]=0&concentration_ids[1]=0&concentration_ids[2]=0&concentration_text[0]=&concentration_text[1]=&concentration_text[2]=&school_type=college&degree_id=0&degree_text=&save=Add%20School&nctr[_mod]=pagelet_edit_eduwork&__user=" + UserId + "&phstamp=";
@@ -2741,8 +2741,8 @@ namespace Accounts
                                 {
                                     try
                                     {
-                                       //string url= item.Replace("  ",string.Empty);
-                                       src = HttpHelper.getHtmlfromUrl(new Uri(item));
+                                        //string url= item.Replace("  ",string.Empty);
+                                        src = HttpHelper.getHtmlfromUrl(new Uri(item));
                                         if (src.Contains("Get Timeline"))
                                         {
                                             break;
@@ -3044,10 +3044,10 @@ namespace Accounts
                         }
                     }
                 }
-                else 
+                else
                 {
                     GlobusLogHelper.log.Info("Please Load Accounts !");
-                    GlobusLogHelper.log.Debug("Please Load Accounts !");   
+                    GlobusLogHelper.log.Debug("Please Load Accounts !");
                 }
             }
             catch (Exception ex)
@@ -3101,19 +3101,19 @@ namespace Accounts
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                GlobusLogHelper.log.Error("Error : "+ex.StackTrace);
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
 
             finally
             {
-               // if (!isStopManageProfiles)
+                // if (!isStopManageProfiles)
                 {
                     count_ThreadControllerManageProfiles--;
                     lock (lockr_ThreadControllerManageProfiles)
                     {
-                       // if (!isStopManageProfiles)
+                        // if (!isStopManageProfiles)
                         {
                             Monitor.Pulse(lockr_ThreadControllerManageProfiles);
                         }
@@ -3556,9 +3556,9 @@ namespace Accounts
                                 GlobusLogHelper.log.Debug("Removed contact Info With Username >>> " + fbUser.username);
 
                             }
-                            catch(Exception ex) 
+                            catch (Exception ex)
                             {
-                                GlobusLogHelper.log.Error("Error : "+ex.StackTrace);
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
                         catch (Exception ex)
@@ -3730,9 +3730,9 @@ namespace Accounts
                         lstManageProfilesThreads.Distinct();
                         Thread.CurrentThread.IsBackground = true;
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
-                        GlobusLogHelper.log.Error("Error : " +ex.StackTrace);
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
 
                     {
@@ -3817,7 +3817,7 @@ namespace Accounts
                                             catch (Exception ex)
                                             {
                                                 HomeTown = string.Empty;
-                                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
                                         }
                                         counterHomeTown++;
@@ -4056,7 +4056,7 @@ namespace Accounts
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-                                  
+
                                     try
                                     {
                                         if (counterActivities >= lstActivitiesManageProfiles.Count)
@@ -4272,7 +4272,7 @@ namespace Accounts
                 {
                     lock (lockr_ThreadControllerManageProfiles)
                     {
-                      //  if (!isStopManageProfiles)
+                        //  if (!isStopManageProfiles)
                         {
                             Monitor.Pulse(lockr_ThreadControllerManageProfiles);
                         }
@@ -4325,14 +4325,15 @@ namespace Accounts
                 GlobusLogHelper.log.Debug("Logging in with " + facebookUser.username);
 
                 //string valueLSD = "name=" + "\"lsd\"";
-                string pageSource=string.Empty;
+                string pageSource = string.Empty;
                 try
                 {
-                    pageSource = HttpHelper.getHtmlfromUrlProxy(new Uri(FBGlobals.Instance.fbLoginPhpUrl), facebookUser.proxyip, intProxyPort, facebookUser.proxyusername, facebookUser.proxypassword);
+                    //  pageSource = HttpHelper.getHtmlfromUrlProxy(new Uri(FBGlobals.Instance.fbLoginPhpUrl), facebookUser.proxyip, intProxyPort, facebookUser.proxyusername, facebookUser.proxypassword);
+                    pageSource = HttpHelper.getHtmlfromUrlProxy(new Uri("https://www.facebook.com/"), facebookUser.proxyip, intProxyPort, facebookUser.proxyusername, facebookUser.proxypassword);
                 }
-                catch(Exception  ex)
+                catch (Exception ex)
                 {
-                    GlobusLogHelper.log.Error("Error : "+ex.StackTrace);
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
 
                 if (pageSource == null || string.IsNullOrEmpty(pageSource))
@@ -4347,7 +4348,8 @@ namespace Accounts
                 }
 
                 string valueLSD = GlobusHttpHelper.GetParamValue(pageSource, "lsd");
-
+                valueLSD = Utils.getBetween(pageSource, "\"LSD\",[],{\"token\":\"", "\"");
+                string lgnRndval = Utils.getBetween(pageSource, "\"lgnrnd\" value=\"", "\"");
                 #region CommentedCOde
                 ///JS, CSS, Image Requests
                 //RequestsJSCSSIMG.RequestJSCSSIMG(pageSource, ref HttpHelper);
@@ -4359,13 +4361,30 @@ namespace Accounts
                 #endregion
 
                 string ResponseLogin = string.Empty;
+                string Revision = string.Empty;
+                string dest_Token = string.Empty;
+                string impId = string.Empty;
+                string RegCookieval = string.Empty;
+                Revision = Utils.getBetween(pageSource, "revision\":", ",");
+                dest_Token = Utils.getBetween(pageSource, "index.php\",\"", "\"");
+                impId = Utils.getBetween(pageSource, "imp_id\":\"", "\"");
+                RegCookieval = Utils.getBetween(pageSource, "reg_instance\" value=\"", "\"");
+
+                string AjaxPostData = "__a=1&__dyn=7xe3uUcp8fo8UhyWzEjye-K1swgE98nwRzo6C7UW2O3Gaxe&__req=1&__rev=" + Revision + "&__user=0&lsd=" + valueLSD + "&ph=V3&q=%5B%7B%22user%22%3A%220%22%2C%22page_id%22%3A%22nb0pw0%22%2C%22posts%22%3A%5B%5B%22script_path_change%22%2C%7B%22source_path%22%3Anull%2C%22source_token%22%3Anull%2C%22dest_path%22%3A%22%2Findex.php%22%2C%22dest_token%22%3A%22" + dest_Token + "%22%2C%22impression_id%22%3A%22" + impId + "%22%2C%22cause%22%3A%22load%22%2C%22referrer%22%3A%22%22%7D%2C" + Utils.GenerateTimeStamp() + "%2C0%5D%2C%5B%22scuba_sample%22%2C%7B%22int%22%3A%7B%22clientWidth%22%3A1349%2C%22clientHeight%22%3A667%7D%2C%22normal%22%3A%7B%22view%22%3A%22normal%22%7D%2C%22_ds%22%3A%22www_tinyview_port%22%2C%22_options%22%3A%7B%22addBrowserFields%22%3Atrue%7D%7D%2C" + Utils.GenerateTimeStamp() + "%2C0%5D%2C%5B%22time_spent_bit_array%22%2C%7B%22tos_id%22%3A%22nb0pw0%22%2C%22start_time%22%3A1436246266%2C%22tos_array%22%3A%5B1%2C0%5D%2C%22tos_len%22%3A9%2C%22tos_seq%22%3A0%2C%22tos_cum%22%3A1%7D%2C" + Utils.GenerateTimeStamp() + "%2C0%5D%2C%5B%22ods%3Ams.time_spent.qa.www%22%2C%7B%22time_spent.bits.js_initialized%22%3A%5B1%5D%7D%2C" + Utils.GenerateTimeStamp() + "%2C0%5D%5D%2C%22trigger%22%3A%22ods%3Ams.time_spent.qa.www%22%7D%5D&ts=" + Utils.GenerateTimeStamp();
+                string ajaxResp = HttpHelper.postFormDataSetCookie(new Uri("https://www.facebook.com/ajax/bz"), AjaxPostData, RegCookieval);
                 try
                 {
-                    ResponseLogin = HttpHelper.postFormData(new Uri(FBGlobals.Instance.AccountVerificationLoginPhpAttempt), "charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + valueLSD + "&locale=en_US&email=" + facebookUser.username.Split('@')[0].Replace("+", "%2B") + "%40" + facebookUser.username.Split('@')[1] + "&pass=" + Uri.EscapeDataString(facebookUser.password) + "&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + valueLSD + "");           //"https://www.facebook.com/login.php?login_attempt=1"
+                    ResponseLogin = HttpHelper.postFormData(new Uri(FBGlobals.Instance.AccountVerificationLoginPhpAttempt), "lsd=" + valueLSD + "&email=" + Uri.EscapeDataString(facebookUser.username) + "&pass=" + facebookUser.password + "&persistent=1&default_persistent=1&timezone=-330&lgndim=eyJ3IjoxMzY2LCJoIjo3NjgsImF3IjoxMzY2LCJhaCI6NzI4LCJjIjoyNH0%3D&lgnrnd=" + lgnRndval + "&lgnjs=1436195193&locale=en_GB&qsstamp=W1tbMjcsMzAsNjUsNzUsODksOTAsOTYsMTA4LDExNSwxNjYsMTc2LDE5MCwxOTIsMjEzLDIyNywyOTQsMjk1LDMxMiwzMTYsMzMxLDM0NiwzNjEsMzc0LDQwNCw0MTAsNDI1LDQ0MSw0NDIsNDUzLDQ4Myw1MDksNTEyLDUxMyw1NDAsNTQ4LDYwNiw2MTgsNjM0LDcyMSw3MzQsODEzLDkwOF1dLCJBWmtFNTBuUE1hNGw3V3Rod1ZycWt4eU1QeWFLNGo3X2xRdVVmTmQ2c05rOXcwYTVzX0toU3UtNGllNzZQX29LbnhOQ2QwLWxXNE5VWkFRVGZPLU1TcnZkUTR0cXo1M1cwYXpWS2N3ckNqQl9fNnkxSE8xZldRTEpTdXY1VmJWSnJraXhQMkFVRk8wNUFmVVh6aUZ2RTF3N3hLWE1QU1drYTltbUxEak5OWVZTTnptd0M0TWhBUXRLMkxnc3RrRWRjNlMwVjRiVEU3UEE5RTVPNDRyd2k5ZXpZVFVDbDFDYVJYdzlfYmFLUWJLMmJnIl0%3D");
+                    //   ResponseLogin = HttpHelper.postFormData(new Uri(FBGlobals.Instance.AccountVerificationLoginPhpAttempt), "charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + valueLSD + "&locale=en_US&email=" + facebookUser.username.Split('@')[0].Replace("+", "%2B") + "%40" + facebookUser.username.Split('@')[1] + "&pass=" + Uri.EscapeDataString(facebookUser.password) + "&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + valueLSD + "");           //"https://www.facebook.com/login.php?login_attempt=1"
+                    //string PostData="charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + valueLSD + "&locale=en_US&email=" + facebookUser.username.Split('@')[0].Replace("+", "%2B") + "%40" + facebookUser.username + "&pass=" + Uri.EscapeDataString(facebookUser.password) + "&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + valueLSD + "";
+                    // ResponseLogin = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/home.php"));
+
+
+                    // ResponseLogin = HttpHelper.postFormData(new Uri(FBGlobals.Instance.AccountVerificationLoginPhpAttempt), PostData);           //"https://www.facebook.com/login.php?login_attempt=1"
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    GlobusLogHelper.log.Error("Error : "+ ex.StackTrace);
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
                 if (string.IsNullOrEmpty(ResponseLogin))
                 {
@@ -4970,7 +4989,7 @@ namespace Accounts
                         {
                             if (StartAccountVerificationProcessUsing == "Check Facebook Account")
                             {
-                               //CheckFacebookAccounts(ref fbUser);
+                                //CheckFacebookAccounts(ref fbUser);
                                 CheckFacebookAccounts(ref objFacebookUser);
                             }
                         }
@@ -4982,19 +5001,200 @@ namespace Accounts
                     }
 
                 }
-                
+
                 if (objFacebookUser.isloggedin)
                 {
-                    
+
                     // Call AccountVerification()                   
                     AccountVerificationAcction(ref objFacebookUser);
                 }
                 else
                 {
-                   // GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                   // GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                    // GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                    // GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
 
                 }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+        }
+
+        public void StartAccountVerificationNew(object obj)
+        {
+
+            Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
+            if (isStopAccountVerification)
+            {
+                return;
+            }
+            try
+            {
+                lstAccountVerificationThreads.Add(Thread.CurrentThread);
+                lstAccountVerificationThreads = lstAccountCreatorThreads.Distinct().ToList();
+                Thread.CurrentThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.StackTrace);
+            }
+
+            FacebookUser objFacebookUser = new FacebookUser();
+
+            string accountUser = string.Empty;
+            string accountPass = string.Empty;
+            string proxyAddress = string.Empty;
+            string proxyPort = string.Empty;
+            string proxyUserName = string.Empty;
+            string proxyPassword = string.Empty;
+            string dateOfBirth = string.Empty;
+            string securityAnswer = string.Empty;
+
+            try
+            {
+                Array paramsArray = new object[10];
+                paramsArray = (Array)obj;
+                try
+                {
+                    string email = (string)paramsArray.GetValue(0);
+                    try
+                    {
+                        if (email.Contains(":"))
+                        {
+                            string[] emailArr = email.Split(':');
+                            if (emailArr.Length > 1)
+                            {
+                                try
+                                {
+
+                                    try
+                                    {
+                                        accountUser = emailArr[0];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                    try
+                                    {
+                                        accountPass = emailArr[1];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                    try
+                                    {
+                                        proxyAddress = emailArr[2];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                    try
+                                    {
+                                        proxyPort = emailArr[3];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                    try
+                                    {
+                                        proxyUserName = emailArr[4];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                    try
+                                    {
+                                        proxyPassword = emailArr[5];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                    try
+                                    {
+                                        dateOfBirth = emailArr[6];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                    try
+                                    {
+                                        securityAnswer = emailArr[7];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                }
+                            }
+                            else
+                            {
+                                GlobusLogHelper.log.Info(email + " Is Wrong Format !");
+                                GlobusLogHelper.log.Debug(email + " Is Wrong Format !");
+                            }
+                        }
+                        else
+                        {
+                            GlobusLogHelper.log.Info(email + " Is Wrong Format !");
+                            GlobusLogHelper.log.Debug(email + " Is Wrong Format !");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+
+                objFacebookUser.username = accountUser;
+                objFacebookUser.password = accountPass;
+                objFacebookUser.proxyip = proxyAddress;
+                objFacebookUser.proxyport = proxyPort;
+                objFacebookUser.proxyusername = proxyUserName;
+                objFacebookUser.proxypassword = proxyPassword;
+                objFacebookUser.dateOfBirth = dateOfBirth;
+                objFacebookUser.securityAnswer = securityAnswer;
+
+                GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+                objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+
+
+                if (!objFacebookUser.isloggedin)
+                {
+
+                    //Login Process
+                    LoginUsingGlobusHttp(ref objFacebookUser);
+
+
+                }
+
+
 
             }
             catch (Exception ex)
@@ -5052,7 +5252,7 @@ namespace Accounts
                     {
                         GlobusLogHelper.log.Info("Start Process Remove Mobile Number from Seting : " + fbUser.username);
                         GlobusLogHelper.log.Debug("Start Process Remove Mobile Number from Seting : " + fbUser.username);
-                     
+
                         StartRemoveMobileFromSetting(ref fbUser);
                     }
                 }
@@ -5117,7 +5317,7 @@ namespace Accounts
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
-               
+
 
                 Thread.Sleep(500);
                 string ResponseLogin = string.Empty;
@@ -5884,7 +6084,7 @@ namespace Accounts
                     }
                 }
             #endregion
-            #region
+                #region
                 if (tempcaptchresponse.Contains("Please confirm your identity") || tempcaptchresponse.Contains("Provide your birthday") || tempcaptchresponse.Contains("Answer your security question"))
                 {
                     try
@@ -6961,7 +7161,7 @@ namespace Accounts
             return null;
         }
 
-         //------------Resend Confirmation Email-------------------//
+        //------------Resend Confirmation Email-------------------//
 
         public void ResendConfirmationEmail(ref FacebookUser fbUser)
         {
@@ -7082,10 +7282,10 @@ namespace Accounts
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }          
+            }
         }
 
-         //----------------Check Facebook Accounts------------------//     
+        //----------------Check Facebook Accounts------------------//     
 
         public void CheckFacebookAccounts(ref FacebookUser fbUser)
         {
@@ -7141,7 +7341,7 @@ namespace Accounts
                 }
                 string FbstatusPostData = "lsd=" + str_lsd + "&email=" + EmailId + "&did_submit=Search&__user=0&__a=1&__dyn=7w86A&__req=2&fb_dtsg=" + fb_dtsg + "&phstamp=165816872817579102116";
                 string FBstatusResponse = HttpHelpr.PostData(FBGlobals.Instance.AccountVerificationCheckFacebookAccountsAjaxLoginHelpUrl, FbstatusPostData, FBGlobals.Instance.AccountVerificationCheckFacebookAccountsLoginIdentifyUrl);        //"https://www.facebook.com/ajax/login/help/identify.php?ctx=recover"//"https://www.facebook.com/login/identify?ctx=recover"
-                string strPageSource1 = HttpHelpr.GetHtml(FBGlobals.Instance.AccountVerificationCheckRecoverInitiateUrl);       
+                string strPageSource1 = HttpHelpr.GetHtml(FBGlobals.Instance.AccountVerificationCheckRecoverInitiateUrl);
 
                 Accounts.AccountManager objAccountManager = new AccountManager();
                 objAccountManager.LoginUsingGlobusHttp(ref fbUser);
@@ -7223,7 +7423,7 @@ namespace Accounts
         //----------------Remove Mobile From Setting------------------//  
 
         public void StartRemoveMobileFromSetting(ref FacebookUser fbUser)
-        {          
+        {
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             string strAccountPageSource2 = string.Empty;
             string str_cell = string.Empty;
@@ -7231,14 +7431,14 @@ namespace Accounts
             string fb_dtsg = "";
             string __user = "";
             string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbWhatIsMyIpUrl));  //"https://www.whatismyip.com"
-          
+
             __user = GlobusHttpHelper.GetParamValue(strPageSource, "user");
             if (string.IsNullOrEmpty(__user))
             {
                 __user = GlobusHttpHelper.ParseJson(strPageSource, "user");
             }
 
-            fb_dtsg = GlobusHttpHelper.Get_fb_dtsg (strPageSource);
+            fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
             string strAccountPageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.AccountVerificationRemoveMobileFromSettingMobileUrl));  //"https://www.facebook.com/settings?tab=mobile"
             if (!strAccountPageSource.Contains("Activating allows Facebook Mobile to send text messages to your phone. You can receive notifications for friend requests, messages, Wall posts, and status updates from your friends."))
             {
@@ -7262,15 +7462,15 @@ namespace Accounts
                                     GlobusLogHelper.log.Debug("Your Account : " + fbUser.username + ":" + fbUser.password + " Remmove Mobile Number : " + MobileNumber);
                                     GlobusLogHelper.log.Info("Your Account : " + fbUser.username + ":" + fbUser.password + " Remmove Mobile Number : " + MobileNumber);
                                     GlobusFileHelper.AppendStringToTextfileNewLine(fbUser.username + ":" + fbUser.password + ":" + fbUser.proxyip + ":" + fbUser.proxyport + ":" + fbUser.proxyusername + ":" + fbUser.password, exportFilePathAccountVerification + "\\RemoveMobileNumberFromAccount.txt");
-                    
-                                    GlobusFileHelper.AppendStringToTextfileNewLine(fbUser.username + ":" + fbUser.password + ":" + fbUser.proxyip + ":" + fbUser.proxyport + ":" + fbUser.proxyusername + ":" + fbUser.password+ ":" + MobileNumber, exportFilePathAccountVerification + "\\RemoveMobileNumberFromAccount.txt");
+
+                                    GlobusFileHelper.AppendStringToTextfileNewLine(fbUser.username + ":" + fbUser.password + ":" + fbUser.proxyip + ":" + fbUser.proxyport + ":" + fbUser.proxyusername + ":" + fbUser.password + ":" + MobileNumber, exportFilePathAccountVerification + "\\RemoveMobileNumberFromAccount.txt");
                                 }
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error(ex.StackTrace);
                             }
-                            
+
                             string[] cellandlinkid = Regex.Split(strAccountPageSource, "{SettingsMobileRemoveLink.init");
                             string[] str_linkidandstr_cell = Regex.Split(cellandlinkid[1], ",");
                             //cellandlinkid[1].Substring(cellandlinkid[1].IndexOf("name=\"lsd\" value=\""), (cellandlinkid[1].IndexOf("autocomplete", cellandlinkid[1].IndexOf("name=\"lsd\" value=\"")) - cellandlinkid[1].IndexOf("name=\"lsd\" value=\""))).Replace("name=\"lsd\" value=\"", string.Empty).Trim().Replace("\"", string.Empty);
@@ -7318,8 +7518,8 @@ namespace Accounts
                         }
                         catch (Exception ex)
                         {
-                            GlobusLogHelper.log.Error("Error : "+ex.StackTrace + "In Remove Number");
-                       }
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace + "In Remove Number");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -7329,10 +7529,10 @@ namespace Accounts
             }
             else
             {
-              GlobusLogHelper.log.Debug("Your Account : " + fbUser.username + ":" + fbUser.password+ " Already Remmove Mobile Number");
-              GlobusLogHelper.log.Info("Your Account : " + fbUser.username + ":" + fbUser.password + " Already Remmove Mobile Number");             
-              GlobusFileHelper.AppendStringToTextfileNewLine(fbUser.username + ":" + fbUser.password + ":" + fbUser.proxyip + ":" + fbUser.proxyport + ":" + fbUser.proxyusername + ":" + fbUser.password, exportFilePathAccountVerification + "\\AlreadyRemoveMobileNumberFromAccount.txt");
-              
+                GlobusLogHelper.log.Debug("Your Account : " + fbUser.username + ":" + fbUser.password + " Already Remmove Mobile Number");
+                GlobusLogHelper.log.Info("Your Account : " + fbUser.username + ":" + fbUser.password + " Already Remmove Mobile Number");
+                GlobusFileHelper.AppendStringToTextfileNewLine(fbUser.username + ":" + fbUser.password + ":" + fbUser.proxyip + ":" + fbUser.proxyport + ":" + fbUser.proxyusername + ":" + fbUser.password, exportFilePathAccountVerification + "\\AlreadyRemoveMobileNumberFromAccount.txt");
+
             }
         }
 
@@ -7347,7 +7547,7 @@ namespace Accounts
         public List<Thread> lstEditProfileNameThread = new List<Thread>();
         int count_ThreadControllerEditProfileName = 0;
         //public static string FilePath = string.Empty;
-        public static  List<string> EditProfileName = new List<string>();
+        public static List<string> EditProfileName = new List<string>();
         public static int minDelayEditProfileName = 10;
         public static int maxDelayEditProfileName = 20;
 
@@ -7357,7 +7557,7 @@ namespace Accounts
 
         readonly object lockrThreadControllerEditProfileName = new object();
 
-        #endregion    
+        #endregion
 
 
         public int NoOfThreadsEditProfileName
@@ -7366,11 +7566,11 @@ namespace Accounts
             set;
         }
 
-        public  static string ChangeLanguageEditProfile
+        public static string ChangeLanguageEditProfile
         {
             get;
             set;
-        }  
+        }
 
 
         public void StartEditProfileName()
@@ -7385,7 +7585,7 @@ namespace Accounts
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
-           
+
             try
             {
                 int numberOfAccountPatch = 25;
@@ -7408,41 +7608,41 @@ namespace Accounts
                         {
                             try
                             {
-                                  try
+                                try
+                                {
+                                    string acc = account.Remove(account.IndexOf(':'));
+                                    FacebookUser item = null;
+                                    FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                                    if (ProcessUsing == "Edit Profile Name")
                                     {
-                                        string acc = account.Remove(account.IndexOf(':'));
-                                        FacebookUser item = null;
-                                        FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
-
-                                        if (ProcessUsing == "Edit Profile Name")
-                                        {
-
-                                         
-                                            string Name = EditProfileName[Utils.GenerateRandom(0, EditProfileName.Count - 1)];
-                                            //Run a separate thread for each account                                           
-
-                                            if (item != null)
-                                            {
-                                                Thread profilerThread = new Thread(StartMultiThreadsEditProfileName);
-                                                profilerThread.Name = "workerThread_Profiler_" + acc;
-                                                profilerThread.IsBackground = true;
-                                                profilerThread.Start(new object[] { item, Name });
 
 
-                                            }
-                                        }
-                                        else if (ProcessUsing == "Change Language")
+                                        string Name = EditProfileName[Utils.GenerateRandom(0, EditProfileName.Count - 1)];
+                                        //Run a separate thread for each account                                           
+
+                                        if (item != null)
                                         {
                                             Thread profilerThread = new Thread(StartMultiThreadsEditProfileName);
+                                            profilerThread.Name = "workerThread_Profiler_" + acc;
                                             profilerThread.IsBackground = true;
-                                            profilerThread.Start(new object[] { item, "" });
+                                            profilerThread.Start(new object[] { item, Name });
+
+
                                         }
                                     }
-                                    catch (Exception ex)
+                                    else if (ProcessUsing == "Change Language")
                                     {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        Thread profilerThread = new Thread(StartMultiThreadsEditProfileName);
+                                        profilerThread.IsBackground = true;
+                                        profilerThread.Start(new object[] { item, "" });
                                     }
-                                
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
                             }
                             catch (Exception ex)
                             {
@@ -7483,7 +7683,7 @@ namespace Accounts
                         paramsArray = (Array)parameters;
 
                         FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
-                        string Name =(string)paramsArray.GetValue(1);
+                        string Name = (string)paramsArray.GetValue(1);
 
                         if (!objFacebookUser.isloggedin)
                         {
@@ -7508,7 +7708,7 @@ namespace Accounts
                                 try
                                 {
                                     EditName_usingGlobus(ref objFacebookUser, Name);
-                                    GlobusLogHelper.log.Info("Process completed With Username : " + objFacebookUser.username +" : and Name " +Name );
+                                    GlobusLogHelper.log.Info("Process completed With Username : " + objFacebookUser.username + " : and Name " + Name);
                                     GlobusLogHelper.log.Debug("Process completed With Username : " + objFacebookUser.username + " : and Name " + Name);
                                 }
                                 catch (Exception ex)
@@ -7548,30 +7748,30 @@ namespace Accounts
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }           
+            }
         }
 
 
         public void EditName(ref FacebookUser fbUser)
         {
             string item = string.Empty;
-             GlobusHttpHelper chilkatHttpHelper = fbUser.globusHttpHelper;
-         
+            GlobusHttpHelper chilkatHttpHelper = fbUser.globusHttpHelper;
+
             try
-            {             
-               
+            {
+
 
                 string fb_dtsg = string.Empty;
                 string UsreId = string.Empty;
                 string FirstName = string.Empty;
                 string LastName = string.Empty;
-                string Password=fbUser.password;
-             
+                string Password = fbUser.password;
+
                 GlobusLogHelper.log.Debug("Starting Change Profile Name");
-              
+
                 string[] NameArr = Regex.Split(item, ":");
                 FirstName = NameArr[0];
-                LastName = NameArr[1];               
+                LastName = NameArr[1];
 
 
                 string strPageSource = chilkatHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.AccountEditProfileNameUrl));      //  "https://www.facebook.com/settings?tab=account&section=name&view"
@@ -7596,21 +7796,21 @@ namespace Accounts
                     string posturl = FBGlobals.Instance.AccountEditProfileNameAjaxSettingAccountUrl;                            // "https://www.facebook.com/ajax/settings/account/name.php"
 
                     string postdata = "fb_dtsg=" + fb_dtsg + "&first_name=" + FirstName + "&middle_name=&last_name=" + LastName + "&display_name=complete&alternate_name=&show_alternate=1&save_password=" + Password + "&__user=" + UsreId + "&__a=1&phstamp=16581681181137110295170";
-                    string response = chilkatHttpHelper.postFormData(new Uri(posturl), postdata, "");   
+                    string response = chilkatHttpHelper.postFormData(new Uri(posturl), postdata, "");
                     int ss = response.Length;
                     string strPageSource1 = chilkatHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.AccountEditProfileNameSettingTabUrl));                 //"https://www.facebook.com/settings?ref=mb#!/settings?tab=account&section=name&view"
-              
+
                     if (response.Contains("SettingsPanelManager.closeEditor"))
                     {
                         GlobusLogHelper.log.Debug("FirstName Name : " + FirstName + " LastName :" + LastName + "Changed of UserName : " + fbUser.username);
                         return;
-                    }                   
+                    }
                 }
                 catch (Exception ex)
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
-             
+
             }
             catch (Exception ex)
             {
@@ -7618,14 +7818,14 @@ namespace Accounts
             }
         }
 
-        public void EditName_usingGlobus(ref FacebookUser fbUser,string Name)
+        public void EditName_usingGlobus(ref FacebookUser fbUser, string Name)
         {
             string item = string.Empty;
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
             {
                 //string Name = EditProfileName[Utils.GenerateRandom(0, EditProfileName.Count - 1)];           
-              
+
 
                 string fb_dtsg = string.Empty;
                 string UsreId = string.Empty;
@@ -7633,11 +7833,11 @@ namespace Accounts
 
                 string FirstName = string.Empty;
                 string LastName = string.Empty;
-                string Password = fbUser.password;                
-               
+                string Password = fbUser.password;
+
                 GlobusLogHelper.log.Debug("Starting Change Profile Name");
                 GlobusLogHelper.log.Info("Starting Change Profile Name");
-                
+
                 string[] NameArr = Regex.Split(Name, ":");
                 FirstName = NameArr[0];
                 try
@@ -7652,7 +7852,7 @@ namespace Accounts
 
 
                 string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.AccountEditProfileNameUrl));
-                fb_dtsg =GlobusHttpHelper.Get_fb_dtsg(strPageSource);
+                fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
                 UsreId = GlobusHttpHelper.GetParamValue(strPageSource, "user");
                 if (string.IsNullOrEmpty(UsreId))
                 {
@@ -7671,9 +7871,14 @@ namespace Accounts
                 {
                     string referer = FBGlobals.Instance.AccountEditProfileNameSettingTabUrl;
                     string posturl = FBGlobals.Instance.AccountEditProfileNameAjaxSettingAccountUrl;
+                    posturl = "https://www.facebook.com/settings/name_change_preview/";
                     string postdata = "fb_dtsg=" + fb_dtsg + "&first_name=" + FirstName + "&middle_name=&last_name=" + LastName + "&display_name=complete&alternate_name=&show_alternate=1&save_password=" + Password + "&__user=" + UsreId + "&__a=1&phstamp=16581681181137110295170";
-                    postdata = "fb_dtsg="+fb_dtsg+"&primary_first_name="+FirstName+"&primary_middle_name=&primary_last_name="+LastName+"&display_format=complete&alternate_name=&show_alternate=1&save_password="+Password+"&__user="+UsreId+"&__a=1&__dyn=7n8anEAMCBynzpQ9UoHaEWy6zECRAyUgByVbGAEGGGeqrWpUpBxCvV8C4-&__req=c&ttstamp=26581711154584105117545168113&__rev=1274745";
+                    postdata = "fb_dtsg=" + fb_dtsg + "&primary_first_name=" + FirstName + "&primary_middle_name=&primary_last_name=" + LastName + "&display_format=complete&alternate_name=&show_alternate=1&save_password=" + Password + "&__user=" + UsreId + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoHaEWy6zECRAyUgByVbGAEGGGeqrWpUpBxCvV8C4-&__req=c&ttstamp=26581711154584105117545168113&__rev=1274745";
+                    postdata = "fb_dtsg=" + fb_dtsg + "&primary_first_name=" + FirstName + "&primary_middle_name=&primary_last_name=" + LastName + "&show_alternate=1&alternate_name=&__user=" + UsreId + "&__a=1&__dyn=7AmajEyl35xKt2u6W85k2mq78hyWgS8zQC-K26m6oKewWhEoyUnwPUS2O4K5e48vEwydxW9xebK8KuEOq&__req=9&ttstamp=265817174676998725172120115&__rev=1819022";
                     string response = HttpHelper.postFormData(new Uri(posturl), postdata);
+                    string AuthPostUrl = "https://www.facebook.com/ajax/settings/account/name.php";
+                    string AuthPostData = "fb_dtsg=" + fb_dtsg + "&display_format=complete&save_password=" + Password + "&primary_first_name=" + FirstName + "&primary_middle_name=&primary_last_name=" + LastName + "&alternate_name=&show_alternate=1&__user=" + UsreId + "&__a=1&__dyn=7AmajEyl35xKt2u6W85k2mq78hyWgS8zQC-K26m6oKewWhEoyUnwPUS2O4K5e48vEwydxW9xebK8KuEOq&__req=c&ttstamp=265817174676998725172120115&__rev=1819022";
+                    string AuthResp = HttpHelper.postFormData(new Uri(AuthPostUrl), AuthPostData);
                     int ss = response.Length;
                     string strPageSource1 = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.AccountEditProfileNameSettingTabUrl));
 
@@ -7681,23 +7886,23 @@ namespace Accounts
                     {
                         GlobusLogHelper.log.Debug("FirstName Name : " + FirstName + " LastName :" + LastName + "Changed of UserName : " + fbUser.username);
                         GlobusLogHelper.log.Info("FirstName Name : " + FirstName + " LastName :" + LastName + "Changed of UserName : " + fbUser.username);
-                     //   GlobusFileHelper.AppendStringToTextfileNewLine(Username + ":" + Password + ":" + proxyAddress + ":" + proxyPort + ":" + proxyUsername + ":" + proxyPassword + ":" + FirstName + ":" + LastName, Globals.path_EditNameList);
+                        //   GlobusFileHelper.AppendStringToTextfileNewLine(Username + ":" + Password + ":" + proxyAddress + ":" + proxyPort + ":" + proxyUsername + ":" + proxyPassword + ":" + FirstName + ":" + LastName, Globals.path_EditNameList);
                         return;
 
 
                     }
                     else if (response.Contains("You can't update your name right now because you've already changed it too many times. ") || response.Contains("You can't update your name right now because you've changed it too recently."))
                     {
-                        GlobusLogHelper.log.Debug("You can't update your name right now because you've already changed it too many times. . " + "FirstName Name : " + FirstName + " LastName :" + LastName +"ID  : " +fbUser.username);
+                        GlobusLogHelper.log.Debug("You can't update your name right now because you've already changed it too many times. . " + "FirstName Name : " + FirstName + " LastName :" + LastName + "ID  : " + fbUser.username);
                         GlobusLogHelper.log.Info("You can't update your name right now because you've already changed it too many times. . " + "FirstName Name : " + FirstName + " LastName :" + LastName + "ID  : " + fbUser.username);
                         return;
                     }
-                   
+
                 }
                 catch (Exception ex)
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                }               
+                }
             }
             catch (Exception ex)
             {
@@ -7739,13 +7944,13 @@ namespace Accounts
         }
 
 
-        
+
         /// <summary>
         ///   Change Account Profile Language
         /// </summary>
         /// <param name="fbUser"></param>
         /// <param name="Name"></param>
-        
+
 
         public void ChangeLanguage(ref FacebookUser fbUser, string Name)
         {
@@ -7757,7 +7962,7 @@ namespace Accounts
 
             string fb_dtsg = string.Empty;
             string UsreId = string.Empty;
-            string New_language=string.Empty;
+            string New_language = string.Empty;
             string Language1 = string.Empty;
 
             string strPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/settings?tab=account&section=language&view"));
@@ -7809,32 +8014,32 @@ namespace Accounts
             //    }
             //} 
             #endregion
-               ChangeLanguageEditProfile = ChangeLanguageEditProfile.Trim();
-        
-                string [] Arr= ChangeLanguageEditProfile.Split(':');
-                New_language =Arr[1];
-                New_language = New_language.Replace(" ",string.Empty);
-                try
+            ChangeLanguageEditProfile = ChangeLanguageEditProfile.Trim();
+
+            string[] Arr = ChangeLanguageEditProfile.Split(':');
+            New_language = Arr[1];
+            New_language = New_language.Replace(" ", string.Empty);
+            try
+            {
+                string AccountSettingAjaxUrl = "https://www.facebook.com/ajax/settings/account/language.php?__user=" + UsreId + "&__a=1&__dyn=7n8a9EAMCBCFUSt2u6aOGUGy6zECQqbx2mbAKGiyGGEVF4YxU&__req=f&__rev=1145305&";
+
+                string PagSourceAjax = HttpHelper.getHtmlfromUrl(new Uri(AccountSettingAjaxUrl));
+                Thread.Sleep(1 * 2 * 1000);
+                string PostData = "fb_dtsg=" + fb_dtsg + "&new_language=" + New_language + "&__user=" + UsreId + "&__a=1&__dyn=7n8a9EAMCBCFUSt2u6aOGUGy6zECQqbx2mbAKGiyGGEVF4YxU&__req=3&ttstamp=265816699808810571&__rev=1145305";
+                string PostUrl = "https://www.facebook.com/ajax/settings/account/language.php";
+                string response = HttpHelper.postFormData(new Uri(PostUrl), PostData);
+
+                if (response.Contains("settings?tab=account&edited=language\\\", true"))
                 {
-                    string AccountSettingAjaxUrl = "https://www.facebook.com/ajax/settings/account/language.php?__user=" + UsreId + "&__a=1&__dyn=7n8a9EAMCBCFUSt2u6aOGUGy6zECQqbx2mbAKGiyGGEVF4YxU&__req=f&__rev=1145305&";
-
-                    string PagSourceAjax = HttpHelper.getHtmlfromUrl(new Uri(AccountSettingAjaxUrl));
-                    Thread.Sleep(1 * 2 * 1000);
-                    string PostData = "fb_dtsg=" + fb_dtsg + "&new_language=" + New_language + "&__user=" + UsreId + "&__a=1&__dyn=7n8a9EAMCBCFUSt2u6aOGUGy6zECQqbx2mbAKGiyGGEVF4YxU&__req=3&ttstamp=265816699808810571&__rev=1145305";
-                    string PostUrl = "https://www.facebook.com/ajax/settings/account/language.php";
-                    string response = HttpHelper.postFormData(new Uri(PostUrl), PostData);
-
-                    if (response.Contains("settings?tab=account&edited=language\\\", true"))
-                    {
-                        GlobusLogHelper.log.Info("Success fully change the Language :  " + ChangeLanguageEditProfile.Replace(" ", string.Empty) + " for User : " + fbUser.username);
-
-                    }
+                    GlobusLogHelper.log.Info("Success fully change the Language :  " + ChangeLanguageEditProfile.Replace(" ", string.Empty) + " for User : " + fbUser.username);
 
                 }
-                catch (Exception ex)
-                {
-                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ namespace faceboardpro
         public static string LicenseCheckDate = string.Empty;
         public static string Licence_Details = string.Empty;
         public static string GroupReportExprotPicFilePath = string.Empty;
+        public static string DesktopFolder = string.Empty;
 
     }
 }

@@ -70,7 +70,7 @@ namespace Scrapers
             {
                 int numberOfAccountPatch = 25;
 
-                if (NoOfThreadsEventScraper > 0) 
+                if (NoOfThreadsEventScraper > 0)
                 {
                     numberOfAccountPatch = NoOfThreadsEventScraper;
                 }
@@ -201,7 +201,7 @@ namespace Scrapers
             {
                 try
                 {
-                  //  if (!isStopEventScraper)
+                    //  if (!isStopEventScraper)
                     {
                         lock (lockrThreadControllerEventScraper)
                         {
@@ -236,7 +236,7 @@ namespace Scrapers
             string EventDetailsSource = string.Empty;
             string fb_dtsg = string.Empty;
             string inviterstatus = string.Empty;
-            Dictionary<string ,string> CheckDuplicats = new Dictionary<string ,string>();
+            Dictionary<string, string> CheckDuplicats = new Dictionary<string, string>();
 
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
@@ -246,8 +246,8 @@ namespace Scrapers
 
                 if (!lstEventURLsFl.Contains("https://www.facebook.com/events/"))
                 {
-                        GlobusLogHelper.log.Info("Invalid Url : " + lstEventURLsFl + "Please Upload Valid Url !");
-                        GlobusLogHelper.log.Debug("Invalid Url : " + lstEventURLsFl+ "Please Upload Valid Url !");
+                    GlobusLogHelper.log.Info("Invalid Url : " + lstEventURLsFl + "Please Upload Valid Url !");
+                    GlobusLogHelper.log.Debug("Invalid Url : " + lstEventURLsFl + "Please Upload Valid Url !");
                 }
 
 
@@ -379,7 +379,7 @@ namespace Scrapers
                                     }
                                     lstitem = lstitem.Distinct().ToList();
 
-                                 
+
                                     string strid = stradminlink.Substring(stradminlink.IndexOf("/browse/event_members/?id="), (stradminlink.IndexOf("&", stradminlink.IndexOf("/browse/event_members/?id=")) - stradminlink.IndexOf("/browse/event_members/?id="))).Replace("/browse/event_members/?id=", string.Empty).Replace("\"", string.Empty).Replace("amp;", string.Empty).Replace(";", string.Empty).Trim();
 
                                     string idss = strid;
@@ -446,7 +446,7 @@ namespace Scrapers
 
                                                     string[] FirstNameArr = Regex.Split(FirstName, "\"");
                                                     firstname = FirstNameArr[1].Replace("\"", string.Empty);
-                                                   
+
                                                 }
                                                 catch (Exception ex)
                                                 {
@@ -523,18 +523,18 @@ namespace Scrapers
                                             string FBEmailId = string.Empty;
                                             if (!string.IsNullOrEmpty(username))
                                             {
-                                                FBEmailId = username+"@facebook.com";
+                                                FBEmailId = username + "@facebook.com";
                                             }
                                             else
                                             {
-                                                FBEmailId =  singleitem1 + "@facebook.com"; ;
+                                                FBEmailId = singleitem1 + "@facebook.com"; ;
                                             }
-                                          
+
                                             try
                                             {
                                                 CheckDuplicats.Add(userlink, username);
 
-                                                string CSVHeader = "ID" + "," + "Name" + ", " + "firstName" + "," + "LastName" + "," + "userlink" + "," + "userName" + "," + "gender" + "," + "Status" + "," + "EventUrl"+","+"FbEmail";
+                                                string CSVHeader = "ID" + "," + "Name" + ", " + "firstName" + "," + "LastName" + "," + "userlink" + "," + "userName" + "," + "gender" + "," + "Status" + "," + "EventUrl" + "," + "FbEmail";
                                                 string CSV_Content = singleitem1 + "," + name + ", " + firstname + "," + lastname + "," + userlink + "," + username + "," + gender + "," + status + "," + lstEventURLsFl + "," + FBEmailId;
                                                 try
                                                 {
@@ -552,7 +552,7 @@ namespace Scrapers
                                             }
                                             catch (Exception ex)
                                             {
-                                               // GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                // GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
 
                                         }
@@ -591,7 +591,7 @@ namespace Scrapers
             string status = string.Empty;
 
             Dictionary<string, string> CheckDuplicats = new Dictionary<string, string>();
-            List<string> lstMemberId = new List<string>(); 
+            List<string> lstMemberId = new List<string>();
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
             foreach (string lstEventURLsFl in LstEventURLsEventScraper)
@@ -607,7 +607,7 @@ namespace Scrapers
                     EventId = Utils.getBetween(eventPageSrc, "event\",\"uid\":", "}");
                     if (string.IsNullOrEmpty(EventId))
                     {
-                        EventId = Utils.getBetween(lstEventURLsFl+"#$$#", "/events/", "#$$#").Replace("/",string.Empty).Trim(); 
+                        EventId = Utils.getBetween(lstEventURLsFl + "#$$#", "/events/", "#$$#").Replace("/", string.Empty).Trim();
                     }
                     __user = GlobusHttpHelper.GetParamValue(eventPageSrc, "user");
                     if (string.IsNullOrEmpty(__user))
@@ -684,7 +684,7 @@ namespace Scrapers
                         {
                             string temp = Utils.getBetween(singleMember, "user.php?id=", "&amp");
                             lstMemberId.Add(temp);
-                            
+
                             if (!string.IsNullOrEmpty(temp))
                             {
                                 scrapMemberUsingGraphApiAndSaved(status, temp, lstEventURLsFl, ref HttpHelper);
@@ -786,10 +786,10 @@ namespace Scrapers
         }
 
         Dictionary<string, string> CheckUnique = new Dictionary<string, string>();
-        public void scrapMemberUsingGraphApiAndSaved(string status, string MemberId,string EventUrl,ref GlobusHttpHelper httphelper)
+        public void scrapMemberUsingGraphApiAndSaved(string status, string MemberId, string EventUrl, ref GlobusHttpHelper httphelper)
         {
             try
-            {                
+            {
                 Thread.Sleep(800);
                 string Name = string.Empty;
                 string FirstName = string.Empty;
@@ -804,11 +804,11 @@ namespace Scrapers
                 if (!string.IsNullOrEmpty(graphresp))
                 {
                     JObject jdata = JObject.Parse(graphresp);
-                    FirstName=(string)((JValue)jdata["first_name"]);
+                    FirstName = (string)((JValue)jdata["first_name"]);
                     LastName = (string)((JValue)jdata["last_name"]);
                     UserName = (string)((JValue)jdata["name"]);
                     Gender = (string)((JValue)jdata["gender"]);
-                    locale = (string)((JValue)jdata["locale"]);    
+                    locale = (string)((JValue)jdata["locale"]);
 
                 }
                 if (!string.IsNullOrEmpty(UserName))
@@ -817,7 +817,7 @@ namespace Scrapers
                 }
                 else
                 {
-                 UserLink=FBGlobals.Instance.fbhomeurl+MemberId;
+                    UserLink = FBGlobals.Instance.fbhomeurl + MemberId;
                 }
                 if (!string.IsNullOrEmpty(UserName))
                 {
@@ -830,10 +830,10 @@ namespace Scrapers
                 try
                 {
                     CheckUnique.Add(MemberId, UserName);
-                string CSVHeader = "ID" + "," + "firstName" + "," + "LastName" + "," + "userlink" + "," + "userName" + "," + "gender" +","+ "locale" + "," + "Status" + "," + "EventUrl" + "," + "FbEmail";
-                string CSV_Content = MemberId + ", " + FirstName + "," + LastName + "," + UserLink + "," + UserName + "," + Gender + "," +locale+","+ status + "," + EventUrl + "," + FBEmailId;
-                
-                    
+                    string CSVHeader = "ID" + "," + "firstName" + "," + "LastName" + "," + "userlink" + "," + "userName" + "," + "gender" + "," + "locale" + "," + "Status" + "," + "EventUrl" + "," + "FbEmail";
+                    string CSV_Content = MemberId + ", " + FirstName + "," + LastName + "," + UserLink + "," + UserName + "," + Gender + "," + locale + "," + status + "," + EventUrl + "," + FBEmailId;
+
+
                     Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ScrapersExprotFilePath);
                     GlobusLogHelper.log.Debug("Data Saved In CSV ." + CSV_Content);
                     GlobusLogHelper.log.Info("Data Saved In CSV ." + CSV_Content);
@@ -1085,7 +1085,7 @@ namespace Scrapers
             get;
             set;
         }
-        
+
 
         #endregion
 
@@ -1328,7 +1328,7 @@ namespace Scrapers
                 lstMesgnippet_idsFb = lstMesgnippet_idsFb.Distinct().ToList();
 
                 int counter = 0;
-        
+
 
 
                 foreach (var lstMesgnippet_idsFbitem in lstMesgnippet_idsFb)
@@ -1349,7 +1349,7 @@ namespace Scrapers
                         string msgUrl = "https://www.facebook.com/messages/conversation-id.";//  FBGlobals.Instance.MessageScraperGetMessagesActionReadUrl;
                         string pagesourceofmsgUrl = gHttpHelpe.getHtmlfromUrl(new Uri(msgUrl + lstMesgnippet_idsFbitem));
 
-                      //  RequestsJSCSSIMG.RequestJSCSSIMG_Chilkat(pagesourceofmsgUrl, ref chilkatHttpHelper);
+                        //  RequestsJSCSSIMG.RequestJSCSSIMG_Chilkat(pagesourceofmsgUrl, ref chilkatHttpHelper);
 
                         if (pagesourceofmsgUrl.Contains("MessagingReadParticipants"))//pagesourceofmsgUrl.Contains("MessagingReadParticipants")
                         {
@@ -1467,7 +1467,7 @@ namespace Scrapers
                                     }
                                 }
 
-                                counter = InsertUpdateMsgsInDatabase(ref fbUser,counter, MsgDate, Msg, MsgSenderName, MsgSnippedId, UserId, MsgFriendId, MessagingReadParticipants, MessagingReadParticipantsId);
+                                counter = InsertUpdateMsgsInDatabase(ref fbUser, counter, MsgDate, Msg, MsgSenderName, MsgSnippedId, UserId, MsgFriendId, MessagingReadParticipants, MessagingReadParticipantsId);
                             }
                             catch (Exception ex)
                             {
@@ -1480,12 +1480,12 @@ namespace Scrapers
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
                 }
-              
+
                 //GlobusLogHelper.log.Info("Total Scrapped Messages = " + counter + " With User Name : " + fbUser.username);
                 //GlobusLogHelper.log.Debug("Total Scrapped Messages = " + counter + " With User Name : " + fbUser.username);
 
                 GlobusLogHelper.log.Info("Process  Completed With : " + fbUser.username);
-                GlobusLogHelper.log.Debug("Process  Completed With : " + fbUser.username);          
+                GlobusLogHelper.log.Debug("Process  Completed With : " + fbUser.username);
             }
             catch (Exception ex)
             {
@@ -1504,7 +1504,7 @@ namespace Scrapers
                 //Data :
                 //messages[thread_ids][id.394432847259847][offset]=0&messages[thread_ids][id.394432847259847][limit]=21&messages[thread_ids][id.111614202347306][offset]=0&messages[thread_ids][id.111614202347306][limit]=21&messages[thread_ids][id.305207196266901][offset]=0&messages[thread_ids][id.305207196266901][limit]=21&&client=web_messenger&__user=100004323278246&__a=1&__dyn=798aD5z5zsw&__req=1&fb_dtsg=AQAqGz7M&phstamp=1658165113711225577399 
                 #endregion
-                
+
                 GlobusHttpHelper gHttpHelper = fbUser.globusHttpHelper;
 
                 string msgUrl = "https://www.facebook.com/messages/conversation-id.";//FBGlobals.Instance.MessageScraperGetMessagesUrl;    //"https://www.facebook.com/messages/?action=read&tid=id.";
@@ -1525,24 +1525,24 @@ namespace Scrapers
                     return;
                 }
 
-                string[] Arr = System.Text.RegularExpressions.Regex.Split(pageSource,"thread_id");
+                string[] Arr = System.Text.RegularExpressions.Regex.Split(pageSource, "thread_id");
 
                 string threadId = string.Empty;
                 foreach (var Arr_item in Arr)
                 {
 
-                    int counter=0;
-                    string MsgDate=string.Empty;
-                    string Msg=string.Empty;
-                    string MsgSenderName=string.Empty;
-                    string MsgSnippedId=string.Empty;
-                    string MsgFriendId=string.Empty;
-                    string MessagingReadParticipants=string.Empty;
+                    int counter = 0;
+                    string MsgDate = string.Empty;
+                    string Msg = string.Empty;
+                    string MsgSenderName = string.Empty;
+                    string MsgSnippedId = string.Empty;
+                    string MsgFriendId = string.Empty;
+                    string MessagingReadParticipants = string.Empty;
                     string MessagingReadParticipantsId = string.Empty;
                     string UserName = string.Empty;
                     string UserId = string.Empty;
                     string tempMessagingReadParticipantsId = string.Empty;
-                  
+
                     try
                     {
                         if (Arr_item.Contains("snippet\":\"") && !Arr_item.Contains("<!DOCTYPE html>"))
@@ -1555,7 +1555,7 @@ namespace Scrapers
                             other_user_fbid = Utils.getBetween(Arr_item, "\"other_user_fbid\":", ",\"last_action_id\"");
                             MsgSnippedId = other_user_fbid;
 
-                            MsgDate = Utils.getBetween(Arr_item, "timestamp_absolute", "timestamp_datetime").Replace("\"","").Replace(":","").Replace(",","");
+                            MsgDate = Utils.getBetween(Arr_item, "timestamp_absolute", "timestamp_datetime").Replace("\"", "").Replace(":", "").Replace(",", "");
                             string DatTme = Utils.getBetween(Arr_item, "timestamp_datetime\":\"", "timestamp_relative").Replace("\"", "").Replace(",", "");
 
                             MsgDate = MsgDate + " " + DatTme;
@@ -1567,27 +1567,52 @@ namespace Scrapers
 
                             // 
                             #endregion
-                            string jsonData2 = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + other_user_fbid + ""));
+                            //string jsonData2 = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + other_user_fbid + ""));
+                            string pageSrc = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl + other_user_fbid + ""));
 
-                            JObject Data2 = JObject.Parse(jsonData2);
 
-                            string name2 = (string)((JValue)Data2["name"]);
-                            string first_name2 = (string)((JValue)Data2["first_name"]);
-                            string middle_name2 = (string)((JValue)Data2["middle_name"]);
-                            string last_name2 = (string)((JValue)Data2["last_name"]);
+                            string FBUserName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                            string aboutUrl = string.Empty;
+                            if (!string.IsNullOrEmpty(FBUserName))
+                            {
+                                aboutUrl = "https://www.facebook.com/" + FBUserName + "/about";
+                            }
+                            else
+                            {
+                                aboutUrl = "https://www.facebook.com/profile.php?id=" + other_user_fbid + "&sk=about";
+                            }
 
-                            MsgSenderName = name2;
+                            string AboutPage = gHttpHelper.getHtmlfromUrl(new Uri(aboutUrl));
+
+                            string name = Utils.getBetween(AboutPage, "setPageTitle\",[],[\"", "\"");
+                            if (string.IsNullOrEmpty(name))
+                            {
+                                name = Utils.getBetween(AboutPage, "<title id=\"pageTitle\">", "</title>");
+
+                            }
+                            name = name.Replace(",", string.Empty);
+
+
+                            //JObject Data2 = JObject.Parse(jsonData2);
+
+                            //string name2 = (string)((JValue)Data2["name"]);
+                            //string first_name2 = (string)((JValue)Data2["first_name"]);
+                            //string middle_name2 = (string)((JValue)Data2["middle_name"]);
+                            //string last_name2 = (string)((JValue)Data2["last_name"]);
+
+                            MsgSenderName = FBUserName;
 
                             //find username
 
                             string jsonData = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + userId + ""));
 
-                            JObject Data = JObject.Parse(jsonData);
 
-                            string name = (string)((JValue)Data["name"]);
-                            string first_name = (string)((JValue)Data["first_name"]);
-                            string middle_name = (string)((JValue)Data["middle_name"]);
-                            string last_name = (string)((JValue)Data["last_name"]);
+                            //JObject Data = JObject.Parse(jsonData);
+
+                            //string name = (string)((JValue)Data["name"]);
+                            //string first_name = (string)((JValue)Data["first_name"]);
+                            //string middle_name = (string)((JValue)Data["middle_name"]);
+                            //string last_name = (string)((JValue)Data["last_name"]);
 
                             MessagingReadParticipants = name;
 
@@ -1598,14 +1623,14 @@ namespace Scrapers
                             if (Arr_item.Contains(userId))
                             {
 
-                                string jsonData1 = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + userId + ""));
+                                //string jsonData1 = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + userId + ""));
 
-                                JObject Data1 = JObject.Parse(jsonData1);
+                                //JObject Data1 = JObject.Parse(jsonData1);
 
-                                string name1 = (string)((JValue)Data1["name"]);
-                                string first_name1 = (string)((JValue)Data1["first_name"]);
-                                string middle_name1 = (string)((JValue)Data1["middle_name"]);
-                                string last_name1 = (string)((JValue)Data1["last_name"]);
+                                //string name1 = (string)((JValue)Data1["name"]);
+                                //string first_name1 = (string)((JValue)Data1["first_name"]);
+                                //string middle_name1 = (string)((JValue)Data1["middle_name"]);
+                                //string last_name1 = (string)((JValue)Data1["last_name"]);
 
                                 MessagingReadParticipants = MessagingReadParticipants;
 
@@ -1616,16 +1641,16 @@ namespace Scrapers
                                 if (Arr_item.Contains(tempMessagingReadParticipantsId))
                                 {
 
-                                    string jsonData1 = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + tempMessagingReadParticipantsId + ""));
+                                    //string jsonData1 = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + tempMessagingReadParticipantsId + ""));
 
-                                    JObject Data1 = JObject.Parse(jsonData1);
+                                    //JObject Data1 = JObject.Parse(jsonData1);
 
-                                    string name1 = (string)((JValue)Data1["name"]);
-                                    string first_name1 = (string)((JValue)Data1["first_name"]);
-                                    string middle_name1 = (string)((JValue)Data1["middle_name"]);
-                                    string last_name1 = (string)((JValue)Data1["last_name"]);
+                                    //string name1 = (string)((JValue)Data1["name"]);
+                                    //string first_name1 = (string)((JValue)Data1["first_name"]);
+                                    //string middle_name1 = (string)((JValue)Data1["middle_name"]);
+                                    //string last_name1 = (string)((JValue)Data1["last_name"]);
 
-                                 //   MsgSenderName = name1;
+                                    //   MsgSenderName = name1;
 
                                     MsgFriendId = tempMessagingReadParticipantsId;
                                 }
@@ -1640,13 +1665,13 @@ namespace Scrapers
                             if (!string.IsNullOrEmpty(MessagingReadParticipantsId) && !string.IsNullOrEmpty(Msg) && !string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(MsgSnippedId) && !string.IsNullOrEmpty(MsgSenderName) && !string.IsNullOrEmpty(MessagingReadParticipants))
                             {
                                 InsertUpdateMsgsInDatabase(ref fbUser, counter, MsgDate, Msg, MsgSenderName, MsgSnippedId, userId, MsgFriendId, MessagingReadParticipants, MessagingReadParticipantsId);
-                             
+
                             }
 
                         }
                     }
                     catch { };
-                    
+
                 }
 
                 #region MyRegion
@@ -2168,7 +2193,7 @@ namespace Scrapers
             return lstFBIDs;
         }
 
-        private int InsertUpdateMsgsInDatabase(ref FacebookUser fbUser,int counter, string MsgDate, string Msg, string MsgSenderName, string MsgSnippedId, string UserId, string MsgFriendId, string MessagingReadParticipants, string MessagingReadParticipantsId)
+        private int InsertUpdateMsgsInDatabase(ref FacebookUser fbUser, int counter, string MsgDate, string Msg, string MsgSenderName, string MsgSnippedId, string UserId, string MsgFriendId, string MessagingReadParticipants, string MessagingReadParticipantsId)
         {
             try
             {
@@ -2178,9 +2203,9 @@ namespace Scrapers
                     {
                         if (!string.IsNullOrEmpty(MsgFriendId))
                         {
-                            DataSet ds=new DataSet();
+                            DataSet ds = new DataSet();
 
-                            RaiseEvent(ds, "Model : MessageRepository", "Function : GetMessageUsingUserIdNameSnippedIdSenderNameMsg", UserId, fbUser.username, MessagingReadParticipantsId, MessagingReadParticipants, MsgFriendId, MsgSnippedId, MsgSenderName, Msg, MsgDate);                           
+                            RaiseEvent(ds, "Model : MessageRepository", "Function : GetMessageUsingUserIdNameSnippedIdSenderNameMsg", UserId, fbUser.username, MessagingReadParticipantsId, MessagingReadParticipants, MsgFriendId, MsgSnippedId, MsgSenderName, Msg, MsgDate);
                         }
                     }
                 }
@@ -2253,7 +2278,7 @@ namespace Scrapers
             {
                 int numberOfAccountPatch = 25;
 
-                if (NoOfThreadsFanPageScraper > 0) 
+                if (NoOfThreadsFanPageScraper > 0)
                 {
                     numberOfAccountPatch = NoOfThreadsFanPageScraper;
                 }
@@ -2359,7 +2384,7 @@ namespace Scrapers
                             {
                                 // Call StartActionEventInviter
                                 StartActionFanPageScraper(ref objFacebookUser);
-                                
+
                             }
                             else
                             {
@@ -2398,7 +2423,7 @@ namespace Scrapers
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
             }
-        }        
+        }
 
         public void StartActionFanPageScraper(ref FacebookUser fbUser)
         {
@@ -2418,7 +2443,7 @@ namespace Scrapers
             try
             {
                 GlobusHttpHelper gHttpHelper = fbUser.globusHttpHelper;
-              
+
                 GlobusLogHelper.log.Info("Logged With " + fbUser.username);
                 GlobusLogHelper.log.Debug("Logged With " + fbUser.username);
 
@@ -2691,7 +2716,7 @@ namespace Scrapers
             {
                 try
                 {
-                  //  if (!isStopFriendInfoScraper)
+                    //  if (!isStopFriendInfoScraper)
                     {
                         lock (lockrThreadControllerFriendInfoScraper)
                         {
@@ -2713,12 +2738,12 @@ namespace Scrapers
             {
                 if (StartProcessUsingFriendInfoScraper == "Own Friends Info")
                 {
-                    
+
                     FriendProfileIdExtractor(ref fbUser);
                 }
                 if (StartProcessUsingFriendInfoScraper == "Friend Of Friends Info")
                 {
-                    FriendOfFriendsProfileIdExtractor(ref fbUser); 
+                    FriendOfFriendsProfileIdExtractor(ref fbUser);
                 }
                 if (StartProcessUsingFriendInfoScraper == "FB Emails Scraper")
                 {
@@ -2753,7 +2778,7 @@ namespace Scrapers
                         }
                         fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSource_HomePage);
                         int countFriend = 0;
-                        countFriend = ExtractFriendCount(ref fbUser,ref gHttpHelper, UserId);
+                        countFriend = ExtractFriendCount(ref fbUser, ref gHttpHelper, UserId);
 
                         GlobusLogHelper.log.Debug("Please  wait ..Getting  the Friends FB Id..");
                         GlobusLogHelper.log.Info("Please  wait ..Getting  the Friends FB Id..");
@@ -2761,14 +2786,14 @@ namespace Scrapers
                         List<string> lstFriends = ExtractFriendIdsFb(ref fbUser, ref gHttpHelper, ref UserId, countFriend);
                         lstFriends = lstFriends.Distinct().ToList();
 
-                         //List<string> lstOwnFriendId = GetFirendId(ref fbUser, ref gHttpHelper, UserId, item);
-                        
-
-                         //lstFriends = lstFriends.Concat(lstOwnFriendId).ToList();
-                         //lstFriends = lstFriends.Distinct().ToList();
+                        //List<string> lstOwnFriendId = GetFirendId(ref fbUser, ref gHttpHelper, UserId, item);
 
 
-                        ExtractFriendsInformation(ref fbUser, ref gHttpHelper, lstFriends);
+                        //lstFriends = lstFriends.Concat(lstOwnFriendId).ToList();
+                        //lstFriends = lstFriends.Distinct().ToList();
+
+
+                        ExtractFriendsInformationNew(ref fbUser, ref gHttpHelper, lstFriends);
 
                         #region MyRegion
                         //lstOwnFriendId.AddRange(lstFriends);
@@ -2827,14 +2852,14 @@ namespace Scrapers
                         //{
                         //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         //}
-                         #endregion
+                        #endregion
 
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    } 
-                       
+                    }
+
                 }
             }
             catch (Exception ex)
@@ -2843,14 +2868,14 @@ namespace Scrapers
             }
         }
 
-        public void ExtractFriendsInformation(ref FacebookUser fbUser,ref GlobusHttpHelper gHttpHelper, List<string> lstFriendsids)
+        public void ExtractFriendsInformation(ref FacebookUser fbUser, ref GlobusHttpHelper gHttpHelper, List<string> lstFriendsids)
         {
-            
-            GlobusLogHelper.log.Info("Start Scraping Profile Information  With Username : "+fbUser.username);
+
+            GlobusLogHelper.log.Info("Start Scraping Profile Information  With Username : " + fbUser.username);
             GlobusLogHelper.log.Debug("Start Scraping Profile Information  With Username : " + fbUser.username);
 
             lstFriendsids = lstFriendsids.Distinct().ToList();
-            
+
             foreach (string listFriendIditem in lstFriendsids)
             {
                 try
@@ -2876,7 +2901,7 @@ namespace Scrapers
                         {
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("id"), 30);
                             string[] ArrTemp = supsstring.Split('"');
-                            id = ArrTemp[2];                            
+                            id = ArrTemp[2];
                         }
                         catch (Exception ex)
                         {
@@ -2889,8 +2914,8 @@ namespace Scrapers
                         {
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("name"), 30);
                             string[] ArrTemp = supsstring.Split('"');
-                            name = ArrTemp[2];    
-                            
+                            name = ArrTemp[2];
+
                         }
                         catch (Exception ex)
                         {
@@ -2903,7 +2928,7 @@ namespace Scrapers
                         {
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("first_name"), 30);
                             string[] ArrTemp = supsstring.Split('"');
-                            first_name = ArrTemp[2];                           
+                            first_name = ArrTemp[2];
                         }
                         catch (Exception ex)
                         {
@@ -2916,7 +2941,7 @@ namespace Scrapers
                         {
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("last_name"), 30);
                             string[] ArrTemp = supsstring.Split('"');
-                            last_name = ArrTemp[2];                            
+                            last_name = ArrTemp[2];
                         }
                         catch (Exception ex)
                         {
@@ -2927,9 +2952,9 @@ namespace Scrapers
                     {
                         try
                         {
-                            string supsstring = pageSrc.Substring(pageSrc.IndexOf("link"), 95);
-                            string[] ArrTemp = supsstring.Split('"');
-                            link = ArrTemp[2];                            
+                            //string supsstring = pageSrc.Substring(pageSrc.IndexOf("link"), 95);
+                            //string[] ArrTemp = supsstring.Split('"');
+                            link = Utils.getBetween(pageSrc, "\"link\": \"", "\"");
 
                         }
                         catch (Exception ex)
@@ -2937,7 +2962,7 @@ namespace Scrapers
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
                     }
-                    
+
                     if (pageSrc.Contains("gender"))
                     {
                         try
@@ -2945,7 +2970,7 @@ namespace Scrapers
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("gender"));
                             string[] ArrTemp = supsstring.Split('"');
                             gender = ArrTemp[2];
-                            
+
                         }
                         catch (Exception ex)
                         {
@@ -2959,7 +2984,7 @@ namespace Scrapers
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("locale"));
                             string[] ArrTemp = supsstring.Split('"');
                             locale = ArrTemp[2];
-                            
+
                         }
                         catch (Exception ex)
                         {
@@ -3007,11 +3032,11 @@ namespace Scrapers
                         string profileUrl = FBGlobals.Instance.fbhomeurl + UserName + "/about";
 
 
-                        string pagesourceofProfileUrl = gHttpHelper.getHtmlfromUrl(new Uri(profileUrl)); 
+                        string pagesourceofProfileUrl = gHttpHelper.getHtmlfromUrl(new Uri(profileUrl));
 
-                        
+
                         string _ExprotFilePath1 = string.Empty;
-                     //   string Currentlocation = "";                  
+                        //   string Currentlocation = "";                  
 
 
                         if (pagesourceofProfileUrl.Contains("fbTimelineSummarySectionWrapper") || ((pagesourceofProfileUrl.Contains("Work and Education") || pagesourceofProfileUrl.Contains("Work and education")) || pagesourceofProfileUrl.Contains("Living") || pagesourceofProfileUrl.Contains("Basic Information") || pagesourceofProfileUrl.Contains("Contact Information")))
@@ -3021,13 +3046,13 @@ namespace Scrapers
                                 try
                                 {
                                     //if (hrefArr1item.Contains("/info"))
-                                    {                                       
-                                     //   string infohref = "http://www.facebook.com/yazhima98/info";
+                                    {
+                                        //   string infohref = "http://www.facebook.com/yazhima98/info";
 
                                         string infopagesource = pagesourceofProfileUrl;
-                                      
-                                        string birthday = "";                                       
-                                        string language = "";                                       
+
+                                        string birthday = "";
+                                        string language = "";
                                         string website = "";
                                         string email = "";
                                         string location = "";
@@ -3037,7 +3062,7 @@ namespace Scrapers
                                         string University = "";
                                         string Secondaryschool = "";
                                         string Hometown = "";
-                                      
+
                                         string HighSchools = string.Empty;
                                         string Colleges = string.Empty;
                                         string Employers = string.Empty;
@@ -3118,7 +3143,7 @@ namespace Scrapers
                                                             Hometown = Utils.getBetween(town, "\">", "@@@@").Replace(",", "");
 
                                                         }
-                                                      
+
                                                     }
                                                 }
                                                 catch { };
@@ -3147,19 +3172,19 @@ namespace Scrapers
                                                                 {
                                                                     CurrentCitys = Utils.getBetween(Arr2_item, "\">", "</a></div>").Replace(",", "");
                                                                 }
-                                                               
+
                                                             }
                                                             if (Arr2_item.Contains(" high school") && !Arr2_item.Contains("<div data-pnref=\"rel\">") || (Arr2_item.Contains("Went to <a class=") && Arr2_item.Contains("School") && !Arr2_item.Contains("<div data-pnref=\"rel\">")))
                                                             {
                                                                 HighSchools = Utils.getBetween(Arr2_item, "\">", "</a></div>").Replace(",", "");
                                                                 if (HighSchools.Contains("</a> and <a class=\""))
                                                                 {
-                                                                   string [] arr=System.Text.RegularExpressions.Regex.Split(HighSchools,"</a> and <a class"); 
-                                                                    HighSchools=arr[0];
+                                                                    string[] arr = System.Text.RegularExpressions.Regex.Split(HighSchools, "</a> and <a class");
+                                                                    HighSchools = arr[0];
                                                                 }
                                                             }
 
-                                                           
+
                                                         }
                                                         catch { };
                                                     }
@@ -3308,7 +3333,7 @@ namespace Scrapers
                                                                     try
                                                                     {
                                                                         Hometowns = Hometowns + ":" + item1;
-                                                                       
+
                                                                     }
                                                                     catch (Exception ex)
                                                                     {
@@ -3337,11 +3362,11 @@ namespace Scrapers
                                         }
 
                                         if (infopagesource.Contains(">Living<") || infopagesource.Contains("Places Lived"))   //Current City
-                                        {                                           
+                                        {
 
                                             try
-                                            {                                                
-                                                string [] Home =System.Text.RegularExpressions.Regex.Split(infopagesource, "<div class=\"fsl fwb fcb\">");
+                                            {
+                                                string[] Home = System.Text.RegularExpressions.Regex.Split(infopagesource, "<div class=\"fsl fwb fcb\">");
                                                 Hometown = Home[0];
                                                 foreach (var Home_item in Home)
                                                 {
@@ -3355,7 +3380,7 @@ namespace Scrapers
                                                         }
                                                         if (!Home_item.Contains("<!DOCTYPE html>") && Home_item.Contains("Hometown"))
                                                         {
-                                                            List<string> Ht= gHttpHelper.GetDataTag(Home_item, "a");
+                                                            List<string> Ht = gHttpHelper.GetDataTag(Home_item, "a");
                                                             Hometowns = Ht[0];
                                                             Hometown = Ht[0];
                                                             GlobusLogHelper.log.Info("Found Hometown " + Hometown);
@@ -3366,7 +3391,7 @@ namespace Scrapers
                                                     {
                                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                     }
-                                                } 
+                                                }
                                             }
                                             catch (Exception ex)
                                             {
@@ -3427,7 +3452,7 @@ namespace Scrapers
                                                             {
                                                                 email = emailArr1[1] + emailArr1[0];
                                                                 GlobusLogHelper.log.Info("Found Email " + email);
-                                                               
+
                                                             }
                                                         }
                                                     }
@@ -3447,7 +3472,7 @@ namespace Scrapers
                                         {
                                             if (pagesourceofProfileUrl.Contains("span class=\"_c24 _50f3\">"))
                                             {
-                                                string[] attt = System.Text.RegularExpressions.Regex.Split(pagesourceofProfileUrl,"<li class=\"_4tnv _2pif\">");
+                                                string[] attt = System.Text.RegularExpressions.Regex.Split(pagesourceofProfileUrl, "<li class=\"_4tnv _2pif\">");
                                                 foreach (var attt_item in attt)
                                                 {
                                                     if (attt_item.Contains("<span class=\"_c24 _50f3\"><div>"))
@@ -3458,26 +3483,26 @@ namespace Scrapers
                                                         {
                                                             birthday = "";
                                                         }
-                                                        if (attt_item.Contains("gcUeztYmfn9.png")&&attt_item.Contains("<span dir=\"ltr\">"))
+                                                        if (attt_item.Contains("gcUeztYmfn9.png") && attt_item.Contains("<span dir=\"ltr\">"))
                                                         {
                                                             string getTagHtm = Utils.getBetween(attt_item, "<span class=\"_c24 _50f3\"><div>", "</div></span></div>");
-                                                            Mobile_Phones = Utils.getBetween(attt_item, "<span dir=\"ltr\">","</span>");
+                                                            Mobile_Phones = Utils.getBetween(attt_item, "<span dir=\"ltr\">", "</span>");
                                                         }
                                                         if (attt_item.Contains("Phones</span>"))
                                                         {
-                                                             Mobile_Phones = Utils.getBetween(attt_item, "<span dir=\"ltr\">","</span>");
+                                                            Mobile_Phones = Utils.getBetween(attt_item, "<span dir=\"ltr\">", "</span>");
                                                         }
                                                         if (attt_item.Contains("https://fbstatic-a.akamaihd.net/rsrc.php/v2/yc/r/l8RlKxR65X7.png"))
                                                         {
-                                                             string getTagHtml1 = Utils.getBetween(attt_item, "<span class=\"_c24 _50f3\"><div>", "</div></span></div>");
-                                                      
-                                                      
+                                                            string getTagHtml1 = Utils.getBetween(attt_item, "<span class=\"_c24 _50f3\"><div>", "</div></span></div>");
+
+
                                                         }
-                                                    }                                                  
+                                                    }
                                                 }
                                                 GlobusLogHelper.log.Info("Found Date Of birth" + birthday);
 
-                                             
+
                                             }
                                         }
                                         catch (Exception ex)
@@ -3486,9 +3511,9 @@ namespace Scrapers
                                         }
                                         if (pagesourceofProfileUrl.Contains("contactInfoPhone"))
                                         {
-                                            string Phone = Utils.getBetween(pagesourceofProfileUrl,"Contact Information","Address");
-                                            string[] arr = System.Text.RegularExpressions.Regex.Split(Phone,"<span dir=");
-                                            if (arr.Count()==3)
+                                            string Phone = Utils.getBetween(pagesourceofProfileUrl, "Contact Information", "Address");
+                                            string[] arr = System.Text.RegularExpressions.Regex.Split(Phone, "<span dir=");
+                                            if (arr.Count() == 3)
                                             {
                                                 try
                                                 {
@@ -3513,11 +3538,11 @@ namespace Scrapers
                                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                 }
                                             }
-                                          
+
                                         }
                                         if (id.Contains("www.facebook.com"))
                                         {
-                                            
+
                                         }
 
                                         if (!string.IsNullOrEmpty(ExportFilePathFriendInfoScraper))
@@ -3526,22 +3551,25 @@ namespace Scrapers
                                             {
                                                 string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
 
-                                                #region MyRegion                                                
-                                              
-                                                //string CSVHeader = "Name" + "," + "Birthday" + ", " + "Gender" + "," + "Mobile_Phones" + "," + "Email" + "," + "Location" + "," + "JobPosition" + "," + "JobCompany" + "," + "URL" + "," + "Used Account" + "," + "Hometown" + "," + "CurrentLocation" + "," + "University" + "," + "SecondrySchool";
-                                               
-                                               //string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + Colleges.Replace(",", " ") + "," + email.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+                                                #region MyRegion
 
-                                               // string CSVHeader = "ExtractUrl" + "," + "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
+                                                //string CSVHeader = "Name" + "," + "Birthday" + ", " + "Gender" + "," + "Mobile_Phones" + "," + "Email" + "," + "Location" + "," + "JobPosition" + "," + "JobCompany" + "," + "URL" + "," + "Used Account" + "," + "Hometown" + "," + "CurrentLocation" + "," + "University" + "," + "SecondrySchool";
+
+                                                //string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + Colleges.Replace(",", " ") + "," + email.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+
+                                                // string CSVHeader = "ExtractUrl" + "," + "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
                                                 //string CSV_Content = ownprofileUrl.Replace(",", " ") + "," + profileUrl.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + Colleges.Replace(",", " ") + "," + email.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ");
                                                 #endregion
-
+                                                if (profileUrl.Contains("graph"))
+                                                {
+                                                    profileUrl = profileUrl.Replace("graph.", string.Empty);
+                                                }
                                                 string CSVHeader = "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
                                                 string CSV_Content = profileUrl.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + Colleges.Replace(",", " ") + "," + FBEmailId.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
                                                 Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFriendInfoScraper);
                                                 if (CSV_Content.Contains("</a> and"))
                                                 {
-                                                    
+
                                                 }
                                                 GlobusLogHelper.log.Info("Data Saved IN CSV File");
 
@@ -3569,9 +3597,12 @@ namespace Scrapers
                             {
                                 try
                                 {
-                                    string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;                                    
-                                    string CSVHeader = "ExtractUrl" + "," + "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";                                    
-
+                                    string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
+                                    string CSVHeader = "ExtractUrl" + "," + "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
+                                    if (profileUrl.Contains("graph"))
+                                    {
+                                        profileUrl = profileUrl.Replace("graph.", string.Empty);
+                                    }
                                     string CSV_Content = Urls.Replace(",", " ") + "," + profileUrl.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + ", " + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
 
                                     Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFriendInfoScraper);
@@ -3595,6 +3626,285 @@ namespace Scrapers
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
+            }
+
+            GlobusLogHelper.log.Info("Process Completed Of Scraping Own Profile Information !");
+            GlobusLogHelper.log.Debug("Process Completed Of Scraping Own Profile Information !");
+        }
+
+        public void ExtractFriendsInformationNew(ref FacebookUser fbUser, ref GlobusHttpHelper gHttpHelper, List<string> lstFriendsids)
+        {
+
+            GlobusLogHelper.log.Info("Start Scraping Profile Information  With Username : " + fbUser.username);
+            GlobusLogHelper.log.Debug("Start Scraping Profile Information  With Username : " + fbUser.username);
+
+            lstFriendsids = lstFriendsids.Distinct().ToList();
+
+            foreach (string listFriendIditem in lstFriendsids)
+            {
+
+                string TempUrl = FBGlobals.Instance.fbhomeurl + listFriendIditem;
+                ScrapeUserInfo(ref fbUser, TempUrl, ExportFilePathFriendInfoScraper, string.Empty);
+                #region commentedRegion
+                // try
+                //{
+                //    //Log("Hello");
+                //    string Urls = string.Empty;
+                //    string id = string.Empty;
+                //    string name = string.Empty;
+                //    string first_name = string.Empty;
+                //    string last_name = string.Empty;
+                //    string link = string.Empty;
+                //    string gender = string.Empty;
+                //    string locale = string.Empty;
+                //    string UserName12 = string.Empty;
+
+                //    Urls = FBGlobals.Instance.fbgraphUrl + listFriendIditem + "/";                    // "https://graph.facebook.com/"
+                //    string pageSrc = gHttpHelper.getHtmlfromUrl(new Uri(Urls));
+
+
+                //    if (pageSrc.Contains("id"))
+                //    {
+                //        try
+                //        {
+                //           id = Utils.getBetween(pageSrc,"\"id\": \"","\"");
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //        }
+                //    }
+                //    if (pageSrc.Contains("name"))
+                //    {
+                //        try
+                //        {
+                //            name = Utils.getBetween(pageSrc, "\"name\": \"", "\"");
+
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //        }
+                //    }
+                //    if (pageSrc.Contains("first_name"))
+                //    {
+                //        try
+                //        {
+                //            first_name = Utils.getBetween(pageSrc, "first_name\": \"", "\"");
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //        }
+                //    }
+                //    if (pageSrc.Contains("last_name"))
+                //    {
+                //        try
+                //        {
+                //            last_name = Utils.getBetween(pageSrc, "last_name\": \"", "\"");
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //        }
+                //    }
+                //    if (pageSrc.Contains("link"))
+                //    {
+                //        try
+                //        {                            
+                //          link = Utils.getBetween(pageSrc, "link\": \"", "\"");
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //        }
+                //    }                    
+
+                //    string UserName = string.Empty;                   
+
+                //    if (string.IsNullOrEmpty(link))
+                //    {
+                //        link = FBGlobals.Instance.fbhomeurl + id;    // "http://www.facebook.com/"
+
+                //    }
+                //    try
+                //    {
+
+                //        string FBEmailId = string.Empty;
+
+
+
+                //        string ownprofileUrl = FBGlobals.Instance.fbProfileUrl + listFriendIditem + "/about";// + "&sk=info";
+
+                //        string profileUrl = FBGlobals.Instance.fbhomeurl + id;
+
+
+                //        string pagesourceofProfileUrl = gHttpHelper.getHtmlfromUrl(new Uri(profileUrl));
+
+                //        string redirectedUrl = gHttpHelper.responseURI.ToString();
+                //        string aboutUrl = string.Empty;
+                //        if (!string.IsNullOrEmpty(redirectedUrl))
+                //        {
+                //            string[] urlData = redirectedUrl.Split('/');
+                //            UserName = urlData[urlData.Length - 1];
+                //            aboutUrl = FBGlobals.Instance.fbhomeurl + UserName + "/about";
+                //        }
+                //        if (redirectedUrl.Contains("profile.php"))
+                //        {
+                //            UserName = id;
+                //            aboutUrl = "https://www.facebook.com/profile.php?id="+id+"%2Fabout&sk=about";
+                //        }
+                //        if (!string.IsNullOrEmpty(UserName))
+                //        {
+                //            FBEmailId = UserName + "@facebook.com";
+                //        }
+                //        else
+                //        {
+                //            FBEmailId = UserName + "@facebook.com"; ;
+                //        }
+
+
+
+                //        pagesourceofProfileUrl = gHttpHelper.getHtmlfromUrl(new Uri(aboutUrl));
+                //        string _ExprotFilePath1 = string.Empty;
+                //        //   string Currentlocation = "";                 
+
+
+
+                //        if (pagesourceofProfileUrl.Contains("fbTimelineSummarySectionWrapper") || ((pagesourceofProfileUrl.Contains("Work and Education") || pagesourceofProfileUrl.Contains("Work and education")) || pagesourceofProfileUrl.Contains("Living") || pagesourceofProfileUrl.Contains("Basic Information") || pagesourceofProfileUrl.Contains("Contact Information")))
+                //        {
+                //            //foreach (var hrefArr1item in hrefArr1)
+                //            {
+                //                try
+                //                {
+                //                    //if (hrefArr1item.Contains("/info"))
+                //                    {
+                //                        //   string infohref = "http://www.facebook.com/yazhima98/info";
+
+                //                        string infopagesource = pagesourceofProfileUrl;
+
+                //                        string birthday = "";
+                //                        string language = "";
+                //                        string website = "";
+                //                        string email = "";
+                //                        string location = "";
+                //                        string jobposition = "";
+                //                        string jobcompany = "";
+                //                        string Mobile_Phones = "";
+                //                        string University = "";
+                //                        string Secondaryschool = "";
+                //                        string Hometown = "";
+
+                //                        string HighSchools = string.Empty;
+                //                        string Colleges = string.Empty;
+                //                        string Employers = string.Empty;
+                //                        string CurrentCitys = string.Empty;
+                //                        string Hometowns = string.Empty;
+                //                        List<string> kkk = gHttpHelper.GetHrefsByTagAndAttributeName(infopagesource, "span", "fwb");
+
+                //                        #region currentCity and Hometown
+                //                    //https://www.facebook.com/profile.php?id=100005834260833%2Fabout&sk=about&section=living&pnref=about
+
+                //                        string LivingUrl = aboutUrl + "&section=living&pnref=about";
+                //                    string livingPage = gHttpHelper.getHtmlfromUrl(new Uri(LivingUrl));
+
+                //                        #endregion
+
+                //                    if (livingPage.Contains("data-overviewsection=\"places\""))
+                //                        {
+                //                            string[] pageData= Regex.Split(infopagesource,"/ajax/hovercard/page.php");
+                //                            Hometown = Utils.getBetween(pageData[5], "\">", "</a>");
+                //                        }
+
+
+                //                       // aria-describedby="js_2" id="js_3"> 
+
+
+
+
+
+                //                        if (!string.IsNullOrEmpty(ExportFilePathFriendInfoScraper))
+                //                        {
+                //                            try
+                //                            {
+                //                                string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
+
+                //                                #region MyRegion
+
+                //                                //string CSVHeader = "Name" + "," + "Birthday" + ", " + "Gender" + "," + "Mobile_Phones" + "," + "Email" + "," + "Location" + "," + "JobPosition" + "," + "JobCompany" + "," + "URL" + "," + "Used Account" + "," + "Hometown" + "," + "CurrentLocation" + "," + "University" + "," + "SecondrySchool";
+
+                //                                //string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + Colleges.Replace(",", " ") + "," + email.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+
+                //                                // string CSVHeader = "ExtractUrl" + "," + "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
+                //                                //string CSV_Content = ownprofileUrl.Replace(",", " ") + "," + profileUrl.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + Colleges.Replace(",", " ") + "," + email.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ");
+                //                                #endregion
+                //                                if (profileUrl.Contains("graph"))
+                //                                {
+                //                                    profileUrl = profileUrl.Replace("graph.", string.Empty);
+                //                                }
+                //                                string CSVHeader = "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
+                //                                string CSV_Content = profileUrl.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + Colleges.Replace(",", " ") + "," + FBEmailId.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+                //                                Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFriendInfoScraper);
+                //                                if (CSV_Content.Contains("</a> and"))
+                //                                {
+
+                //                                }
+                //                                GlobusLogHelper.log.Info("Data Saved IN CSV File");
+
+                //                                GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
+                //                            }
+                //                            catch (Exception ex)
+                //                            {
+                //                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //                            }
+                //                        }
+
+                //                    }
+                //                }
+                //                catch (Exception ex)
+                //                {
+                //                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //                }
+                //            }
+
+                //        }
+
+                //        else
+                //        {
+                //            if (!string.IsNullOrEmpty(ExportFilePathFriendInfoScraper))
+                //            {
+                //                try
+                //                {
+                //                    string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
+                //                    string CSVHeader = "ExtractUrl" + "," + "ProfileUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
+                //                    if (profileUrl.Contains("graph"))
+                //                    {
+                //                        profileUrl = profileUrl.Replace("graph.", string.Empty);
+                //                    }
+                //                    string CSV_Content = Urls.Replace(",", " ") + "," + profileUrl.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + ", " + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+
+                //                    Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFriendInfoScraper);
+                //                    GlobusLogHelper.log.Info("Data Saved IN CSV File");
+
+                //                    GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
+                //                }
+                //                catch (Exception ex)
+                //                {
+                //                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //                }
+                //            }
+                //        }
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //    }
+                //}
+                //catch (Exception ex)
+                //{
+                //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //}
+                #endregion
             }
 
             GlobusLogHelper.log.Info("Process Completed Of Scraping Own Profile Information !");
@@ -3639,7 +3949,7 @@ namespace Scrapers
                                     }
 
                                     toatalid.Add(keyword_idarritem);
-                                    toatalid = toatalid.Distinct().ToList();                                    
+                                    toatalid = toatalid.Distinct().ToList();
                                 }
                                 catch (Exception ex)
                                 {
@@ -3678,7 +3988,7 @@ namespace Scrapers
             List<string> lstfriendid = new List<string>();
             try
             {
-                
+
                 string UserId = UId;
                 string GraphApiSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + UserId));
                 string grpusername = string.Empty;
@@ -3689,7 +3999,7 @@ namespace Scrapers
                         string supsstring = GraphApiSource.Substring(GraphApiSource.IndexOf("username"), 30);
                         string[] ArrTemp = supsstring.Split('"');
                         grpusername = ArrTemp[2];
-                      
+
                     }
                     catch (Exception ex)
                     {
@@ -3730,7 +4040,7 @@ namespace Scrapers
                         //FriendlistUrl = FriendlistUrl.Replace("http", "https");
                         //FriendlistUrl = FriendlistUrl.Replace("httpss", "https");
                         FriendsResponse = HttpHelper.getHtmlfromUrl(new Uri(FriendlistUrl));
-                        
+
                     }
                     catch (Exception ex)
                     {
@@ -3746,7 +4056,7 @@ namespace Scrapers
                         if (!iditem.Contains("<!DOCTYPE html>"))
                         {
                             try
-                             {
+                            {
                                 string FriendIDS = iditem.Substring(iditem.IndexOf("id="), (iditem.IndexOf(">", iditem.IndexOf("id=")) - iditem.IndexOf("id="))).Replace("id=", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
 
                                 if (FriendIDS.Contains("&"))
@@ -3780,14 +4090,14 @@ namespace Scrapers
         public static List<string> ExtractFriendIdsFb(ref FacebookUser fbUser, ref BaseLib.GlobusHttpHelper HttpHelper, ref string userID, int FriendCount)
         {
             GlobusHttpHelper gHttpHelper = fbUser.globusHttpHelper;
-           
+
             List<string> lstFriendTemp = new List<string>();
             try
             {
-                
+
                 int i = 0;
                 do
-                {                    
+                {
 
                     string FriendUrl = FBGlobals.Instance.fbAllFriendsUIdUrl + userID + "&infinitescroll=1&location=friends_tab_tl&start=" + i + "&__user=" + userID + "&__a=1";
 
@@ -3839,7 +4149,7 @@ namespace Scrapers
                         i = i + 16;
                     }
                 } while (i < FriendCount);
-                
+
             }
             catch (Exception ex)
             {
@@ -3857,20 +4167,20 @@ namespace Scrapers
 
                 string url = FBGlobals.Instance.fbProfileUrl + UserId;
                 string PageSrcFriendCountOLd = HttpHelper.getHtmlfromUrl(new Uri(url));
-                string[] arr = System.Text.RegularExpressions.Regex.Split(PageSrcFriendCountOLd,"data-medley-id");
+                string[] arr = System.Text.RegularExpressions.Regex.Split(PageSrcFriendCountOLd, "data-medley-id");
                 foreach (var arr_item in arr)
                 {
                     try
                     {
                         //if (!arr_item.Contains("<!DOCTYPE html>")&&arr_item.Contains("Friends"))
                         {
-                            string Count = Utils.getBetween(arr_item,"<span class=\"_gs6\">","</span>");
+                            string Count = Utils.getBetween(arr_item, "<span class=\"_gs6\">", "</span>");
                             Count = Count.Replace(",", string.Empty);
                             FriendCountNumber = Convert.ToInt32(Count);
                             break;
                         }
                     }
-                    catch { };                    
+                    catch { };
                 }
 
                 Regex NumChk = new Regex("^[0-9]*$");
@@ -3912,7 +4222,7 @@ namespace Scrapers
                         {
                             FriendCountNumber = int.Parse(FriendCount);
                         }
-                    }                   
+                    }
                 }
             }
             catch (Exception ex)
@@ -3986,16 +4296,16 @@ namespace Scrapers
                         GlobusLogHelper.log.Info("Please wait finding the friends ID...");
                         GlobusLogHelper.log.Debug("Please wait finding the friends ID...");
 
-                        List<string> lstOwnFriendId = GetAllFriends(ref fbUser,ref gHttpHelper, UserId);
+                        List<string> lstOwnFriendId = GetAllFriends(ref fbUser, ref gHttpHelper, UserId);
                         try
                         {
-                            ExtractFriendOfFriendsInformation(ref fbUser,ref gHttpHelper, lstOwnFriendId, item, UserId);
+                            ExtractFriendOfFriendsInformation(ref fbUser, ref gHttpHelper, lstOwnFriendId, item, UserId);
                         }
                         catch (Exception ex)
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
-                        
+
                     }
                     catch (Exception ex)
                     {
@@ -4009,12 +4319,12 @@ namespace Scrapers
             }
         }
 
-        public void ExtractFriendOfFriendsInformation(ref FacebookUser fbUser,ref GlobusHttpHelper gHttpHelper, List<string> lstFriendsids, string Prfurl, string User)
+        public void ExtractFriendOfFriendsInformation(ref FacebookUser fbUser, ref GlobusHttpHelper gHttpHelper, List<string> lstFriendsids, string Prfurl, string User)
         {
             try
             {
-                
-                GlobusLogHelper.log.Info("Start Scraping Profile Information With Username : "+fbUser.username);
+
+                GlobusLogHelper.log.Info("Start Scraping Profile Information With Username : " + fbUser.username);
                 GlobusLogHelper.log.Debug("Start Scraping Profile Information With Username : " + fbUser.username);
                 lstFriendsids = lstFriendsids.Distinct().ToList();
                 List<string> lstFriendofFriendUrl = new List<string>();
@@ -4053,7 +4363,7 @@ namespace Scrapers
                         }
 
 
-                        List<string> lsttotalajaxid = FriendsTotalId(ref fbUser,ref gHttpHelper, itemurl, User);
+                        List<string> lsttotalajaxid = FriendsTotalId(ref fbUser, ref gHttpHelper, itemurl, User);
                         LstFriendofFriendId.AddRange(lsttotalajaxid);
 
                         List<string> list_finalFriendsID = new List<string>();
@@ -4082,9 +4392,13 @@ namespace Scrapers
                             }
                         }
 
-                        
+
                         foreach (string listFriendIditem in LstFriendofFriendId)
                         {
+                            string profileURL = FBGlobals.Instance.fbProfileUrl + listFriendIditem;
+                            ScrapeUserInfo(ref fbUser, profileURL, ExportFilePathFriendInfoScraper, itemurl);
+                            #region commented
+                            /*
                             try
                             {
                                 string urlss = FBGlobals.Instance.fbProfileUrl + listFriendIditem + "&sk=friends&ft_ref=mni";
@@ -4697,6 +5011,8 @@ namespace Scrapers
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
+                            */
+                            #endregion
                         }
                     }
                     catch (Exception ex)
@@ -4730,7 +5046,7 @@ namespace Scrapers
 
                 List<string> lstnewfriendid = new List<string>();
 
-              
+
 
 
                 string collection_token = "";
@@ -4859,7 +5175,7 @@ namespace Scrapers
             set;
         }
 
-       public bool FBIDExtracterOnlyTargetedID
+        public bool FBIDExtracterOnlyTargetedID
         {
             get;
             set;
@@ -4874,8 +5190,8 @@ namespace Scrapers
         {
             get;
             set;
-        }      
-      
+        }
+
 
         #endregion
         public List<string> LstFBProfileUrlList
@@ -4888,65 +5204,91 @@ namespace Scrapers
             get;
             set;
         }
+
         public void StartExtracter()
         {
-            
-               //ID Scraper
+            //ID Scraper
             if (FBIDExtractorProsessUsing == "URL Scraper")
             {
                 StartFBIDExtracter();
             }
             else
-            {              
-               StartFBIDExtracterUsingProfileUrls();              
-               
+            {
+                // StartFBIDExtracterUsingProfileUrls();              
+                ScrapeFBIDsUsingProfileUrl();
+
             }
         }
-        public void StartFBIDExtracterUsingProfileUrls()
+
+        public string fbIDScraperSelectedAcc = string.Empty;
+        public void ScrapeFBIDsUsingProfileUrl()
         {
-            GlobusHttpHelper ObjGlobHttp = new GlobusHttpHelper();
-            string PageSource = string.Empty;
             try
             {
-                foreach (var LstFBProfileUrlList_item in LstFBProfileUrlList)
-                {
-                    string FBID = string.Empty;
-                    try
-                    {
-                        string[] Arr = System.Text.RegularExpressions.Regex.Split(LstFBProfileUrlList_item, ".com/");
-                        string GraphUrl = FBGlobals.Instance.fbgraphUrl + Arr[1];
-                        PageSource = ObjGlobHttp.getHtmlfromUrl(new Uri(GraphUrl));
-                        FBID = Utils.getBetween(PageSource,"\"id\": \"","\"");
+                int numberOfAccountPatch = 25;
 
-                        if (!string.IsNullOrEmpty(ExportFilePathFBIDExtractor) && !string.IsNullOrEmpty(FBID))
+                if (NoOfThreadsFBIDExtracter > 0)
+                {
+                    numberOfAccountPatch = NoOfThreadsFriendInfoScraper;
+                }
+                string acc = string.Empty;
+                acc = fbIDScraperSelectedAcc;
+                FacebookUser item = null;
+                List<List<string>> list_listAccounts = new List<List<string>>();
+                if (FBGlobals.listAccounts.Count >= 1)
+                {
+
+                    list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
+
+                    foreach (List<string> listAccounts in list_listAccounts)
+                    {
+                        //int tempCounterAccounts = 0; 
+
+                        foreach (string account in listAccounts)
                         {
                             try
                             {
-                                string ProfileLink = LstFBProfileUrlList_item;
-                                string commaSeparatedData = FBID + ProfileLink;
-
-                              
-                                if (!string.IsNullOrEmpty(FBID))
+                                lock (lockrThreadControllerFriendInfoScraper)
                                 {
-                                    FBID = "'" + FBID;
-                                    string CSVHeader = "FBID" + "," + "ProfileLink";
-                                    string CSV_Content = FBID + "," + ProfileLink;
-                                    Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFBIDExtractor);
-                                    GlobusLogHelper.log.Info("FBID  " + FBID + " Saved In CSV");
-                                    GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
+                                    try
+                                    {
+                                        if (countThreadControllerisStopFBIDExtracter >= 1)
+                                        {
+                                            Monitor.Wait(lockrThreadControllerisStopFBIDExtracter);
+                                        }
+
+                                        acc = account.Remove(account.IndexOf(':'));
+
+                                        //Run a separate thread for each account
+
+                                        FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+
+                                        if (item != null)
+                                        {
+
+                                            Thread FBIDExtractor = new Thread(StartFBIDExtracterUsingProfileUrls);
+                                            FBIDExtractor.Name = "workerThread_Profiler_" + acc;
+                                            FBIDExtractor.IsBackground = true;
+
+
+                                            FBIDExtractor.Start(new object[] { item });
+
+                                            countThreadControllerisStopFBIDExtracter++;
+                                        }
+                                    }
+
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
                                 }
-                              
                             }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
                 }
             }
@@ -4954,9 +5296,78 @@ namespace Scrapers
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
-            GlobusLogHelper.log.Debug("Process Completed");
-            GlobusLogHelper.log.Info("Process Completed");
 
+        }
+        public void StartFBIDExtracterUsingProfileUrls(object parameters)
+        {
+            Array paramsArray = new object[1];
+            paramsArray = (Array)parameters;
+
+            FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+            GlobusHttpHelper ObjGlobHttp = new GlobusHttpHelper();
+            if (!objFacebookUser.isloggedin)
+            {
+
+
+                objFacebookUser.globusHttpHelper = ObjGlobHttp;
+                //Login Process
+                Accounts.AccountManager objAccountManager = new AccountManager();
+                objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+            }
+
+            if (objFacebookUser.isloggedin)
+            {
+
+                string PageSource = string.Empty;
+                try
+                {
+                    foreach (var LstFBProfileUrlList_item in LstFBProfileUrlList)
+                    {
+                        string FBID = string.Empty;
+                        try
+                        {
+
+                            PageSource = ObjGlobHttp.getHtmlfromUrl(new Uri(LstFBProfileUrlList_item));
+                            FBID = Utils.getBetween(PageSource, "\"profile_id\":", ",");
+
+                            if (!string.IsNullOrEmpty(ExportFilePathFBIDExtractor) && !string.IsNullOrEmpty(FBID))
+                            {
+                                try
+                                {
+                                    string ProfileLink = LstFBProfileUrlList_item;
+
+
+                                    if (!string.IsNullOrEmpty(FBID))
+                                    {
+                                        // FBID = "'" + FBID;
+                                        string CSVHeader = "FBID" + "," + "ProfileLink";
+                                        string CSV_Content = FBID + "," + ProfileLink;
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFBIDExtractor);
+                                        GlobusLogHelper.log.Info("FBID  " + FBID + " Saved In CSV");
+                                        GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
+                                    }
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+                GlobusLogHelper.log.Debug("Process Completed");
+                GlobusLogHelper.log.Info("Process Completed");
+            }
 
         }
         public void StartFBIDExtracter()
@@ -5074,14 +5485,14 @@ namespace Scrapers
 
                             if (objFacebookUser.isloggedin)
                             {
-                                
+
 
                                 // Call StartAction                                
 
                                 if (FBIDExtracterOnlyTargetedID == true)
                                 {
-                                    ExtractFriendsInformationFacebooker(ref objFacebookUser);
-
+                                    //ExtractFriendsInformationFacebooker(ref objFacebookUser);
+                                    ExtractFriendsInformationFacebookerNew(ref objFacebookUser);
                                     GlobusLogHelper.log.Info("Process completed With Username : " + objFacebookUser.username);
                                     GlobusLogHelper.log.Debug("Process completed With Username : " + objFacebookUser.username);
                                 }
@@ -5092,8 +5503,8 @@ namespace Scrapers
 
                                 }
                                 return;
-                               //FriendOfFriendsProfileIdExtractor1(ref objFacebookUser);                                                        
-                               //OwnExtractFriendsInformationFacebooker(ref objFacebookUser);
+                                //FriendOfFriendsProfileIdExtractor1(ref objFacebookUser);                                                        
+                                //OwnExtractFriendsInformationFacebooker(ref objFacebookUser);
                             }
                             else
                             {
@@ -5132,16 +5543,16 @@ namespace Scrapers
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
             }
-        }  
+        }
 
 
         public void ExtractFriendsInformationFacebooker(ref FacebookUser fbUser)
         {
             GlobusHttpHelper chilkatHttpHelper = fbUser.globusHttpHelper;
 
-           GlobusLogHelper.log.Debug("Start Scraping Profile Information !");
-           GlobusLogHelper.log.Info("Start Scraping Profile Information !");
-        
+            GlobusLogHelper.log.Debug("Start Scraping Profile Information !");
+            GlobusLogHelper.log.Info("Start Scraping Profile Information !");
+
 
             foreach (string listFriendIditem in LstFBIDExtractorList)
             {
@@ -5155,8 +5566,8 @@ namespace Scrapers
                     string link = string.Empty;
                     string gender = string.Empty;
                     string locale = string.Empty;
-                    string birthday = "";                  
-                    string language = "";                 
+                    string birthday = "";
+                    string language = "";
                     string website = "";
                     string email = "";
                     string location = "";
@@ -5179,8 +5590,8 @@ namespace Scrapers
                         Urls = FBGlobals.Instance.fbgraphUrl + listFriendIditem + "/";
                     }
                     // "http://graph.facebook.com/"
-                   
-                    string pageSrc = chilkatHttpHelper.getHtmlfromUrl(new Uri(Urls));              
+
+                    string pageSrc = chilkatHttpHelper.getHtmlfromUrl(new Uri(Urls));
 
                     if (pageSrc.Contains("id"))
                     {
@@ -5189,7 +5600,7 @@ namespace Scrapers
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("id"), 30);
                             string[] ArrTemp = supsstring.Split('"');
                             id = ArrTemp[2];
-                      
+
                         }
                         catch (Exception ex)
                         {
@@ -5202,9 +5613,9 @@ namespace Scrapers
                         {
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("name"), 30);
                             string[] ArrTemp = supsstring.Split('"');
-                            name = ArrTemp[2];                      
+                            name = ArrTemp[2];
 
-                           
+
                         }
                         catch (Exception ex)
                         {
@@ -5218,7 +5629,7 @@ namespace Scrapers
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("first_name"), 30);
                             string[] ArrTemp = supsstring.Split('"');
                             first_name = ArrTemp[2];
-                          
+
                         }
                         catch (Exception ex)
                         {
@@ -5232,7 +5643,7 @@ namespace Scrapers
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("last_name"), 30);
                             string[] ArrTemp = supsstring.Split('"');
                             last_name = ArrTemp[2];
-                        
+
                         }
                         catch (Exception ex)
                         {
@@ -5246,7 +5657,7 @@ namespace Scrapers
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("link"), 95);
                             string[] ArrTemp = supsstring.Split('"');
                             link = ArrTemp[2];
-                          
+
 
                         }
                         catch (Exception ex)
@@ -5262,10 +5673,10 @@ namespace Scrapers
                         }
                         else
                         {
-                           // FBGlobals.Instance.fbhomeurl +
-                            link =  listFriendIditem;             // "http://www.facebook.com/" 
+                            // FBGlobals.Instance.fbhomeurl +
+                            link = listFriendIditem;             // "http://www.facebook.com/" 
                         }
-                      
+
                     }
                     if (pageSrc.Contains("gender"))
                     {
@@ -5274,7 +5685,7 @@ namespace Scrapers
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("gender"));
                             string[] ArrTemp = supsstring.Split('"');
                             gender = ArrTemp[2];
-                            
+
                         }
                         catch (Exception ex)
                         {
@@ -5287,7 +5698,7 @@ namespace Scrapers
                         {
                             string supsstring = pageSrc.Substring(pageSrc.IndexOf("locale"));
                             string[] ArrTemp = supsstring.Split('"');
-                            locale = ArrTemp[2];                           
+                            locale = ArrTemp[2];
                         }
                         catch (Exception ex)
                         {
@@ -5313,7 +5724,7 @@ namespace Scrapers
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
-                      
+
                         if (!string.IsNullOrEmpty(UserName))
                         {
                             FBEmailId = UserName + "@facebook.com";
@@ -5335,111 +5746,111 @@ namespace Scrapers
                         {
                             ownprofileUrl = link + "/about";
                         }
-                           // "http://www.facebook.com/"
-                             pagesourceofProfileUrl = chilkatHttpHelper.getHtmlfromUrl(new Uri(ownprofileUrl));
-                             if (string.IsNullOrEmpty(pagesourceofProfileUrl))
-                             {
-                                 ownprofileUrl = link + "/about";
-                                 pagesourceofProfileUrl = chilkatHttpHelper.getHtmlfromUrl(new Uri(ownprofileUrl)); 
-                             }
+                        // "http://www.facebook.com/"
+                        pagesourceofProfileUrl = chilkatHttpHelper.getHtmlfromUrl(new Uri(ownprofileUrl));
+                        if (string.IsNullOrEmpty(pagesourceofProfileUrl))
+                        {
+                            ownprofileUrl = link + "/about";
+                            pagesourceofProfileUrl = chilkatHttpHelper.getHtmlfromUrl(new Uri(ownprofileUrl));
+                        }
 
-                            try
-                            {
-                                string GetAbout = getBetween(pagesourceofProfileUrl, "<div class=\"fsl fwb fcb\">", "</div>");
-                                List<string> Arr = chilkatHttpHelper.GetDataTag(GetAbout, "a");
-                                Currentlocation = Arr[0].Replace(",", string.Empty);
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }
-                            if (pagesourceofProfileUrl.Contains("fsm fwn fcg") && pagesourceofProfileUrl.Contains("From"))
-                            {
-                                string[] Arrr = System.Text.RegularExpressions.Regex.Split(pagesourceofProfileUrl, "fsm fwn fcg");
-                                foreach (var Arr_item in Arrr)
-                                {
-                                    try
-                                    {
-                                        if (!Arr_item.Contains("<!DOCTYPE html>"))
-                                        {
-                                            if (Arr_item.Contains("><span>From <a href="))
-                                            {
-                                                string town = Utils.getBetween(Arr_item, "><span>From", "</a></span>").Replace(",", "") + "@@@@";
-                                                Hometown = Utils.getBetween(town, "\">", "@@@@").Replace(",", "");
-
-                                            }
-
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
-                            }
-                            if (string.IsNullOrEmpty(Hometown))
+                        try
+                        {
+                            string GetAbout = getBetween(pagesourceofProfileUrl, "<div class=\"fsl fwb fcb\">", "</div>");
+                            List<string> Arr = chilkatHttpHelper.GetDataTag(GetAbout, "a");
+                            Currentlocation = Arr[0].Replace(",", string.Empty);
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                        if (pagesourceofProfileUrl.Contains("fsm fwn fcg") && pagesourceofProfileUrl.Contains("From"))
+                        {
+                            string[] Arrr = System.Text.RegularExpressions.Regex.Split(pagesourceofProfileUrl, "fsm fwn fcg");
+                            foreach (var Arr_item in Arrr)
                             {
                                 try
                                 {
-                                    string[] arr = Regex.Split(pagesourceofProfileUrl, "<div class=\"fsl fwb fcb\">");
-                                    List<string> Arr = chilkatHttpHelper.GetDataTag(arr[2], "a");
-                                    Hometown = Arr[0].Replace(",", string.Empty);
+                                    if (!Arr_item.Contains("<!DOCTYPE html>"))
+                                    {
+                                        if (Arr_item.Contains("><span>From <a href="))
+                                        {
+                                            string town = Utils.getBetween(Arr_item, "><span>From", "</a></span>").Replace(",", "") + "@@@@";
+                                            Hometown = Utils.getBetween(town, "\">", "@@@@").Replace(",", "");
+
+                                        }
+
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-                                
                             }
-
+                        }
+                        if (string.IsNullOrEmpty(Hometown))
+                        {
                             try
                             {
-                                string[] arr = Regex.Split(pagesourceofProfileUrl, "fbTimelineSection mtm _bak fbTimelineCompactSection");                                
-                                string[] arr1 = Regex.Split(arr[1], "<th class=\"_3sts\">");
-
-                                foreach (var arr1_item in arr1)
-                                {
-                                    if (arr1_item.Contains("Gender"))
-                                    {
-                                        try
-                                        {
-                                            List<string> Arr2 = chilkatHttpHelper.GetDataTag(arr1_item, "div");
-                                            gender = Arr2[0];
-                                            
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                        break;
-                                    }
-                                }
-
-                                foreach (var arr1_item in arr1)
-                                {
-                                    if (arr1_item.Contains("Birthday"))
-                                    {
-                                        try
-                                        {
-                                            List<string> Arr2 = chilkatHttpHelper.GetDataTag(arr1_item, "div");
-                                            birthday = Arr2[0].Replace(",","-");
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                        break;
-                                    }
-                                }
+                                string[] arr = Regex.Split(pagesourceofProfileUrl, "<div class=\"fsl fwb fcb\">");
+                                List<string> Arr = chilkatHttpHelper.GetDataTag(arr[2], "a");
+                                Hometown = Arr[0].Replace(",", string.Empty);
                             }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
 
+                        }
 
-                          if (pagesourceofProfileUrl.Contains("clearfix experienceImageBlock lfloat"))
-                           {
+                        try
+                        {
+                            string[] arr = Regex.Split(pagesourceofProfileUrl, "fbTimelineSection mtm _bak fbTimelineCompactSection");
+                            string[] arr1 = Regex.Split(arr[1], "<th class=\"_3sts\">");
+
+                            foreach (var arr1_item in arr1)
+                            {
+                                if (arr1_item.Contains("Gender"))
+                                {
+                                    try
+                                    {
+                                        List<string> Arr2 = chilkatHttpHelper.GetDataTag(arr1_item, "div");
+                                        gender = Arr2[0];
+
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                    break;
+                                }
+                            }
+
+                            foreach (var arr1_item in arr1)
+                            {
+                                if (arr1_item.Contains("Birthday"))
+                                {
+                                    try
+                                    {
+                                        List<string> Arr2 = chilkatHttpHelper.GetDataTag(arr1_item, "div");
+                                        birthday = Arr2[0].Replace(",", "-");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+
+
+                        if (pagesourceofProfileUrl.Contains("clearfix experienceImageBlock lfloat"))
+                        {
                             string[] hrefArr = Regex.Split(pagesourceofProfileUrl, "clearfix experienceImageBlock lfloat");
                             string allhref = string.Empty;
                             foreach (var hrefArr_item in hrefArr)
@@ -5448,13 +5859,13 @@ namespace Scrapers
                                 {
                                     string ss = Utils.getBetween(hrefArr_item, "<div class=\"experienceTitle\">", "</div></div></div></div><");
                                     List<string> Arr = chilkatHttpHelper.GetDataTag(hrefArr_item, "a");
-                                    jobcompany=Arr[1].Replace(",",string.Empty);
-                                    break;                                   
-                                }                                
+                                    jobcompany = Arr[1].Replace(",", string.Empty);
+                                    break;
+                                }
                             }
                             string Univercity = getBetween(hrefArr[2], "<div class=\"experienceTitle\">", "</div><div");
                             List<string> Uniersity = chilkatHttpHelper.GetDataTag(Univercity, "a");
-                            string Uni= Uniersity[0].Replace("&#039;",string.Empty);
+                            string Uni = Uniersity[0].Replace("&#039;", string.Empty);
                             University = Uni;
 
                             try
@@ -5465,7 +5876,7 @@ namespace Scrapers
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }                           
+                            }
                             string[] hrefArr1 = Regex.Split(allhref, "href=");
                             foreach (var hrefArr1item in hrefArr1)
                             {
@@ -5473,10 +5884,10 @@ namespace Scrapers
                                 {
                                     if (hrefArr1item.Contains("/info"))
                                     {
-                                        string[] infohrefArr = Regex.Split(hrefArr1item, "\"");                                     
+                                        string[] infohrefArr = Regex.Split(hrefArr1item, "\"");
                                         string infohref = infohrefArr[1];
-                                        string infopagesource = chilkatHttpHelper.getHtmlfromUrl(new Uri(infohref));                                     
-                                      
+                                        string infopagesource = chilkatHttpHelper.getHtmlfromUrl(new Uri(infohref));
+
                                         string[] nameArr = Regex.Split(infopagesource, "nameButton uiButton uiButtonOverlay");
                                         List<string> lstspan = chilkatHttpHelper.GetDataTag(nameArr[1], "span");
                                         name = System.Net.WebUtility.HtmlDecode(lstspan[0].Replace(",", ";").Trim());
@@ -5496,7 +5907,7 @@ namespace Scrapers
                                                 }
                                             }
                                         }
-                                     
+
                                         string[] contactinfoArr = Regex.Split(infopagesource, "uiHeader uiHeaderWithImage fbTimelineAboutMeHeader");
                                         if (contactinfoArr.Count() >= 2)
                                         {
@@ -5506,12 +5917,12 @@ namespace Scrapers
                                                 if (lstcontactinfoArrtditem.Contains("Mobile Phones"))
                                                 {
                                                     Mobile_Phones = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Mobile Phones", string.Empty).Replace(",", ";").Trim());
-                                                   
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Address"))
                                                 {
                                                     location = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Address", string.Empty).Replace(",", ";").Trim());
-                                                  
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Email"))
                                                 {
@@ -5520,18 +5931,18 @@ namespace Scrapers
                                                     if (emailArr1.Count() >= 2)
                                                     {
                                                         email = emailArr1[1] + emailArr1[0];
-                                                      
+
                                                     }
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Current location") || lstcontactinfoArrtditem.Contains("Current City"))
                                                 {
                                                     Currentlocation = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Current location", string.Empty).Replace(",", ";").Replace("Current City", string.Empty).Trim());
-                                                    
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Hometown"))
                                                 {
                                                     Hometown = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Hometown", string.Empty).Replace(",", ";").Trim());
-                                                   
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Employers"))
                                                 {
@@ -5540,7 +5951,7 @@ namespace Scrapers
                                                     if (workinfospanArr2.Count() >= 2)
                                                     {
                                                         jobcompany = System.Net.WebUtility.HtmlDecode(workinfospanArr2[1].Replace("class=\"fwb\">", string.Empty).Replace("</", string.Empty).Replace(",", ";").Trim());
-                                                       
+
                                                     }
                                                     jobposition = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Employers ·", string.Empty).Replace(jobcompany, string.Empty).Replace(",", ";").Trim());
                                                 }
@@ -5549,7 +5960,7 @@ namespace Scrapers
                                                     try
                                                     {
                                                         Secondaryschool = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Secondary school", string.Empty).Replace(",", ";").Trim());
-                                                      
+
                                                     }
                                                     catch (Exception ex)
                                                     {
@@ -5559,7 +5970,7 @@ namespace Scrapers
 
                                                 if (lstcontactinfoArrtditem.Contains("University"))
                                                 {
-                                                  
+
                                                     try
                                                     {
                                                         University = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("University", string.Empty).Replace(",", ";").Trim());
@@ -5582,12 +5993,12 @@ namespace Scrapers
                                                         if (lstcontactinfoArrtditem.Contains("Current location"))
                                                         {
                                                             Currentlocation = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Current location", string.Empty).Replace(",", ";").Trim());
-                                                         
+
                                                         }
                                                         if (lstcontactinfoArrtditem.Contains("Hometown"))
                                                         {
                                                             Hometown = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Hometown", string.Empty).Replace(",", ";").Trim());
-                                                          
+
                                                         }
                                                     }
                                                     catch (Exception ex)
@@ -5611,12 +6022,12 @@ namespace Scrapers
                                                 if (lstcontactinfoArrtditem.Contains("Mobile Phones"))
                                                 {
                                                     Mobile_Phones = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Mobile Phones", string.Empty).Replace(",", ";").Trim());
-                                                  
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Address"))
                                                 {
                                                     location = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Address", string.Empty).Replace(",", ";").Trim());
-                                                   
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Email"))
                                                 {
@@ -5625,18 +6036,18 @@ namespace Scrapers
                                                     if (emailArr1.Count() >= 2)
                                                     {
                                                         email = emailArr1[1] + emailArr1[0];
-                                                     
+
                                                     }
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Current location") || lstcontactinfoArrtditem.Contains("Current City"))
                                                 {
                                                     Currentlocation = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Current location", string.Empty).Replace(",", ";").Replace("Current City", string.Empty).Trim());
-                                                   
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Hometown"))
                                                 {
                                                     Hometown = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Hometown", string.Empty).Replace(",", ";").Trim());
-                                                  
+
                                                 }
                                                 if (lstcontactinfoArrtditem.Contains("Employers"))
                                                 {
@@ -5645,7 +6056,7 @@ namespace Scrapers
                                                     if (workinfospanArr2.Count() >= 2)
                                                     {
                                                         jobcompany = System.Net.WebUtility.HtmlDecode(workinfospanArr2[1].Replace("class=\"fwb\">", string.Empty).Replace("</", string.Empty).Replace(",", ";").Trim());
-                                                     
+
                                                     }
                                                     jobposition = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Employers ·", string.Empty).Replace(jobcompany, string.Empty).Replace(",", ";").Trim());
                                                 }
@@ -5654,7 +6065,7 @@ namespace Scrapers
                                                     try
                                                     {
                                                         Secondaryschool = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Secondary school", string.Empty).Replace(",", ";").Trim());
-                                                       
+
                                                     }
                                                     catch (Exception ex)
                                                     {
@@ -5666,7 +6077,7 @@ namespace Scrapers
                                                 if (lstcontactinfoArrtditem.Contains("University"))
                                                 {
                                                     University = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("University", string.Empty).Replace(",", ";").Trim());
-                                                   
+
                                                 }
                                             }
                                             try
@@ -5679,12 +6090,12 @@ namespace Scrapers
                                                         if (lstcontactinfoArrtditem.Contains("Current location"))
                                                         {
                                                             Currentlocation = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Current location", string.Empty).Replace(",", ";").Trim());
-                                                           
+
                                                         }
                                                         if (lstcontactinfoArrtditem.Contains("Hometown"))
                                                         {
                                                             Hometown = System.Net.WebUtility.HtmlDecode(lstcontactinfoArrtditem.Replace("Hometown", string.Empty).Replace(",", ";").Trim());
-                                                          
+
                                                         }
                                                     }
                                                     catch (Exception ex)
@@ -5712,7 +6123,7 @@ namespace Scrapers
                                                     if (workinfospanArr2.Count() >= 2)
                                                     {
                                                         jobcompany = System.Net.WebUtility.HtmlDecode(workinfospanArr2[1].Replace("class=\"fwb\">", string.Empty).Replace("</", string.Empty).Replace(",", ";").Trim());
-                                                        jobcompany = jobcompany.Replace("&#039;",string.Empty);
+                                                        jobcompany = jobcompany.Replace("&#039;", string.Empty);
                                                     }
                                                     jobposition = System.Net.WebUtility.HtmlDecode(workinfospanArr1item.Replace("Employers ·", string.Empty).Replace(jobcompany, string.Empty).Replace(",", ";").Trim());
 
@@ -5723,12 +6134,12 @@ namespace Scrapers
                                                     try
                                                     {
                                                         Secondaryschool = System.Net.WebUtility.HtmlDecode(workinfospanArr1item.Replace("Secondary school", string.Empty).Replace(",", ";").Trim());
-                                                        
+
                                                     }
                                                     catch (Exception ex)
                                                     {
                                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                    }                                                   
+                                                    }
                                                 }
 
                                                 if (workinfospanArr1item.Contains("University"))
@@ -5736,7 +6147,7 @@ namespace Scrapers
                                                     try
                                                     {
                                                         University = System.Net.WebUtility.HtmlDecode(workinfospanArr1item.Replace("University", string.Empty).Replace(",", ";").Trim());
-                                                        
+
                                                     }
                                                     catch (Exception ex)
                                                     {
@@ -5744,7 +6155,7 @@ namespace Scrapers
                                                     }
                                                 }
                                             }
-                                        }                                       
+                                        }
                                     }
                                 }
                                 catch (Exception ex)
@@ -5765,30 +6176,182 @@ namespace Scrapers
                         {
                             string phone = getBetween(pagesourceofProfileUrl, "<td class=\"_51m- contactInfoPhone\">", "</td>");
                             List<string> Phonelst = chilkatHttpHelper.GetDataTag(phone, "span");
-                            Mobile_Phones = Phonelst[0].Replace(",",string.Empty);
+                            Mobile_Phones = Phonelst[0].Replace(",", string.Empty);
                         }
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                    
-                  //  Urls
+
+                    //  Urls
 
                     if (!string.IsNullOrEmpty(ExportFilePathFBIDExtractor))
                     {
                         try
                         {
                             string ProfileLink = FBGlobals.Instance.fbhomeurl + id;     // "http://facebook.com/"
-                            
+
                             string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
 
-                            string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "locale"+"FbEmail";
+                            string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "locale" + "FbEmail";
                             string CSV_Content = ProfileLink + "," + id + "," + name + "," + first_name + "," + last_name + "," + locale + "," + FBEmailId;
 
-                           // string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Birthday" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "Email" + "," + "Telephone" + "," + "UserAccount";
+                            // string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Birthday" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "Email" + "," + "Telephone" + "," + "UserAccount";
 
-                           // string CSV_Content = ProfileLink + "," + id + "," + name + "," + first_name + "," + last_name + "," + birthday + "," + link + "," + gender + "," + locale + "," + Hometown + "," + Currentlocation + ", " + jobcompany + "," + University + "," + Secondaryschool + "," + email + "," + Mobile_Phones + ",," + fbUser.username;// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+                            // string CSV_Content = ProfileLink + "," + id + "," + name + "," + first_name + "," + last_name + "," + birthday + "," + link + "," + gender + "," + locale + "," + Hometown + "," + Currentlocation + ", " + jobcompany + "," + University + "," + Secondaryschool + "," + email + "," + Mobile_Phones + ",," + fbUser.username;// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+                            Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFBIDExtractor);
+                            GlobusLogHelper.log.Info("Profile Info Saved In CSV");
+                            GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+            }
+
+        }
+
+
+        public void ExtractFriendsInformationFacebookerNew(ref FacebookUser fbUser)
+        {
+            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+
+            GlobusLogHelper.log.Debug("Start Scraping Profile Information !");
+            GlobusLogHelper.log.Info("Start Scraping Profile Information !");
+
+
+            foreach (string listFriendIditem in LstFBIDExtractorList)
+            {
+                try
+                {
+                    string Urls = string.Empty;
+                    string id = string.Empty;
+                    string name = string.Empty;
+                    string first_name = string.Empty;
+                    string last_name = string.Empty;
+                    string link = string.Empty;
+                    string gender = string.Empty;
+                    string locale = string.Empty;
+                    string birthday = "";
+                    string language = "";
+                    string website = "";
+                    string email = "";
+                    string location = "";
+                    string jobposition = "";
+                    string jobcompany = "";
+                    string Mobile_Phones = "";
+                    string University = "";
+                    string Secondaryschool = "";
+                    string Hometown = "";
+                    string Currentlocation = "";
+                    string pagesourceofProfileUrl = string.Empty;
+                    string FBEmailId = string.Empty;
+                    string FBUserName = string.Empty;
+
+                    Urls = listFriendIditem;
+
+
+                    string pageSrc = HttpHelper.getHtmlfromUrl(new Uri(Urls));
+                    try
+                    {
+                        id = Utils.getBetween(pageSrc, "\"profile_id\":", ",");
+
+                        FBUserName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                        string aboutUrl = string.Empty;
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+                            aboutUrl = "https://www.facebook.com/" + FBUserName + "/about";
+                        }
+                        else
+                        {
+                            aboutUrl = "https://www.facebook.com/profile.php?id=" + id + "&sk=about";
+                        }
+
+                        string AboutPage = HttpHelper.getHtmlfromUrl(new Uri(aboutUrl));
+                        string WorkDetails = Utils.getBetween(Utils.getBetween(AboutPage, "Works at <a", "</div>"), ">", "</a>");
+                        name = Utils.getBetween(AboutPage, "setPageTitle\",[],[\"", "\"");
+                        University = Utils.getBetween(Utils.getBetween(AboutPage, "Studied at <a", "</div>"), ">", "</a>");
+                        location = Utils.getBetween(Utils.getBetween(AboutPage, "Lives in <a", "</div>"), ">", "</a>");
+                        birthday = Utils.getBetween(AboutPage, "Birthday</span></div><div>", "</div>");
+                        if (AboutPage.Contains("Phones</span></div><div><span dir=\"ltr\">"))
+                        {
+                            Mobile_Phones = Utils.getBetween(AboutPage, "Phones</span></div><div><span dir=\"ltr\">", "</span>");
+                        }
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+                            FBEmailId = FBUserName + "@facebook.com";
+
+                        }
+                        else
+                        {
+                            FBEmailId = id + "@facebook.com";
+                        }
+                        string basicInfoUrl = string.Empty;
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+                            basicInfoUrl = aboutUrl + "?section=contact-info&pnref=about";
+                        }
+                        else
+                        {
+                            basicInfoUrl = aboutUrl + "&section=contact-info&pnref=about";
+                        }
+                        string basicInfoPage = HttpHelper.getHtmlfromUrl(new Uri(basicInfoUrl));
+                        string genderInfo = Utils.getBetween(basicInfoPage, "Gender</span>", "</span>");
+                        if (genderInfo.Contains("Male"))
+                        {
+                            gender = "Male";
+                        }
+                        else
+                        {
+                            gender = "Female";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+
+                    try
+                    {
+
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+
+                    //  Urls
+
+                    if (!string.IsNullOrEmpty(ExportFilePathFBIDExtractor))
+                    {
+                        try
+                        {
+                            string ProfileLink = string.Empty;
+                            if (!string.IsNullOrEmpty(FBUserName))
+                            {
+                                ProfileLink = FBGlobals.Instance.fbhomeurl + FBUserName;
+                            }
+                            else
+                            {
+                                ProfileLink = FBGlobals.Instance.fbhomeurl + id;
+                            }
+
+                            // string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
+
+                            string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "University" + "," + "Location" + "," + "Birthday" + "FbEmail";
+                            string CSV_Content = ProfileLink + "," + id + "," + name + "," + University + "," + location + "," + birthday + "," + FBEmailId;
+
+                            // string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Birthday" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "Email" + "," + "Telephone" + "," + "UserAccount";
+
+                            // string CSV_Content = ProfileLink + "," + id + "," + name + "," + first_name + "," + last_name + "," + birthday + "," + link + "," + gender + "," + locale + "," + Hometown + "," + Currentlocation + ", " + jobcompany + "," + University + "," + Secondaryschool + "," + email + "," + Mobile_Phones + ",," + fbUser.username;// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
                             Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFBIDExtractor);
                             GlobusLogHelper.log.Info("Profile Info Saved In CSV");
                             GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
@@ -5814,7 +6377,7 @@ namespace Scrapers
         {
 
             GlobusHttpHelper chilkatHttpHelper = fbUser.globusHttpHelper;
-          
+
             string UserId = string.Empty;
 
             string pageSource_HomePage = chilkatHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));      // "http://www.facebook.com/"
@@ -5851,7 +6414,7 @@ namespace Scrapers
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
-                      
+
                         string[] hrefArr1 = Regex.Split(allhref, "href=");
                         foreach (var hrefArr1item in hrefArr1)
                         {
@@ -5859,13 +6422,13 @@ namespace Scrapers
                             {
                                 if (hrefArr1item.Contains("/info"))
                                 {
-                                    string[] infohrefArr = Regex.Split(hrefArr1item, "\"");                               
+                                    string[] infohrefArr = Regex.Split(hrefArr1item, "\"");
                                     string infohref = infohrefArr[1];
                                     string infopagesource = chilkatHttpHelper.getHtmlfromUrl(new Uri(infohref));
                                     string name = "";
                                     string birthday = "";
                                     string gender = "";
-                                    string language = "";                                    
+                                    string language = "";
                                     string website = "";
                                     string email = "";
                                     string location = "";
@@ -5891,7 +6454,7 @@ namespace Scrapers
                                             }
                                         }
                                     }
-                                
+
                                     string[] contactinfoArr = Regex.Split(infopagesource, "uiInfoTable mvl mhm profileInfoTable");
                                     if (contactinfoArr.Count() >= 2)
                                     {
@@ -6038,14 +6601,14 @@ namespace Scrapers
         public static List<string> ExtractFriendIdsFb(ref FacebookUser fbUser, ref string userID, int FriendCount)
         {
 
-            GlobusHttpHelper gHttpHelper = fbUser.globusHttpHelper;          
+            GlobusHttpHelper gHttpHelper = fbUser.globusHttpHelper;
             List<string> lstFriendTemp = new List<string>();
             try
             {
 
                 int i = 0;
                 do
-                {                 
+                {
 
                     string FriendUrl = FBGlobals.Instance.fbAllFriendsUIdUrl + userID + "&infinitescroll=1&location=friends_tab_tl&start=" + i + "&__user=" + userID + "&__a=1";
 
@@ -6113,12 +6676,12 @@ namespace Scrapers
             {
 
                 GlobusLogHelper.log.Debug("Logged In With UserName : " + fbUser.username);
-                GlobusLogHelper.log.Debug("Start Scraping Profile Information !");   
+                GlobusLogHelper.log.Debug("Start Scraping Profile Information !");
 
                 listFriendId.Clear();
 
                 List<string> lstid = lstOwnFriendId.Distinct().ToList();
-             
+
 
 
                 foreach (string listFriendIditem in lstid)
@@ -6138,8 +6701,8 @@ namespace Scrapers
 
 
                         Urls = FBGlobals.Instance.fbgraphUrl + listFriendIditem + "/";          // "http://graph.facebook.com/" 
-                       
-                        string pageSrc = chilkatHttpHelper.getHtmlfromUrl(new Uri(Urls));                    
+
+                        string pageSrc = chilkatHttpHelper.getHtmlfromUrl(new Uri(Urls));
 
                         if (pageSrc.Contains("id"))
                         {
@@ -6148,7 +6711,7 @@ namespace Scrapers
                                 string supsstring = pageSrc.Substring(pageSrc.IndexOf("id"), 30);
                                 string[] ArrTemp = supsstring.Split('"');
                                 id = ArrTemp[2];
-                              
+
                             }
                             catch (Exception ex)
                             {
@@ -6162,7 +6725,7 @@ namespace Scrapers
                                 string supsstring = pageSrc.Substring(pageSrc.IndexOf("name"), 30);
                                 string[] ArrTemp = supsstring.Split('"');
                                 name = ArrTemp[2];
-                                
+
                             }
                             catch (Exception ex)
                             {
@@ -6176,7 +6739,7 @@ namespace Scrapers
                                 string supsstring = pageSrc.Substring(pageSrc.IndexOf("first_name"), 30);
                                 string[] ArrTemp = supsstring.Split('"');
                                 first_name = ArrTemp[2];
-                               
+
                             }
                             catch (Exception ex)
                             {
@@ -6203,7 +6766,7 @@ namespace Scrapers
                             {
                                 string supsstring = pageSrc.Substring(pageSrc.IndexOf("link"), 95);
                                 string[] ArrTemp = supsstring.Split('"');
-                                link = ArrTemp[2];                             
+                                link = ArrTemp[2];
 
                             }
                             catch (Exception ex)
@@ -6221,7 +6784,7 @@ namespace Scrapers
                             {
                                 string supsstring = pageSrc.Substring(pageSrc.IndexOf("gender"));
                                 string[] ArrTemp = supsstring.Split('"');
-                                gender = ArrTemp[2];                             
+                                gender = ArrTemp[2];
                             }
                             catch (Exception ex)
                             {
@@ -6234,7 +6797,7 @@ namespace Scrapers
                             {
                                 string supsstring = pageSrc.Substring(pageSrc.IndexOf("locale"));
                                 string[] ArrTemp = supsstring.Split('"');
-                                locale = ArrTemp[2];                             
+                                locale = ArrTemp[2];
                             }
                             catch (Exception ex)
                             {
@@ -6282,8 +6845,8 @@ namespace Scrapers
                             }
                             string pagesourceofProfileUrl = chilkatHttpHelper.getHtmlfromUrl(new Uri(ownprofileUrl));
                             string _ExprotFilePath1 = string.Empty;
-                         
-                        
+
+
                             if (pagesourceofProfileUrl.Contains("fbTimelineSummarySectionWrapper") || (pagesourceofProfileUrl.Contains("Work and education") && pagesourceofProfileUrl.Contains("Living") || pagesourceofProfileUrl.Contains("Basic Information")))// && pagesourceofProfileUrl.Contains("Contact Information")))
                             {
                                 #region commentedCode
@@ -6330,7 +6893,7 @@ namespace Scrapers
 
                                                 string getTagHtml = Utils.getBetween(pagesourceofProfileUrl, "<th class=\"_3sts\">Birthday</th>", "</div></td>");
                                                 string getdiv = Utils.getBetween(getTagHtml, "<div>", "</div>");
-                                                birthday = getdiv.Replace(",","-");
+                                                birthday = getdiv.Replace(",", "-");
                                             }
                                             catch (Exception ex)
                                             {
@@ -6350,7 +6913,7 @@ namespace Scrapers
                                                         try
                                                         {
                                                             HighSchools = HighSchools + ":" + item;
-                                                            
+
                                                         }
                                                         catch (Exception ex)
                                                         {
@@ -6464,7 +7027,7 @@ namespace Scrapers
                                                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                         }
                                                     }
-                                                    string[] HS = Regex.Split(ArrHighSchool1[1], "<");                                                  
+                                                    string[] HS = Regex.Split(ArrHighSchool1[1], "<");
 
                                                 }
                                                 catch (Exception ex)
@@ -6506,7 +7069,7 @@ namespace Scrapers
                                             {
                                                 try
                                                 {
-                                                    
+
                                                     string[] ArrHighschool = Regex.Split(infopagesource, ">Living<");
                                                     string[] ArrHighSchool1 = Regex.Split(ArrHighschool[1], "<span class=\"fwb\">");
 
@@ -6597,7 +7160,7 @@ namespace Scrapers
                                                                 List<string> Ht = chilkatHttpHelper.GetDataTag(Home_item, "a");
                                                                 Hometowns = Ht[0];
                                                                 Hometown = Ht[0];
-                                                                Hometown = Hometown.Replace(",",string.Empty);
+                                                                Hometown = Hometown.Replace(",", string.Empty);
                                                             }
 
                                                         }
@@ -6690,7 +7253,7 @@ namespace Scrapers
                                             {
                                                 try
                                                 {
-                                                    
+
                                                     string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
                                                     string CSVHeader = "ExtractUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Birthday" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone" + "," + "UserAccont";
                                                     string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + birthday + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + Hometowns.Replace(",", " ") + "," + CurrentCitys.Replace(",", " ") + ", " + Employers.Replace(",", " ") + "," + University.Replace(",", " ") + "," + Secondaryschool.Replace(",", " ") + "," + HighSchools.Replace(",", " ") + "," + FBEmailId.Replace(",", " ") + "," + Mobile_Phones.Replace(",", " ") + "," + fbUser.username;
@@ -6703,7 +7266,7 @@ namespace Scrapers
                                                 {
                                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                 }
-                                            }                                           
+                                            }
                                         }
                                     }
                                     catch (Exception ex)
@@ -6719,14 +7282,14 @@ namespace Scrapers
                                     try
                                     {
                                         string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
-                                       
+
                                         string CSVHeader = "ExtractUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
 
                                         string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + ", " + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + FBEmailId.Replace(",", " ") + "," + "-".Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
 
                                         Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathFBIDExtractor);
                                         GlobusLogHelper.log.Info("Data Saved IN CSV File");
-                                        GlobusLogHelper.log.Debug("Data Saved IN CSV File");                                       
+                                        GlobusLogHelper.log.Debug("Data Saved IN CSV File");
                                     }
                                     catch (Exception ex)
                                     {
@@ -6746,7 +7309,7 @@ namespace Scrapers
                     }
                 }
 
-               GlobusLogHelper.log.Debug("Process Completed Of Scraping Profile Information With Username >>> " + fbUser.username);
+                GlobusLogHelper.log.Debug("Process Completed Of Scraping Profile Information With Username >>> " + fbUser.username);
             }
             catch (Exception ex)
             {
@@ -6787,7 +7350,7 @@ namespace Scrapers
             {
                 GlobusHttpHelper gHttpHelper = fbUser.globusHttpHelper;
 
-               foreach (string item in LstFBIDExtractorList)
+                foreach (string item in LstFBIDExtractorList)
                 {
                     try
                     {
@@ -6803,12 +7366,12 @@ namespace Scrapers
                         fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSource_HomePage);
 
                         int countFriend = ExtractFriendCount(ref fbUser, ref gHttpHelper, UserId);
-                        if (countFriend==0)
+                        if (countFriend == 0)
                         {
                             string mm = FBGlobals.Instance.fbhomeurl + UserId;             // "https://www.facebook.com/"
                             string pageSource = gHttpHelper.getHtmlfromUrl(new Uri(mm));
                             string ss = Utils.getBetween(pageSource, "Friends<span class=\"_gs6\">", "</span>");
-                            ss = ss.Replace(",",string.Empty);
+                            ss = ss.Replace(",", string.Empty);
                             countFriend = Convert.ToInt32(ss);
                         }
 
@@ -6937,16 +7500,16 @@ namespace Scrapers
         }
 
         /// Group Scraper ///
-      
+
         public List<string> LstOfGroupKeywords
         {
             get;
             set;
         }
-        
+
 
         ///  GroupMemberScraper  ///
-        
+
 
         #region Property For FriendInfoScraper
 
@@ -7015,7 +7578,7 @@ namespace Scrapers
             get;
             set;
         }
-        
+
 
         #endregion
 
@@ -7029,206 +7592,208 @@ namespace Scrapers
         Dictionary<string, string> DicIds = new Dictionary<string, string>();
 
         #endregion
-     
-
-       public void StartGroupMemberScraper()
-       {
-           try
-           {
-
-               countThreadControllerGroupMemberScraper = 0;
-               int numberOfAccountPatch = 25;
-
-               if (NoOfThreadsGroupMemberScraper > 0)
-               {
-                   numberOfAccountPatch = NoOfThreadsGroupMemberScraper;
-               }
-
-               List<List<string>> list_listAccounts = new List<List<string>>();
-               if (FBGlobals.listAccounts.Count >= 1)
-               {
-
-                   list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
-
-                   foreach (List<string> listAccounts in list_listAccounts)
-                   {
-                       //int tempCounterAccounts = 0; 
-
-                       foreach (string account in listAccounts)
-                       {
-
-                           string[] AccountArr = GroupMemberScraperUsingAccount.Split(':');
-                           string Account = AccountArr[0];
-                           try
-                           {
-                               lock (lockrThreadControllerGroupScraper)
-                               {
-                                   try
-                                   {
-                                       if (countThreadControllerGroupMemberScraper >= listAccounts.Count)
-                                       {
-                                           Monitor.Wait(lockrThreadControllerGroupScraper);
-                                       }
-
-                                       string acc = account.Remove(account.IndexOf(':'));
-                                       if (Account==acc)
-                                       {
-                                           //Run a separate thread for each account
-
-                                           FacebookUser item = null;
-                                           FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
-
-                                           if (item != null)
-                                           {
-
-                                               Thread GroupMemberThread = new Thread(StartMultiThreadsGroupMemberInfoScraper);
-                                               GroupMemberThread.Name = "workerThread_Profiler_" + acc;
-                                               GroupMemberThread.IsBackground = true;
 
 
-                                               GroupMemberThread.Start(new object[] { item });
+        public void StartGroupMemberScraper()
+        {
+            try
+            {
 
-                                               countThreadControllerGroupMemberScraper++;
-                                           } 
-                                       }
-                                   }
-                                   catch (Exception ex)
-                                   {
-                                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                   }
-                               }
-                           }
-                           catch (Exception ex)
-                           {
-                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                           }
-                       }
-                   }
-               }
-           }
-           catch (Exception ex)
-           {
-               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-           }
-       }
+                countThreadControllerGroupMemberScraper = 0;
+                int numberOfAccountPatch = 25;
 
+                if (NoOfThreadsGroupMemberScraper > 0)
+                {
+                    numberOfAccountPatch = NoOfThreadsGroupMemberScraper;
+                }
 
+                List<List<string>> list_listAccounts = new List<List<string>>();
+                if (FBGlobals.listAccounts.Count >= 1)
+                {
 
-       public void StartMultiThreadsGroupMemberInfoScraper(object parameters)
-       {
-           try
-           {
-               if (!isStopFriendInfoScraper)
-               {
-                   try
-                   {
-                       lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
-                       lstThreadsGroupMemberScraper.Distinct();
-                       Thread.CurrentThread.IsBackground = true;
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                   }
-                   try
-                   {
-                       {
-                           Array paramsArray = new object[1];
-                           paramsArray = (Array)parameters;
+                    list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
 
-                           FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+                    foreach (List<string> listAccounts in list_listAccounts)
+                    {
+                        //int tempCounterAccounts = 0; 
 
-                           if (!objFacebookUser.isloggedin)
-                           {
-                               GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
-                               objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+                        foreach (string account in listAccounts)
+                        {
 
-                               //Login Process
+                            string[] AccountArr = GroupMemberScraperUsingAccount.Split(':');
+                            string Account = AccountArr[0];
+                            try
+                            {
+                                lock (lockrThreadControllerGroupScraper)
+                                {
+                                    try
+                                    {
+                                        if (countThreadControllerGroupMemberScraper >= listAccounts.Count)
+                                        {
+                                            Monitor.Wait(lockrThreadControllerGroupScraper);
+                                        }
 
-                               Accounts.AccountManager objAccountManager = new AccountManager();
-                               objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
-                           }
+                                        string acc = account.Remove(account.IndexOf(':'));
+                                        if (Account == acc)
+                                        {
+                                            //Run a separate thread for each account
 
-                           if (objFacebookUser.isloggedin)
-                           {
-                               // Call StartActionEventInviter
+                                            FacebookUser item = null;
+                                            FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                                            if (item != null)
+                                            {
+
+                                                Thread GroupMemberThread = new Thread(StartMultiThreadsGroupMemberInfoScraper);
+                                                GroupMemberThread.Name = "workerThread_Profiler_" + acc;
+                                                GroupMemberThread.IsBackground = true;
 
 
-                               
-                               if (StartProcessUsingGroupMemberScraper == "Group member Scraper by Urls")
-                               {
-                                   GetGroupMember(ref objFacebookUser);
-                               }
-                               else if (StartProcessUsingGroupMemberScraper == "Group url Scraper  by Keywords")
-                               {
-                                   GetGroupUrls(ref objFacebookUser);
-                               }
-                           }
-                           else
-                           {
-                               GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                               GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
-                           }
-                       }
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                   }
-               }
-           }
-           catch (Exception ex)
-           {
-               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-           }
+                                                GroupMemberThread.Start(new object[] { item });
 
-           finally
-           {
-               try
-               {
-                 //  if (!isStopGroupMemberScraper)
-                   {
-                       lock (lockrThreadControllerGroupScraper)
-                       {
-                           countThreadControllerGroupMemberScraper--;
-                           Monitor.Pulse(lockrThreadControllerGroupScraper);
-                       }
-                   }
-               }
-               catch (Exception ex)
-               {
-                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-               }
-           }
-       }
-
-       public List<string> sgroupid = new List<string>();
-       public static bool opengrouptype = false;
-       public static bool closegrouptype = false;
-
-       public void GetGroupUrls(ref FacebookUser fbuse)
-       {
+                                                countThreadControllerGroupMemberScraper++;
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+        }
 
 
-           try
-           {
-               lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
-               lstThreadsGroupMemberScraper.Distinct();
-               Thread.CurrentThread.IsBackground = true;
-           }
-           catch (Exception ex)
-           {
-               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-           }
 
-          GlobusHttpHelper chilkatHttpHelper = fbuse.globusHttpHelper;
+        public void StartMultiThreadsGroupMemberInfoScraper(object parameters)
+        {
+            try
+            {
+                if (!isStopFriendInfoScraper)
+                {
+                    try
+                    {
+                        lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
+                        lstThreadsGroupMemberScraper.Distinct();
+                        Thread.CurrentThread.IsBackground = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                    try
+                    {
+                        {
+                            Array paramsArray = new object[1];
+                            paramsArray = (Array)parameters;
 
-          Dictionary<string, string> CheckDuplicates = new Dictionary<string, string>();
+                            FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+
+                            if (!objFacebookUser.isloggedin)
+                            {
+                                GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+                                objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+
+                                //Login Process
+
+                                Accounts.AccountManager objAccountManager = new AccountManager();
+                                objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                            }
+
+                            if (objFacebookUser.isloggedin)
+                            {
+                                // Call StartActionEventInviter
+
+                                if (StartProcessUsingGroupMemberScraper == "Group member Scraper by Urls")
+                                {
+                                    GetGroupMember(ref objFacebookUser);
+                                }
+                                else if (StartProcessUsingGroupMemberScraper == "Group url Scraper  by Keywords")
+                                {
+                                    GetGroupUrls(ref objFacebookUser);
+                                }
+                            }
+                            else
+                            {
+                                GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                                GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+            finally
+            {
+                try
+                {
+                    //  if (!isStopGroupMemberScraper)
+                    {
+                        lock (lockrThreadControllerGroupScraper)
+                        {
+                            countThreadControllerGroupMemberScraper--;
+                            Monitor.Pulse(lockrThreadControllerGroupScraper);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+            }
+        }
+
+        public List<string> sgroupid = new List<string>();
+        public static bool opengrouptype = false;
+        public static bool closegrouptype = false;
+
+
+
+
+
+        public void GetGroupUrls(ref FacebookUser fbuse)
+        {
+
+
+            try
+            {
+                lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
+                lstThreadsGroupMemberScraper.Distinct();
+                Thread.CurrentThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+            GlobusHttpHelper chilkatHttpHelper = fbuse.globusHttpHelper;
+
+            Dictionary<string, string> CheckDuplicates = new Dictionary<string, string>();
 
             string Username = fbuse.username;
-            int GetCountMember =0;
-        
-       
+            int GetCountMember = 0;
+
+
 
             try
             {
@@ -7243,7 +7808,8 @@ namespace Scrapers
                     {
                         try
                         {
-                            GetCountMember = FindTheGroupUrls(chilkatHttpHelper, CheckDuplicates, Username, GetCountMember, keyword);
+                            //  GetCountMember = FindTheGroupUrls(chilkatHttpHelper, CheckDuplicates, Username, GetCountMember, keyword);
+                            FindTheGroupUrlsNew(ref chilkatHttpHelper, CheckDuplicates, Username, GetCountMember, keyword);
                         }
                         catch (Exception ex)
                         {
@@ -7259,986 +7825,1851 @@ namespace Scrapers
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }          
-            
-      }
-
-       private int FindTheGroupUrls(GlobusHttpHelper chilkatHttpHelper, Dictionary<string, string> CheckDuplicates, string Username, int GetCountMember, string keyword)
-       {
-
-           try
-           {
-               lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
-               lstThreadsGroupMemberScraper.Distinct();
-               Thread.CurrentThread.IsBackground = true;
-           }
-           catch (Exception ex)
-           {
-               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-           }
-
-           try
-           {
-               string strKeyword = keyword;
-               string strGroupUrl = FBGlobals.Instance.fbfacebookSearchPhpQUrl + strKeyword.Replace(" ","+") + "&init=quick&type=groups";   // "https://www.facebook.com/search.php?q="
-
-               string __user = "";
-               string fb_dtsg = "";
-
-               string pgSrc_FanPageSearch = chilkatHttpHelper.getHtmlfromUrl(new Uri(strGroupUrl));
-
-
-
-               __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
-               if (string.IsNullOrEmpty(__user))
-               {
-                   __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
-               }
-
-               fb_dtsg = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "fb_dtsg");
-               if (string.IsNullOrEmpty(fb_dtsg))
-               {
-                   fb_dtsg = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "fb_dtsg");
-               }
-
-               List<string> pagesList = GetGroups_FBSearch(pgSrc_FanPageSearch);
-
-
-               List<string> distinctPages = pagesList.Distinct().ToList();
-               foreach (string distpage in distinctPages)
-               {
-                   try
-                   {
-                       string distpage1 = distpage.Replace("d", "groups/");
-                       sgroupid.Add(distpage1);
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                   }
-               }
-               string ajaxRequestURL = GetAjaxURL_MoreResults(pgSrc_FanPageSearch);
-               ajaxRequestURL = FBGlobals.Instance.fbhomeurl + ajaxRequestURL + "&__a=1&__user=" + __user + "";   // "https://www.facebook.com/" 
-               ajaxRequestURL = Uri.UnescapeDataString(ajaxRequestURL) + "&init=quick";
-
-               string res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(ajaxRequestURL));
-               if (string.IsNullOrEmpty(res_ajaxRequest))
-               {
-                   string AjaxGrpUrl250 = ajaxRequestURL.Replace("pagesize=300", "pagesize=250");
-                   res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl250));
-                   if (string.IsNullOrEmpty(res_ajaxRequest))
-                   {
-                       string AjaxGrpUrl200 = ajaxRequestURL.Replace("pagesize=300", "pagesize=200");
-                       res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl200));
-                       if (string.IsNullOrEmpty(res_ajaxRequest))
-                       {
-                           string AjaxGrpUrl150 = ajaxRequestURL.Replace("pagesize=300", "pagesize=150");
-                           res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl150));
-                           if (string.IsNullOrEmpty(res_ajaxRequest))
-                           {
-                               string AjaxGrpUrl100= ajaxRequestURL.Replace("pagesize=300", "pagesize=100");
-                               res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl100));
-                               if (string.IsNullOrEmpty(res_ajaxRequest))
-                               {
-                                   string AjaxGrpUrl50 = ajaxRequestURL.Replace("pagesize=300", "pagesize=50");
-                                   res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl50));
-                                   if (string.IsNullOrEmpty(res_ajaxRequest))
-                                   {
-                                       string AjaxGrpUrl30 = ajaxRequestURL.Replace("pagesize=300", "pagesize=30");
-                                       res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl30));
-                                       if (string.IsNullOrEmpty(res_ajaxRequest))
-                                       {
-                                           string AjaxUrl20 = ajaxRequestURL.Replace("pagesize=300", "pagesize=20");
-                                           res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxUrl20));
-                                           if (string.IsNullOrEmpty(res_ajaxRequest))
-                                           {
-                                               string AjaxUrl = ajaxRequestURL.Replace("pagesize=300", "pagesize=10"); ;
-                                               res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxUrl));
-                                           }
-                                       }
-                                   }
-                               }
-                           }
-                       }
-                   }
-               }
-
-
-               string[] Linklist = System.Text.RegularExpressions.Regex.Split(res_ajaxRequest, "href=");
-               List<string> list = new List<string>();
-               List<string> lstLinkData = new List<string>();
-
-
-               try
-               {
-                   foreach (string itemurl in Linklist)
-                   {
-                       try
-                       {
-                           if (!itemurl.Contains("<!DOCTYPE html"))
-                           {
-                               if (!itemurl.Contains(@"http:\/\/www.facebook.com"))
-                               {
-                                   lstLinkData.Add(itemurl);
-                                   string strLink = itemurl.Substring(0, 70);
-
-                                   if (strLink.Contains("group") && strLink.Contains("onclick"))
-                                   {
-                                       try
-                                       {
-                                           string[] tempArr = strLink.Split('"');
-                                           string temp = tempArr[1];
-                                           temp = temp.Replace("\\", "");
-                                           temp = "https://www.facebook.com" + temp;   // "" 
-                                           list.Add(temp);
-                                       }
-                                       catch (Exception ex)
-                                       {
-                                           GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                       }
-                                   }
-                               }
-                           }
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                       }
-                   }
-               }
-               catch (Exception ex)
-               {
-                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-               }
-
-
-               list = list.Distinct().ToList();
-
-               sgroupid.AddRange(list);
-               //}
-               foreach (string lsturl in sgroupid)
-               {
-                   try
-                   {
-                       string findstatus = chilkatHttpHelper.getHtmlfromUrl(new Uri(lsturl));
-
-                       
-                       GetCountMember = GetMemberCounts(GetCountMember, findstatus);
-
-                       if (GroupUrlScraperCheckMembersMin <= GetCountMember && GroupUrlScraperCheckMembersMax >= GetCountMember)
-                       {
-
-                           List<string> GroupType = chilkatHttpHelper.GetTextDataByTagAndAttributeName(findstatus, "span", "fsm fcg");
-                           if (GroupType.Count()==0)
-                           {
-                               GroupType = chilkatHttpHelper.GetTextDataByTagAndAttributeName(findstatus, "div", "_5mo6"); 
-                           }
-                           List<string> Groupmember = chilkatHttpHelper.GetDataTagAttribute(findstatus, "div", "fsm fwn fcg");
-
-                           List<string> GroupName = chilkatHttpHelper.GetDataTagAttribute(findstatus, "a", "mrm groupsJumpTitle");
-
-                           if (GroupType[0].Contains("Closed Group"))
-                           {
-                               try
-                               {
-                                   string[] owner = Regex.Split(findstatus, "uiInfoTable mtm profileInfoTable uiInfoTableFixed noBorder");
-
-                                   string[] ownerlink = Regex.Split(owner[1], "uiProfilePortrait");
-
-                                   if (ownerlink[0].Contains("Admins"))
-                                   {
-                                       string stradminlink = ownerlink[1].Substring(ownerlink[1].IndexOf("href=\""), (ownerlink[1].IndexOf(">", ownerlink[1].IndexOf("href=\"")) - ownerlink[1].IndexOf("href=\""))).Replace("href=\"", string.Empty).Replace("\"", string.Empty).Trim();
-                                       string stradminname = ownerlink[1].Substring(ownerlink[1].IndexOf("/>"), (ownerlink[1].IndexOf("</a>", ownerlink[1].IndexOf("/>")) - ownerlink[1].IndexOf("/>"))).Replace("/>", string.Empty).Replace("\"", string.Empty).Trim();
-                                   }
-                               }
-                               catch (Exception ex)
-                               {
-                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                               }
-                           }
-                           string NoOfGroupMember = string.Empty;
-                           foreach (string item in Groupmember)
-                           {
-                               try
-                               {
-                                   if (!item.Contains("Facebook © 2012 English (US)") && item.Contains("members"))
-                                   {
-                                       NoOfGroupMember = item;
-                                   }
-                               }
-                               catch (Exception ex)
-                               {
-                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                               }
-                              
-                           }
-                           if (findstatus.Contains("uiHeaderActions fsm fwn fcg"))
-                           {
-                               string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus,"uiHeaderActions fsm fwn fcg");
-                               if (Arr.Count()==3)
-                               {
-                                   try
-                                   {
-                                       NoOfGroupMember = Utils.getBetween(Arr[2], "/\">", "members</a>").Replace(",", string.Empty);
-                                   }
-                                   catch (Exception ex)
-                                   {
-                                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                   }
-                               }
-                              
-                           }
-                           if (string.IsNullOrEmpty(NoOfGroupMember))
-                           {
-                               string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus, "uiHeader uiHeaderTopAndBottomBorder uiHeaderSection");
-
-                               try
-                               {
-                                   NoOfGroupMember = Utils.getBetween(Arr[1], "Members (", ")</h3>").Replace(",", string.Empty);
-                               }
-                               catch (Exception ex)
-                               {
-                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                               }
-                           }
-
-                           string groupType = GroupType[0];
-
-                           if (CheckScrapeOpenGroupUrlsScraper)
-                           {
-                               if (groupType.Contains("Open group") || groupType.Contains("Open Group") || groupType.Contains("Public Group"))
-                               {
-                                   //objclsgrpmngr.InsertGroupUrl(strKeyword, lsturl, groupType, Selectedusername);
-                                   GlobusLogHelper.log.Debug("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
-                                   GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
-                                   try
-                                   {
-
-                                       if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords))
-                                       {
-
-                                           string Grppurl = string.Empty;
-                                           string Grpkeyword = string.Empty;
-                                           string GrpTypes = string.Empty;
-
-                                           Grppurl = lsturl;
-                                           Grpkeyword = strKeyword;
-                                           GrpTypes = groupType;
-
-
-                                           try
-                                           {
-                                               CheckDuplicates.Add(Grppurl, Grppurl);
-
-
-                                               string CSVHeader = "GroupUrl" + "," + "GroupSearchUrl" + ", " + "GroupTypes" + "," + "NumberOfMember";
-                                               string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes + "," + GetCountMember;
-
-                                               string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + ", " + GrpTypes + "\t\t\t" + "," + GetCountMember;
-
-                                               Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);
-
-                                               Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
-                                               GlobusLogHelper.log.Debug("Data Export In csv File !" + CSV_Content);
-                                               GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
-
-
-                                           }
-                                           catch (Exception ex)
-                                           {
-                                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                           }
-                                       }
-                                   }
-                                   catch (Exception ex)
-                                   {
-                                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                   }
-
-                               }
-
-                               #region Codecommented
-                               //try
-                               //{
-
-                               //    if (!string.IsNullOrEmpty(_ExprotFilePath))
-                               //    {
-
-                               //        string Grppurl = string.Empty;
-                               //        string Grpkeyword = string.Empty;
-                               //        string GrpTypes = string.Empty;
-                               //        //  string GrpStatus = string.Empty;
-                               //        Grppurl = lsturl;
-                               //        Grpkeyword = strKeyword;
-                               //        GrpTypes = groupType;
-                               //        //  GrpStatus = currentstatus1;
-
-                               //        string CSVHeader = "Grouppurl" + "," + "Groupkeyword" + ", " + "GroupTypes";// + "," + "Status";
-                               //        string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes;// + "," + GrpStatus;
-
-                               //        FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
-
-                               //    }
-                               //}
-
-                               //catch (Exception ex)
-                               //{
-                               //    Console.WriteLine(ex.Message);
-                               //} 
-                               #endregion
-                           }
-
-                           if (CheckScrapeCloseGroupUrlsScraper)
-                           {
-                               if (groupType.Contains("Closed Group") || groupType.Contains("Closed Group"))
-                               {
-                                   //  objclsgrpmngr.InsertGroupUrl(strKeyword, lsturl, groupType, Selectedusername);
-                                   GlobusLogHelper.log.Debug("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
-                                   GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
-                                   try
-                                   {
-
-                                       if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords))
-                                       {
-
-                                           string Grppurl = string.Empty;
-                                           string Grpkeyword = string.Empty;
-                                           string GrpTypes = string.Empty;
-
-                                           Grppurl = lsturl;
-                                           Grpkeyword = strKeyword;
-                                           GrpTypes = groupType;
-
-
-                                           try
-                                           {
-                                               CheckDuplicates.Add(Grppurl, Grppurl);
-
-
-                                               string CSVHeader = "GroupUrl" + "," + "Groupkeyword" + ", " + "GroupTypes" + "," + "NumberOfMember";
-                                               string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes + "," + GetCountMember;
-
-                                               string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + ", " + GrpTypes + "\t\t\t" + "," + GetCountMember;
-
-                                               Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);
-
-                                               Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
-                                               GlobusLogHelper.log.Debug("Data Export In csv File !" + CSV_Content);
-                                               GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
-
-
-                                           }
-                                           catch (Exception ex)
-                                           {
-                                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                           }
-                                       }
-                                   }
-                                   catch (Exception ex)
-                                   {
-                                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                   }
-
-                               }
-                           }
-                           try
-                           {
-
-                               if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords) && CheckScrapeCloseGroupUrlsScraper == false && CheckScrapeOpenGroupUrlsScraper == false)
-                               {
-                                   string Grppurl = string.Empty;
-                                   string Grpkeyword = string.Empty;
-                                   string GrpTypes = string.Empty;
-
-                                   Grppurl = lsturl;
-                                   Grpkeyword = strKeyword;
-                                   GrpTypes = groupType;                              
-
-
-                                   try
-                                   {
-                                       CheckDuplicates.Add(Grppurl, Grppurl);
-
-                                       GlobusLogHelper.log.Debug("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
-                                       GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
-
-                                       string CSVHeader = "GroupUrl" + "," + "Groupkeyword" + ", " + "GroupTypes" + "," + "NumberOfMember";
-                                       string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes + "," + GetCountMember;
-
-                                       string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + ", " + GrpTypes + "\t\t\t" + "," + GetCountMember;
-
-                                       Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);
-
-                                       Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
-                                       GlobusLogHelper.log.Debug("Data Export In csv File !" + CSV_Content);
-                                       GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
-                                   }
-                                   catch (Exception ex)
-                                   {
-                                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                   }
-                               }
-                           }
-                           catch (Exception ex)
-                           {
-                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                           }                         
-                       }
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                   }
-               }
-           }
-           catch (Exception ex)
-           {
-               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-           }
-          
-
-           return GetCountMember;
-       }
-
-       private static int GetMemberCounts(int GetCountMember, string findstatus)
-       {
-           string GetTagCountMember = Utils.getBetween(findstatus, "<div class=\"groupsAddMemberSideBox\">", "</div>");
-           string GetGroupMemberCount = Utils.getBetween(findstatus, "<span id=\"count_text\">", "</span>");
-
-           try
-           {
-
-               if (string.IsNullOrEmpty(GetGroupMemberCount))
-               {
-                   if (findstatus.Contains("uiHeader uiHeaderTopAndBottomBorder uiHeaderSection"))
-                   {
-                       try
-                       {
-                           string MemberCount = Utils.getBetween(findstatus, "uiHeader uiHeaderTopAndBottomBorder uiHeaderSection", "</h3>");
-                           MemberCount = MemberCount + "</h3>";
-                           GetGroupMemberCount = Utils.getBetween(MemberCount, "<h3 class=\"accessible_elem\">", "</h3>");
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                       }
-                   }
-                   else if (findstatus.Contains("<h6 class=\"accessible_elem\">About</h6>"))
-                   {
-                       try
-                       {
-                           string MemberCount = Utils.getBetween(findstatus, "<h6 class=\"accessible_elem\">About</h6>", "</div>");
-                           MemberCount = Utils.getBetween(MemberCount, "members/\">", "</a>");
-                           GetGroupMemberCount = MemberCount;
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                       }
-                   }
-               }
-           }
-           catch { };
-           GetGroupMemberCount = GetGroupMemberCount.Replace("members", "").Replace(",", "").Replace("Members", "").Replace("(", "").Replace(")", "").Replace("Membros","");
-           try
-           {
-               GetCountMember = Convert.ToInt32(GetGroupMemberCount);
-           }
-           catch { };
-           return GetCountMember;
-       }
-
-       public static List<string> GetGroups_FBSearch(string pgSrc)
-       {
-           List<string> lst_Pages = new List<string>();
-
-           string splitPattern = "/hovercard/";
-
-           string[] splitPgSrc = Regex.Split(pgSrc, splitPattern);
-
-           foreach (string item in splitPgSrc)
-           {
-               if (!item.Contains("<!DOCTYPE html>"))
-               {
-                   try
-                   {
-                       if (item.Contains("group.php?id"))
-                       {
-                           int startIndx = item.IndexOf("group.php?id=") + "group.php?id=".Length;
-                           int endIndx = item.IndexOf(">", startIndx);
-                           string pageURL = FBGlobals.Instance.fbhomeurl + "groups/" + item.Substring(startIndx, endIndx - startIndx).Replace("\"", "").Replace("=", "");
-
-                           lst_Pages.Add(pageURL);
-                       }
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                   }
-
-               }
-           }
-
-           return lst_Pages;
-       }
-
-       public static string GetAjaxURL_MoreResults(string pgSrc)
-       {
-           string pattern = "search/ajax/more.php?offset";
-
-           if (pgSrc.Contains(pattern))
-           {
-               string URL = string.Empty;
-               try
-               {
-                   int startIndx = pgSrc.IndexOf(pattern);
-                   int endIndx = pgSrc.IndexOf("\"", startIndx);
-                   URL = pgSrc.Substring(startIndx, endIndx - startIndx);
-                   URL = URL.Replace("&amp;", "&").Replace("pagesize=10", "pagesize=300");//.Replace("pagesize=10", "pagesize=300")
-               }
-               catch (Exception ex)
-               {
-                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-               }
-               return URL;
-           }
-           return string.Empty;
-       }
-
-       public static void myFunction()
-       {
-           List<string> UserIds = new List<string>();
-           string Data = string.Empty;
-           GlobusHttpHelper objGlobusHttpHelper=new GlobusHttpHelper();
-           string PageSource = objGlobusHttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/groups/22320730270/"));
-           Data = Utils.getBetween(PageSource, "GroupEntstreamPagelet\\\", ", ", {");
-           string[] Users_IDs = Regex.Split(PageSource,"<div class=\"_4-u2 mbm _5jmm _5pat _5v3q _5x16\" data-");
-           Users_IDs = Users_IDs.Skip(1).ToArray();
-           foreach (string item in Users_IDs)
-           {
-               UserIds.Add(Utils.getBetween(item,"/ajax/hovercard/user.php?id=","\""));
-               Utils.getBetween(item,"","");
-           }
-       }
-
-       public List<string> GetGroupMember(ref FacebookUser fbuse)
-       {
-           List<string> lstGrpMember = new List<string>();
-
-           GlobusHttpHelper HttpHelper = fbuse.globusHttpHelper;
-           string PageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
-
-
-           string __user = GlobusHttpHelper.GetParamValue(PageSource, "user");    //pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
-           if (string.IsNullOrEmpty(__user))
-           {
-               __user = GlobusHttpHelper.ParseJson(PageSource, "user");
-           }
-           try
-           {
-               foreach (string item in LstGroupURLsFriendInfoScraper)
-               {
-                   try
-                   {
-                     new Thread(() =>
-                                       {
-                                           try
-                                           {
-                                               lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
-                                               lstThreadsGroupMemberScraper.Distinct();
-                                               Thread.CurrentThread.IsBackground = true;
-                                           }
-                                           catch (Exception ex)
-                                           {
-                                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                           }
-                                           string link = string.Empty;
-                                           try
-                                           {
-                                               if (item.Contains("groups/"))
-                                               {
-                                                   GlobusLogHelper.log.Debug("Start Getting Group Members for : " + item);
-                                                   GlobusLogHelper.log.Info("Start Getting Group Members for : " + item);
-
-                                                   char lastIndexValue = item[item.Length - 1];
-
-                                                   string realGrpUrl = string.Empty;
-
-                                                   realGrpUrl = item;
-
-                                                   if (lastIndexValue != '/')
-                                                   {
-                                                       realGrpUrl = item + "/";
-                                                   }
-
-                                                   string gid = string.Empty;
-
-                                                   //string ddd = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com"));
-                                                   //  string GroupUrl = "https://www.facebook.com/groups/PureLeverageHQ/";
-
-                                                   //   string GetGraphRes = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/groups/248382998621966/members/"));
-
-
-
-                                                   string pageSource = HttpHelper.getHtmlfromUrl(new Uri(realGrpUrl + "members/"));   //realGrpUrl + "members/"
-
-                                                   try
-                                                   {
-                                                       if (pageSource.Contains("gid="))
-                                                       {
-                                                           gid = pageSource.Substring(pageSource.IndexOf("gid="), pageSource.IndexOf("&", pageSource.IndexOf("gid=")) - pageSource.IndexOf("gid=")).Replace("\"", string.Empty).Replace("gid=", string.Empty).Replace("//", string.Empty);//realGrpUrl.Substring(realGrpUrl.IndexOf("groups/"), (realGrpUrl.Length - (realGrpUrl.IndexOf("groups/")))).Replace("groups/", string.Empty).Replace("\"", string.Empty).Replace("/", string.Empty).Replace(" ", string.Empty).Trim();
-                                                       }
-                                                       else
-                                                       {
-                                                           gid = realGrpUrl.Substring(realGrpUrl.IndexOf("groups/"), (realGrpUrl.Length - (realGrpUrl.IndexOf("groups/")))).Replace("groups/", string.Empty).Replace("\"", string.Empty).Replace("/", string.Empty).Replace(" ", string.Empty).Trim();
-                                                       }
-
-                                                       if (!Utils.IsNumeric(gid))
-                                                       {
-                                                           try
-                                                           {
-                                                               string PageSourceGroupUrl = HttpHelper.getHtmlfromUrl(new Uri(realGrpUrl));
-                                                               gid = Utils.getBetween(PageSourceGroupUrl, "group_id=", "\"");
-                                                           }
-                                                           catch (Exception ex)
-                                                           {
-                                                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                           }
-                                                       }
-                                                   }
-                                                   catch (Exception ex)
-                                                   {
-                                                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                   }
-                                                   
-                                                   if (pageSource.Contains("/ajax/hovercard/user.php?id="))
-                                                   {
-                                                       string[] arrId = Regex.Split(pageSource, "/ajax/hovercard/user.php");
-
-                                                       foreach (string item1 in arrId)
-                                                       {
-                                                           try
-                                                           {
-                                                               if (!item1.Contains("<!DOCTYPE"))
-                                                               {
-                                                                   if (item1.Contains("</a>"))
-                                                                   {
-                                                                       string idName = item1.Substring(0, item1.IndexOf("</a>"));
-
-                                                                       if (idName.Contains(">"))
-                                                                       {
-                                                                           string[] arrIdName = Regex.Split(idName, ">");
-
-                                                                           if (arrIdName.Length > 1)
-                                                                           {
-                                                                               try
-                                                                               {
-                                                                                   string id = arrIdName[0].Replace("//", string.Empty).Replace("\"", string.Empty).Replace("?id=", string.Empty).Replace("&amp;extragetparams=%7B%22hc_location%22%3A%22friend_browser%22%7D", string.Empty).Replace("&amp;extragetparams=%7B%22fref%22%3A%22grp_mmbr_list%22%7D", "").Trim();
-                                                                                   if (id.Contains("&amp;"))
-                                                                                   {
-                                                                                       id=id.Split('&')[0];
-                                                                                   }
-                                                                                   string name = arrIdName[1].Replace("//", string.Empty).Replace("\"", string.Empty).Trim();
-                                                                                   if (name.Contains("<img class="))
-                                                                                   {
-                                                                                       string PageSOurce =  HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/" + id));
-                                                                                       string Fname = getBetween(PageSOurce, " \"first_name\": \"", "\",\n");
-                                                                                       string Lname = getBetween(PageSOurce, "\"last_name\": \"", "\",\n");
-
-                                                                                       name = string.Empty;
-                                                                                       name = Fname + " " + Lname;
-                                                                                   }
-                                                                                   if (!id.Contains("for"))
-                                                                                   {
-                                                                                       DicIds.Add(id, id);
-
-                                                                                       string profileURL=string.Empty;
-                                                                                       profileURL= FBGlobals.Instance.fbProfileUrl + id;     // "https://www.facebook.com/profile.php?id=" 
-                                                                                       string UserName = string.Empty;
-                                                                                       string UserName1 = string.Empty;
-                                                                                       Thread.Sleep(2000);
-                                                                                       string GraphUrl = FBGlobals.Instance.fbgraphUrl + id;
-                                                                                       string getGraphPageSource = HttpHelper.getHtmlfromUrl(new Uri(GraphUrl));
-                                                                                       try
-                                                                                       {
-                                                                                           JObject jdata = JObject.Parse(getGraphPageSource);
-
-                                                                                           name = (string)((JValue)jdata["name"]);
-                                                                                           link = (string)((JValue)jdata["link"]);
-                                                                                           UserName1 = (string)((JValue)jdata["username"]);
-
-                                                                                           if (string.IsNullOrEmpty(link))
-                                                                                           {
-                                                                                               UserName = (string)((JValue)jdata["username"]);
-                                                                                           }
-                                                                                       }
-                                                                                       catch (Exception ex)
-                                                                                       {
-                                                                                           GlobusLogHelper.log.Error(ex.Message);
-                                                                                       }
-                                                                                     //  string s = Utils.getBetween(getGraphPageSource, "<a class=\"_6-6 _6-7\" href=\"", "\">Timeline");
-                                                                                    //   link = s;
-                                                                                      // name = Utils.getBetween(getGraphPageSource, "<h2 class=\"_6-f\">", "</a>") + "###";
-                                                                                      // name = Utils.getBetween(name, ">", "###");
-                                                                                     //  if (name.Contains("<"))
-                                                                                   //    {
-                                                                                      //     name = "###" + name;
-                                                                                      //     name = Utils.getBetween(name, "###", "<").Replace(",", "");
-
-                                                                                      // }
-
-                                                                                       #region CommentedGraphSerchCode
-                                                                                       //string getGraphPageSource =HttpHelper.getHtmlfromUrl(new Uri( FBGlobals.Instance.fbgraphUrl + id));
-                                                                                       //if (getGraphPageSource.Contains("link"))
-                                                                                       //{
-                                                                                       //    try
-                                                                                       //    {
-                                                                                       //        string supsstring = getGraphPageSource.Substring(getGraphPageSource.IndexOf("link"), 95);
-                                                                                       //        string[] ArrTemp = supsstring.Split('"');
-                                                                                       //        link = ArrTemp[2];
-
-
-                                                                                       //    }
-                                                                                       //    catch (Exception ex)
-                                                                                       //    {
-                                                                                       //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                                                       //    }
-                                                                                       //} 
-                                                                                       #endregion
-                                                                                       string FBEmail = string.Empty;
-                                                                                       if (string.IsNullOrEmpty(link))
-                                                                                       {
-                                                                                           link = FBGlobals.Instance.fbhomeurl + UserName;
-                                                                                           
-                                                                                       }
-
-                                                                                       if (!string.IsNullOrEmpty(UserName1))
-                                                                                       {
-                                                                                           FBEmail = UserName1 + "@" + "facebook.com";
-                                                                                       }
-                                                                                       else
-                                                                                       {
-                                                                                           FBEmail = id + "@" + "facebook.com";
-                                                                                       }
-
-                                                                                      
-                                                                                       if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraper))
-                                                                                       {
-                                                                                           try
-                                                                                           {
-                                                                                               string CSVHeader = "Profile URL" + "," + "ProfileLink" + "," + "Name" + "," + "facebook Email" + "," + "Group URL";
-                                                                                               string CSV_Content = profileURL + "," + link + "," + name + "," + FBEmail + "," + item;
-                                                                                               Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraper);
-
-                                                                                               GlobusLogHelper.log.Info("Find ProfileLink : " + link);
-                                                                                               GlobusLogHelper.log.Info("Found  Name : " + name);
-                                                                                               GlobusLogHelper.log.Info("Found  GroupUrl : " + item);
-
-                                                                                               GlobusLogHelper.log.Info("Data Saved IN CSV File");
-
-                                                                                               GlobusLogHelper.log.Debug("Data Saved IN CSV File");
-                                                                                               GlobusLogHelper.log.Info("________________________");
-                                                                                           }
-                                                                                           catch (Exception ex)
-                                                                                           {
-                                                                                               GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                                                           }
-                                                                                       }
-                                                                                   }
-                                                                               }
-                                                                               catch (Exception ex)
-                                                                               {
-                                                                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                                               }
-                                                                           }
-                                                                       }
-                                                                   }
-                                                               }
-                                                           }
-                                                           catch (Exception ex)
-                                                           {
-                                                               Console.WriteLine("Error >>> " + ex.StackTrace);
-                                                           }
-                                                       }
-
-                                                       // Calling Ajax Fn..
-
-                                                       int start = 96;
-                                                       GetGrpMember_Ajax(ref HttpHelper, __user, gid, start, item);
-                                                   }
-                                                   else
-                                                   {
-                                                       int start = 96;
-                                                       GetGrpMember_Ajax(ref HttpHelper, __user, gid, start, item);
-                                                   }
-                                               }
-                                               else
-                                               {
-                                                   GlobusLogHelper.log.Debug("Group URL Not In Correct Format ! Please Follow The Format >>> http://www.facebook.com/groups/253568111433276/ ");
-                                                   GlobusLogHelper.log.Info("Group URL Not In Correct Format ! Please Follow The Format >>> http://www.facebook.com/groups/253568111433276/ ");
-                                               }
-
-                                           }
-                                           catch (Exception ex)
-                                           {
-                                               Console.WriteLine("Error >>> " + ex.StackTrace);
-                                           }
-                                       }).Start();
-                   }
-                   catch (Exception ex)
-                   {
-                       Console.WriteLine("Error >>> " + ex.StackTrace);
-                   }
-               }
-           }
-           catch (Exception ex)
-           {
-           }
-
-           return lstGrpMember;
-       }
-
-       private void GetGrpMember_Ajax(ref GlobusHttpHelper HttpHelper, string userId, string grpId, int start, string grpUrl)
-       {
-           try
-           {
-               //int start = 96;
-
-               bool isContinue = false;
-
-               if (start == 10000)
-               {
-               }
-
-
-               string pageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.GroupsGroupCampaignManagerPostAjaxBrowserListGroupMemberUrl + grpId + "&gid=" + grpId + "&edge=groups%3Amembers&order=default&view=grid&start=" + start + "&__user=" + userId + "&__a=1"));  // "https://www.facebook.com/ajax/browser/list/group_members/?id="
-
-               // Not find Toatal Members Since Page Source Contains...
-               // for (;;);{"__ar":1,"payload":null,"domops":[["appendContent","^div.fbProfileBrowserListContainer",true,{"__html":""}],["remove","^.morePager",true,{"__html":""}]],"jsmods":{"require":[["Arbiter","inform",[],["ProfileBrowser\/LoadMoreContent"]]]},"ixData":[]}
-
-               if (pageSource.Contains("user.php?id="))
-               {
-                   isContinue = true;
-
-                   string[] arrId = Regex.Split(pageSource, "user.php");
-
-                   foreach (string item1 in arrId)
-                   {
-                       string link = string.Empty;
-                       try
-                       {
-                           if (!item1.Contains("<!DOCTYPE"))
-                           {
-                               if (item1.Contains("/a>"))
-                               {
-                                   string idName = item1.Substring(0, item1.IndexOf("/a>"));
-
-                                   if (idName.Contains(">"))
-                                   {
-                                       string[] arrIdName = Regex.Split(idName, ">");
-
-                                       if (arrIdName.Length > 1)
-                                       {
-                                           string id = arrIdName[0].Replace("//", string.Empty).Replace("\"", string.Empty).Replace("?id=", string.Empty).Replace("&amp;extragetparams=%7B%22hc_location%22%3A%22friend_browser%22%7D", string.Empty).Replace("\\", string.Empty).Trim();
-                                           if (id.Contains("&amp;"))
-                                           {
-                                               string [] arr=System.Text.RegularExpressions.Regex.Split(id,"&amp;");
-                                               id=arr[0];
-                                           }
-                                           string name = arrIdName[1].Replace("//", string.Empty).Replace("\"", string.Empty).Replace("\\u003C\\", string.Empty).Trim();
-
-
-                                           if (!id.Contains("for"))
-                                           {
-                                               DicIds.Add(id, id);
-
-                                               string profileURL = FBGlobals.Instance.fbProfileUrl + id;            // "https://www.facebook.com/profile.php?id="
-
-                                               string getGraphPageSource = HttpHelper.getHtmlfromUrl(new Uri(profileURL));
-
-                                               string s = Utils.getBetween(getGraphPageSource, "<a class=\"_6-6 _6-7\" href=\"", "\">Timeline").Replace("\" data-tab-key=\"", "").Trim();
-                                               link = s;
-
-                                               name = Utils.getBetween(getGraphPageSource, "<h2 class=\"_6-f\">", "</a>") + "###";
-                                               if (name.Contains("cover-name\">"))
-                                               {
-                                                   name = Utils.getBetween(name, "<span id=\"fb-timeline-cover-name\">", "<").Replace(",", "");
-                                               }
-                                               else
-                                               {
-                                                   name = Utils.getBetween(name, ">", "###");
-                                               }
-                                               if (name.Contains("<"))
-                                               {
-                                                   if (name.Contains("cover-name\">"))
-                                                   {
-                                                       name = Utils.getBetween(name, "<span id=\"fb-timeline-cover-name\">", "<").Replace(",", "");
-                                                   }
-                                                   else
-                                                   {
-                                                       name = "###" + name;
-                                                       name = Utils.getBetween(name, "###", "<").Replace(",", "");
-                                                   }
-
-                                               }
-
-
-                                               if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraper))
-                                               {
-                                                   try
-                                                   {
-                                                       string CSVHeader = "Profile URL" + "," + "ProfileLink" + "," + "Name" + "," + "Group URL";
-                                                       string CSV_Content = profileURL + "," + link + "," + name + "," + grpUrl;
-                                                     
-                                                       Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraper);
-
-                                                       GlobusLogHelper.log.Info("Found  ProfileLink : " + link);
-                                                       GlobusLogHelper.log.Info("Found  Name : " + name);
-                                                       GlobusLogHelper.log.Info("Found  GroupUrl : " + grpUrl);
-                                                                
-                                                       GlobusLogHelper.log.Info("Data Saved IN CSV File");
-
-                                                       GlobusLogHelper.log.Debug("Data Saved IN CSV File");
-                                                       GlobusLogHelper.log.Info("________________________");
-
-                                                   }
-                                                   catch (Exception ex)
-                                                   {
-                                                       GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                   }
-                                               } 
-                                           }
-                                       }
-                                   }
-                               }
-                           }
-                       }
-                       catch (Exception ex)
-                       {
-                           Console.WriteLine("Error >>> " + ex.StackTrace);
-                       }
-                   }
-
-                   if (isContinue)
-                   {
-                       System.Threading.Thread.Sleep(5 * 1000);
-
-                       start = start + 96;
-
-                       GetGrpMember_Ajax(ref HttpHelper, userId, grpId, start, grpUrl);
-                   }
-
-                   // Calling Ajax Fn..
-               }
-
-               GlobusLogHelper.log.Debug("Process Completed !");
-               GlobusLogHelper.log.Info("Process Completed !");
-           }
-           catch (Exception ex)
-           {
-               Console.WriteLine("Error >>> " + ex.StackTrace);
-           }
-       }
+            }
+
+        }
+
+        private int FindTheGroupUrls(GlobusHttpHelper chilkatHttpHelper, Dictionary<string, string> CheckDuplicates, string Username, int GetCountMember, string keyword)
+        {
+
+            try
+            {
+                lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
+                lstThreadsGroupMemberScraper.Distinct();
+                Thread.CurrentThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+            try
+            {
+                string strKeyword = keyword;
+                string strGroupUrl = FBGlobals.Instance.fbfacebookSearchPhpQUrl + strKeyword.Replace(" ", "+") + "&init=quick&type=groups";   // "https://www.facebook.com/search.php?q="
+
+                string __user = "";
+                string fb_dtsg = "";
+
+                string pgSrc_FanPageSearch = chilkatHttpHelper.getHtmlfromUrl(new Uri(strGroupUrl));
+
+
+
+                __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
+                if (string.IsNullOrEmpty(__user))
+                {
+                    __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
+                }
+
+                fb_dtsg = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "fb_dtsg");
+                if (string.IsNullOrEmpty(fb_dtsg))
+                {
+                    fb_dtsg = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "fb_dtsg");
+                }
+
+                List<string> pagesList = GetGroups_FBSearch(pgSrc_FanPageSearch);
+
+
+                List<string> distinctPages = pagesList.Distinct().ToList();
+                foreach (string distpage in distinctPages)
+                {
+                    try
+                    {
+                        string distpage1 = distpage.Replace("d", "groups/");
+                        sgroupid.Add(distpage1);
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+                string ajaxRequestURL = GetAjaxURL_MoreResults(pgSrc_FanPageSearch);
+                ajaxRequestURL = FBGlobals.Instance.fbhomeurl + ajaxRequestURL + "&__a=1&__user=" + __user + "";   // "https://www.facebook.com/" 
+                ajaxRequestURL = Uri.UnescapeDataString(ajaxRequestURL) + "&init=quick";
+
+                string res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(ajaxRequestURL));
+                if (string.IsNullOrEmpty(res_ajaxRequest))
+                {
+                    string AjaxGrpUrl250 = ajaxRequestURL.Replace("pagesize=300", "pagesize=250");
+                    res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl250));
+                    if (string.IsNullOrEmpty(res_ajaxRequest))
+                    {
+                        string AjaxGrpUrl200 = ajaxRequestURL.Replace("pagesize=300", "pagesize=200");
+                        res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl200));
+                        if (string.IsNullOrEmpty(res_ajaxRequest))
+                        {
+                            string AjaxGrpUrl150 = ajaxRequestURL.Replace("pagesize=300", "pagesize=150");
+                            res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl150));
+                            if (string.IsNullOrEmpty(res_ajaxRequest))
+                            {
+                                string AjaxGrpUrl100 = ajaxRequestURL.Replace("pagesize=300", "pagesize=100");
+                                res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl100));
+                                if (string.IsNullOrEmpty(res_ajaxRequest))
+                                {
+                                    string AjaxGrpUrl50 = ajaxRequestURL.Replace("pagesize=300", "pagesize=50");
+                                    res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl50));
+                                    if (string.IsNullOrEmpty(res_ajaxRequest))
+                                    {
+                                        string AjaxGrpUrl30 = ajaxRequestURL.Replace("pagesize=300", "pagesize=30");
+                                        res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxGrpUrl30));
+                                        if (string.IsNullOrEmpty(res_ajaxRequest))
+                                        {
+                                            string AjaxUrl20 = ajaxRequestURL.Replace("pagesize=300", "pagesize=20");
+                                            res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxUrl20));
+                                            if (string.IsNullOrEmpty(res_ajaxRequest))
+                                            {
+                                                string AjaxUrl = ajaxRequestURL.Replace("pagesize=300", "pagesize=10"); ;
+                                                res_ajaxRequest = chilkatHttpHelper.getHtmlfromUrl(new Uri(AjaxUrl));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                string[] Linklist = System.Text.RegularExpressions.Regex.Split(res_ajaxRequest, "href=");
+                List<string> list = new List<string>();
+                List<string> lstLinkData = new List<string>();
+
+
+                try
+                {
+                    foreach (string itemurl in Linklist)
+                    {
+                        try
+                        {
+                            if (!itemurl.Contains("<!DOCTYPE html"))
+                            {
+                                if (!itemurl.Contains(@"http:\/\/www.facebook.com"))
+                                {
+                                    lstLinkData.Add(itemurl);
+                                    string strLink = itemurl.Substring(0, 70);
+
+                                    if (strLink.Contains("group") && strLink.Contains("onclick"))
+                                    {
+                                        try
+                                        {
+                                            string[] tempArr = strLink.Split('"');
+                                            string temp = tempArr[1];
+                                            temp = temp.Replace("\\", "");
+                                            temp = "https://www.facebook.com" + temp;   // "" 
+                                            list.Add(temp);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+
+                list = list.Distinct().ToList();
+
+                sgroupid.AddRange(list);
+                //}
+                foreach (string lsturl in sgroupid)
+                {
+                    try
+                    {
+                        string findstatus = chilkatHttpHelper.getHtmlfromUrl(new Uri(lsturl));
+
+
+                        GetCountMember = GetMemberCounts(GetCountMember, findstatus);
+
+                        if (GroupUrlScraperCheckMembersMin <= GetCountMember && GroupUrlScraperCheckMembersMax >= GetCountMember)
+                        {
+
+                            List<string> GroupType = chilkatHttpHelper.GetTextDataByTagAndAttributeName(findstatus, "span", "fsm fcg");
+                            if (GroupType.Count() == 0)
+                            {
+                                GroupType = chilkatHttpHelper.GetTextDataByTagAndAttributeName(findstatus, "div", "_5mo6");
+                            }
+                            List<string> Groupmember = chilkatHttpHelper.GetDataTagAttribute(findstatus, "div", "fsm fwn fcg");
+
+                            List<string> GroupName = chilkatHttpHelper.GetDataTagAttribute(findstatus, "a", "mrm groupsJumpTitle");
+
+                            if (GroupType[0].Contains("Closed Group"))
+                            {
+                                try
+                                {
+                                    string[] owner = Regex.Split(findstatus, "uiInfoTable mtm profileInfoTable uiInfoTableFixed noBorder");
+
+                                    string[] ownerlink = Regex.Split(owner[1], "uiProfilePortrait");
+
+                                    if (ownerlink[0].Contains("Admins"))
+                                    {
+                                        string stradminlink = ownerlink[1].Substring(ownerlink[1].IndexOf("href=\""), (ownerlink[1].IndexOf(">", ownerlink[1].IndexOf("href=\"")) - ownerlink[1].IndexOf("href=\""))).Replace("href=\"", string.Empty).Replace("\"", string.Empty).Trim();
+                                        string stradminname = ownerlink[1].Substring(ownerlink[1].IndexOf("/>"), (ownerlink[1].IndexOf("</a>", ownerlink[1].IndexOf("/>")) - ownerlink[1].IndexOf("/>"))).Replace("/>", string.Empty).Replace("\"", string.Empty).Trim();
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                            }
+                            string NoOfGroupMember = string.Empty;
+                            foreach (string item in Groupmember)
+                            {
+                                try
+                                {
+                                    if (!item.Contains("Facebook © 2012 English (US)") && item.Contains("members"))
+                                    {
+                                        NoOfGroupMember = item;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
+                            }
+                            if (findstatus.Contains("uiHeaderActions fsm fwn fcg"))
+                            {
+                                string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus, "uiHeaderActions fsm fwn fcg");
+                                if (Arr.Count() == 3)
+                                {
+                                    try
+                                    {
+                                        NoOfGroupMember = Utils.getBetween(Arr[2], "/\">", "members</a>").Replace(",", string.Empty);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+                            }
+                            if (string.IsNullOrEmpty(NoOfGroupMember))
+                            {
+                                string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus, "uiHeader uiHeaderTopAndBottomBorder uiHeaderSection");
+
+                                try
+                                {
+                                    NoOfGroupMember = Utils.getBetween(Arr[1], "Members (", ")</h3>").Replace(",", string.Empty);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                            }
+
+                            string groupType = GroupType[0];
+
+                            if (CheckScrapeOpenGroupUrlsScraper)
+                            {
+                                if (groupType.Contains("Open group") || groupType.Contains("Open Group") || groupType.Contains("Public Group"))
+                                {
+                                    //objclsgrpmngr.InsertGroupUrl(strKeyword, lsturl, groupType, Selectedusername);
+                                    GlobusLogHelper.log.Debug("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
+                                    GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
+                                    try
+                                    {
+
+                                        if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords))
+                                        {
+
+                                            string Grppurl = string.Empty;
+                                            string Grpkeyword = string.Empty;
+                                            string GrpTypes = string.Empty;
+
+                                            Grppurl = lsturl;
+                                            Grpkeyword = strKeyword;
+                                            GrpTypes = groupType;
+
+
+                                            try
+                                            {
+                                                CheckDuplicates.Add(Grppurl, Grppurl);
+
+
+                                                string CSVHeader = "GroupUrl" + "," + "GroupSearchUrl" + ", " + "GroupTypes" + "," + "NumberOfMember";
+                                                string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes + "," + GetCountMember;
+
+                                                string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + ", " + GrpTypes + "\t\t\t" + "," + GetCountMember;
+
+                                                Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);
+
+                                                Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
+                                                GlobusLogHelper.log.Debug("Data Export In csv File !" + CSV_Content);
+                                                GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
+
+
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                }
+
+                                #region Codecommented
+                                //try
+                                //{
+
+                                //    if (!string.IsNullOrEmpty(_ExprotFilePath))
+                                //    {
+
+                                //        string Grppurl = string.Empty;
+                                //        string Grpkeyword = string.Empty;
+                                //        string GrpTypes = string.Empty;
+                                //        //  string GrpStatus = string.Empty;
+                                //        Grppurl = lsturl;
+                                //        Grpkeyword = strKeyword;
+                                //        GrpTypes = groupType;
+                                //        //  GrpStatus = currentstatus1;
+
+                                //        string CSVHeader = "Grouppurl" + "," + "Groupkeyword" + ", " + "GroupTypes";// + "," + "Status";
+                                //        string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes;// + "," + GrpStatus;
+
+                                //        FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
+
+                                //    }
+                                //}
+
+                                //catch (Exception ex)
+                                //{
+                                //    Console.WriteLine(ex.Message);
+                                //} 
+                                #endregion
+                            }
+
+                            if (CheckScrapeCloseGroupUrlsScraper)
+                            {
+                                if (groupType.Contains("Closed Group") || groupType.Contains("Closed Group"))
+                                {
+                                    //  objclsgrpmngr.InsertGroupUrl(strKeyword, lsturl, groupType, Selectedusername);
+                                    GlobusLogHelper.log.Debug("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
+                                    GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
+                                    try
+                                    {
+
+                                        if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords))
+                                        {
+
+                                            string Grppurl = string.Empty;
+                                            string Grpkeyword = string.Empty;
+                                            string GrpTypes = string.Empty;
+
+                                            Grppurl = lsturl;
+                                            Grpkeyword = strKeyword;
+                                            GrpTypes = groupType;
+
+
+                                            try
+                                            {
+                                                CheckDuplicates.Add(Grppurl, Grppurl);
+
+
+                                                string CSVHeader = "GroupUrl" + "," + "Groupkeyword" + ", " + "GroupTypes" + "," + "NumberOfMember";
+                                                string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes + "," + GetCountMember;
+
+                                                string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + ", " + GrpTypes + "\t\t\t" + "," + GetCountMember;
+
+                                                Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);
+
+                                                Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
+                                                GlobusLogHelper.log.Debug("Data Export In csv File !" + CSV_Content);
+                                                GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
+
+
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                }
+                            }
+                            try
+                            {
+
+                                if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords) && CheckScrapeCloseGroupUrlsScraper == false && CheckScrapeOpenGroupUrlsScraper == false)
+                                {
+                                    string Grppurl = string.Empty;
+                                    string Grpkeyword = string.Empty;
+                                    string GrpTypes = string.Empty;
+
+                                    Grppurl = lsturl;
+                                    Grpkeyword = strKeyword;
+                                    GrpTypes = groupType;
+
+
+                                    try
+                                    {
+                                        CheckDuplicates.Add(Grppurl, Grppurl);
+
+                                        GlobusLogHelper.log.Debug("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
+                                        GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username);
+
+                                        string CSVHeader = "GroupUrl" + "," + "Groupkeyword" + ", " + "GroupTypes" + "," + "NumberOfMember";
+                                        string CSV_Content = Grppurl + "," + Grpkeyword + ", " + GrpTypes + "," + GetCountMember;
+
+                                        string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + ", " + GrpTypes + "\t\t\t" + "," + GetCountMember;
+
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);
+
+                                        Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
+                                        GlobusLogHelper.log.Debug("Data Export In csv File !" + CSV_Content);
+                                        GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+
+            return GetCountMember;
+        }
+
+        private static int GetMemberCounts(int GetCountMember, string findstatus)
+        {
+            string GetTagCountMember = Utils.getBetween(findstatus, "<div class=\"groupsAddMemberSideBox\">", "</div>");
+            string GetGroupMemberCount = Utils.getBetween(findstatus, "<span id=\"count_text\">", "</span>");
+
+            try
+            {
+
+                if (string.IsNullOrEmpty(GetGroupMemberCount))
+                {
+                    if (findstatus.Contains("uiHeader uiHeaderTopAndBottomBorder uiHeaderSection"))
+                    {
+                        try
+                        {
+                            string MemberCount = Utils.getBetween(findstatus, "uiHeader uiHeaderTopAndBottomBorder uiHeaderSection", "</h3>");
+                            MemberCount = MemberCount + "</h3>";
+                            GetGroupMemberCount = Utils.getBetween(MemberCount, "<h3 class=\"accessible_elem\">", "</h3>");
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+                    else if (findstatus.Contains("<h6 class=\"accessible_elem\">About</h6>"))
+                    {
+                        try
+                        {
+                            string MemberCount = Utils.getBetween(findstatus, "<h6 class=\"accessible_elem\">About</h6>", "</div>");
+                            MemberCount = Utils.getBetween(MemberCount, "members/\">", "</a>");
+                            GetGroupMemberCount = MemberCount;
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+                }
+            }
+            catch { };
+            GetGroupMemberCount = GetGroupMemberCount.Replace("members", "").Replace(",", "").Replace("Members", "").Replace("(", "").Replace(")", "").Replace("Membros", "");
+            try
+            {
+                GetCountMember = Convert.ToInt32(GetGroupMemberCount);
+            }
+            catch { };
+            return GetCountMember;
+        }
+
+        public static List<string> GetGroups_FBSearch(string pgSrc)
+        {
+            List<string> lst_Pages = new List<string>();
+
+            string splitPattern = "/hovercard/";
+
+            string[] splitPgSrc = Regex.Split(pgSrc, splitPattern);
+
+            foreach (string item in splitPgSrc)
+            {
+                if (!item.Contains("<!DOCTYPE html>"))
+                {
+                    try
+                    {
+                        if (item.Contains("group.php?id"))
+                        {
+                            int startIndx = item.IndexOf("group.php?id=") + "group.php?id=".Length;
+                            int endIndx = item.IndexOf(">", startIndx);
+                            string pageURL = FBGlobals.Instance.fbhomeurl + "groups/" + item.Substring(startIndx, endIndx - startIndx).Replace("\"", "").Replace("=", "");
+
+                            lst_Pages.Add(pageURL);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+
+                }
+            }
+
+            return lst_Pages;
+        }
+
+        public static string GetAjaxURL_MoreResults(string pgSrc)
+        {
+            string pattern = "search/ajax/more.php?offset";
+
+            if (pgSrc.Contains(pattern))
+            {
+                string URL = string.Empty;
+                try
+                {
+                    int startIndx = pgSrc.IndexOf(pattern);
+                    int endIndx = pgSrc.IndexOf("\"", startIndx);
+                    URL = pgSrc.Substring(startIndx, endIndx - startIndx);
+                    URL = URL.Replace("&amp;", "&").Replace("pagesize=10", "pagesize=300");//.Replace("pagesize=10", "pagesize=300")
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+                return URL;
+            }
+            return string.Empty;
+        }
+
+        public static void myFunction()
+        {
+            List<string> UserIds = new List<string>();
+            string Data = string.Empty;
+            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+            string PageSource = objGlobusHttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/groups/22320730270/"));
+            Data = Utils.getBetween(PageSource, "GroupEntstreamPagelet\\\", ", ", {");
+            string[] Users_IDs = Regex.Split(PageSource, "<div class=\"_4-u2 mbm _5jmm _5pat _5v3q _5x16\" data-");
+            Users_IDs = Users_IDs.Skip(1).ToArray();
+            foreach (string item in Users_IDs)
+            {
+                UserIds.Add(Utils.getBetween(item, "/ajax/hovercard/user.php?id=", "\""));
+                Utils.getBetween(item, "", "");
+            }
+        }
+
+        public int NoOfMemberScraper = 500;
+
+        public List<string> GetGroupMember(ref FacebookUser fbuse)
+        {
+            List<string> lstGrpMember = new List<string>();
+
+            GlobusHttpHelper HttpHelper = fbuse.globusHttpHelper;
+            string PageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+
+            string __user = GlobusHttpHelper.GetParamValue(PageSource, "user");    //pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
+            if (string.IsNullOrEmpty(__user))
+            {
+                __user = GlobusHttpHelper.ParseJson(PageSource, "user");
+            }
+            try
+            {
+                foreach (string item in LstGroupURLsFriendInfoScraper)
+                {
+                    try
+                    {
+                        //  new Thread(() =>
+                        {
+                            try
+                            {
+                                lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
+                                lstThreadsGroupMemberScraper.Distinct();
+                                Thread.CurrentThread.IsBackground = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                            string link = string.Empty;
+                            try
+                            {
+                                if (item.Contains("groups/"))
+                                {
+                                    GlobusLogHelper.log.Debug("Start Getting Group Members for : " + item);
+                                    GlobusLogHelper.log.Info("Start Getting Group Members for : " + item);
+
+                                    char lastIndexValue = item[item.Length - 1];
+
+                                    string realGrpUrl = string.Empty;
+
+                                    realGrpUrl = item;
+
+                                    if (lastIndexValue != '/')
+                                    {
+                                        realGrpUrl = item + "/";
+                                    }
+                                    if (realGrpUrl.Contains("?ref=br_rs/"))
+                                    {
+                                        realGrpUrl = realGrpUrl.Remove(realGrpUrl.IndexOf("?ref=br_rs/"));
+                                    }
+                                    string gid = string.Empty;
+
+                                    //string ddd = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com"));
+                                    //  string GroupUrl = "https://www.facebook.com/groups/PureLeverageHQ/";
+
+                                    //   string GetGraphRes = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/groups/248382998621966/members/"));
+
+
+
+                                    string pageSource = HttpHelper.getHtmlfromUrl(new Uri(realGrpUrl + "members/"));   //realGrpUrl + "members/"
+
+                                    try
+                                    {
+                                        if (pageSource.Contains("gid="))
+                                        {
+                                            gid = pageSource.Substring(pageSource.IndexOf("gid="), pageSource.IndexOf("&", pageSource.IndexOf("gid=")) - pageSource.IndexOf("gid=")).Replace("\"", string.Empty).Replace("gid=", string.Empty).Replace("//", string.Empty);//realGrpUrl.Substring(realGrpUrl.IndexOf("groups/"), (realGrpUrl.Length - (realGrpUrl.IndexOf("groups/")))).Replace("groups/", string.Empty).Replace("\"", string.Empty).Replace("/", string.Empty).Replace(" ", string.Empty).Trim();
+                                        }
+                                        else
+                                        {
+                                            gid = realGrpUrl.Substring(realGrpUrl.IndexOf("groups/"), (realGrpUrl.Length - (realGrpUrl.IndexOf("groups/")))).Replace("groups/", string.Empty).Replace("\"", string.Empty).Replace("/", string.Empty).Replace(" ", string.Empty).Trim();
+                                        }
+
+                                        if (!Utils.IsNumeric(gid))
+                                        {
+                                            try
+                                            {
+                                                string PageSourceGroupUrl = HttpHelper.getHtmlfromUrl(new Uri(realGrpUrl));
+                                                gid = Utils.getBetween(PageSourceGroupUrl, "group_id=", "\"");
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                    if (pageSource.Contains("/ajax/hovercard/user.php?id="))
+                                    {
+                                        string[] arrId = Regex.Split(pageSource, "/ajax/hovercard/user.php");
+
+                                        foreach (string item1 in arrId)
+                                        {
+                                            try
+                                            {
+                                                if (!item1.Contains("<!DOCTYPE"))
+                                                {
+                                                    if (item1.Contains("</a>"))
+                                                    {
+                                                        string idName = item1.Substring(0, item1.IndexOf("</a>"));
+
+                                                        if (idName.Contains(">"))
+                                                        {
+                                                            string[] arrIdName = Regex.Split(idName, ">");
+
+                                                            if (arrIdName.Length > 1)
+                                                            {
+                                                                try
+                                                                {
+                                                                    string id = arrIdName[0].Replace("//", string.Empty).Replace("\"", string.Empty).Replace("?id=", string.Empty).Replace("&amp;extragetparams=%7B%22hc_location%22%3A%22friend_browser%22%7D", string.Empty).Replace("&amp;extragetparams=%7B%22fref%22%3A%22grp_mmbr_list%22%7D", "").Trim();
+                                                                    if (id.Contains("&amp;"))
+                                                                    {
+                                                                        id = id.Split('&')[0];
+                                                                    }
+
+                                                                    if (!id.Contains("for"))
+                                                                    {
+                                                                        DicIds.Add(id, id);
+
+                                                                        if (DicIds.Count > NoOfMemberScraper)
+                                                                        {
+                                                                            return lstGrpMember;
+
+                                                                        }
+                                                                        string profileURL = string.Empty;
+                                                                        profileURL = FBGlobals.Instance.fbProfileUrl + id;     // "https://www.facebook.com/profile.php?id=" 
+
+                                                                        if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraper))
+                                                                        {
+                                                                            try
+                                                                            {
+                                                                                GlobusLogHelper.log.Info("Find ProfileLink : " + profileURL);
+                                                                                ScrapeUserInfo(ref fbuse, profileURL, ExportFilePathGroupMemberScraper, item);
+                                                                                GlobusLogHelper.log.Info("________________________");
+                                                                            }
+                                                                            catch (Exception ex)
+                                                                            {
+                                                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                catch (Exception ex)
+                                                                {
+                                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Console.WriteLine("Error >>> " + ex.StackTrace);
+                                            }
+                                        }
+
+                                        // Calling Ajax Fn..
+
+                                        int start = 96;
+                                        GetGrpMember_Ajax(ref fbuse, __user, gid, start, item);
+                                    }
+                                    else
+                                    {
+                                        int start = 96;
+                                        GetGrpMember_Ajax(ref fbuse, __user, gid, start, item);
+                                    }
+                                }
+                                else
+                                {
+                                    GlobusLogHelper.log.Debug("Group URL Not In Correct Format ! Please Follow The Format >>> http://www.facebook.com/groups/253568111433276/ ");
+                                    GlobusLogHelper.log.Info("Group URL Not In Correct Format ! Please Follow The Format >>> http://www.facebook.com/groups/253568111433276/ ");
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Error >>> " + ex.StackTrace);
+                            }
+                        }//).Start();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Error >>> " + ex.StackTrace);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return lstGrpMember;
+        }
+
+
+        private void FindTheGroupUrlsNew(ref GlobusHttpHelper chilkatHttpHelper, Dictionary<string, string> CheckDuplicates, string Username, int GetCountMember, string keyword)
+        {
+            GlobusHttpHelper httpHelper = chilkatHttpHelper;
+            try
+            {
+                lstThreadsGroupMemberScraper.Add(Thread.CurrentThread);
+                lstThreadsGroupMemberScraper.Distinct();
+                Thread.CurrentThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error : " + ex.StackTrace);
+            }
+
+            try
+            {
+                string HomePage = httpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                string strKeyword = keyword;
+                string strGroupUrl = FBGlobals.Instance.fbfacebookSearchPhpQUrl + strKeyword + "&init=quick&type=groups";   // "https://www.facebook.com/search.php?q="
+                strGroupUrl = "https://www.facebook.com/search/results/?q=" + strKeyword + "&type=groups";
+                string __user = "";
+                string fb_dtsg = "";
+
+                string pgSrc_FanPageSearch = httpHelper.getHtmlfromUrl(new Uri(strGroupUrl));
+
+
+
+                __user = GlobusHttpHelper.GetParamValue(HomePage, "user");
+                if (string.IsNullOrEmpty(__user))
+                {
+                    __user = GlobusHttpHelper.ParseJson(HomePage, "user");
+                }
+
+                fb_dtsg = GlobusHttpHelper.GetParamValue(HomePage, "fb_dtsg");
+                if (string.IsNullOrEmpty(fb_dtsg))
+                {
+                    fb_dtsg = GlobusHttpHelper.ParseJson(HomePage, "fb_dtsg");
+                }
+
+                List<string> pagesList = GetGroups_FBSearch(pgSrc_FanPageSearch);
+
+
+                List<string> distinctPages = pagesList.Distinct().ToList();
+                foreach (string distpage in distinctPages)
+                {
+                    try
+                    {
+                        string distpage1 = distpage.Replace("d", "groups/");
+                        sgroupid.Add(distpage1);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Error : " + ex.StackTrace);
+                    }
+                }
+                string ajaxRequestURL = GetAjaxURL_MoreResults(pgSrc_FanPageSearch);
+
+
+
+                List<string> list = new List<string>();
+                List<string> lstLinkData = new List<string>();
+
+
+
+
+                string[] PageSplit = { };
+
+                if (true)
+                {
+                    try
+                    {
+                        PageSplit = Regex.Split(pgSrc_FanPageSearch, "group_id");
+                    }
+                    catch { };
+
+                    if (PageSplit.Count() != 1)
+                    {
+
+                        try
+                        {
+                            List<string> PageSplitList = PageSplit.ToList();
+                            PageSplitList.RemoveAt(0);
+                            foreach (string item in PageSplitList)
+                            {
+
+                                if (item.Contains("<!DOCTYPE html>"))
+                                {
+                                    continue;
+                                }
+
+
+                                if (1000 < list.Count())
+                                {
+                                    break;
+                                }
+
+                                //new Thread(() =>
+                                {
+                                    string groupId = string.Empty;
+                                    try
+                                    {
+                                        groupId = FBUtils.getBetween(item, "=", "\"").Replace("\\", string.Empty);
+                                        if (!string.IsNullOrEmpty(groupId))
+                                        {
+                                            try
+                                            {
+                                                string GroupPage = httpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/groups/" + groupId));
+
+                                                string GroupMembersCountVal = Utils.getBetween(GroupPage, "<span id=\"count_text\">", "members</span>").Replace(",", string.Empty);
+                                                int GroupMemberCount = int.Parse(GroupMembersCountVal);
+
+                                                if (GroupUrlScraperCheckMembersMin < GroupMemberCount && GroupUrlScraperCheckMembersMax > GroupMemberCount)
+                                                {
+
+                                                    list.Add("https://www.facebook.com/groups/" + groupId);
+                                                    GlobusHttpHelper objNewHttp = httpHelper;
+                                                    Thread threadGroupInfoScrape = new Thread(ScrapegroupInformation);
+
+                                                    threadGroupInfoScrape.Start(new object[] { objNewHttp, GetCountMember, "https://www.facebook.com/groups/" + groupId });
+                                                    //ScrapegroupInformation(ref httpHelper, CheckDuplicates, GetCountMember, "https://www.facebook.com/groups/" + groupId);
+                                                    GlobusLogHelper.log.Info("Added Group Id : " + groupId + " Group Member Count :" + GroupMemberCount);
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }//).Start();
+                            }
+
+
+
+                        }
+                        catch { };
+                    }
+
+
+                    else
+                    {
+
+                        try
+                        {
+                            try
+                            {
+                                PageSplit = Regex.Split(pgSrc_FanPageSearch, "<a href=\"/groups");
+                            }
+                            catch { };
+                            List<string> PageSplitList = PageSplit.ToList();
+                            PageSplitList.RemoveAt(0);
+                            foreach (string item in PageSplitList)
+                            {
+                                if (item.Contains("<!DOCTYPE html>"))
+                                {
+                                    continue;
+                                }
+
+
+                                if (1000 < list.Count())
+                                {
+                                    break;
+                                }
+
+
+                                // new Thread(() =>
+                                {
+                                    string groupId = string.Empty;
+                                    try
+                                    {
+                                        groupId = FBUtils.getBetween(item, "/", "/");
+                                        if (!string.IsNullOrEmpty(groupId))
+                                        {
+                                            string GroupPage = httpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/groups/" + groupId));
+
+                                            string GroupMembersCountVal = Utils.getBetween(GroupPage, "<span id=\"count_text\">", "members</span>").Replace(",", string.Empty);
+                                            int GroupMemberCount = int.Parse(GroupMembersCountVal);
+                                            if (GroupUrlScraperCheckMembersMin < GroupMemberCount && GroupUrlScraperCheckMembersMax > GroupMemberCount)
+                                            {
+                                                list.Add("https://www.facebook.com/groups/" + groupId);
+                                                GlobusHttpHelper objNewHttp = httpHelper;
+                                                Thread threadGroupInfoScrape = new Thread(ScrapegroupInformation);
+
+                                                threadGroupInfoScrape.Start(new object[] { objNewHttp, GetCountMember, "https://www.facebook.com/groups/" + groupId }); //(ref httpHelper, CheckDuplicates, GetCountMember, "https://www.facebook.com/groups/" + groupId);
+                                                GlobusLogHelper.log.Info("Added Group Id : " + groupId + " Group Member Count :" + GroupMemberCount);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }//).Start();
+                            }
+
+                        }
+                        catch { };
+                    }
+
+                    int countForlistIteminPrvious = 0;
+                    while (true)
+                    {
+                        list = list.Distinct().ToList();
+                        countForlistIteminPrvious = list.Count();
+
+                        try
+                        {
+
+                            if (100 < list.Count())
+                            {
+                                GlobusLogHelper.log.Info("No of Groups Found To Scrap : " + list.Count());
+                                break;
+                            }
+
+                            PageSplit = Regex.Split(pgSrc_FanPageSearch, "rel=\"ajaxify\"");  //rel=\"ajaxify\"
+
+                            if (PageSplit.Count() == 1)
+                            {
+                                string splitIt = "&amp;offset=";
+                                PageSplit = Regex.Split(pgSrc_FanPageSearch, splitIt);
+                                if (PageSplit.Count() == 1)
+                                {
+                                    GlobusLogHelper.log.Info("All Group Id Scraped ");
+                                    break;
+                                }
+                                if (PageSplit.Count() > 1)
+                                {
+
+                                    PageSplit[1] = "/search/results/more/?q=" + strKeyword + "&amp;offset=" + PageSplit[1];
+                                    ajaxRequestURL = FBUtils.getBetween(PageSplit[1], "", "\\\"");
+
+                                }
+
+                            }
+                            else
+                            {
+
+                                ajaxRequestURL = FBUtils.getBetween(PageSplit[1], "href=\"", "\"");
+                            }
+
+                            ajaxRequestURL = ajaxRequestURL.Replace("amp;", "").Replace("type=all", "type=groups").Replace("\\", "%2C").Replace("u00252C", "");
+
+                            ajaxRequestURL = "https://www.facebook.com" + ajaxRequestURL + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl35xKt2u6aEyx90BCxO4oKAdDgZ9LHwxBxCbzEeAq68K5Uc-dwIxbxjx27W88y98uyk4EKUyVWz9E&__req=c&__rev=1852936";
+
+                            pgSrc_FanPageSearch = httpHelper.getHtmlfromUrl(new Uri(ajaxRequestURL));
+                            string allListGroup = FBUtils.getBetween(pgSrc_FanPageSearch, "&quot;ents&quot;:&quot;", "&quot");
+                            string[] Linklist = System.Text.RegularExpressions.Regex.Split(allListGroup, ",");
+                            foreach (string item in Linklist)
+                            {
+
+
+                                if (100 < list.Count())
+                                {
+                                    break;
+                                }
+
+
+                                try
+                                {
+
+                                    //new Thread(() =>
+                                    {
+                                        if (!string.IsNullOrEmpty(item) && item.Count() < 20)
+                                        {
+                                            try
+                                            {
+                                                string GroupPage = httpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/groups/" + item));
+
+                                                string GroupMembersCountVal = Utils.getBetween(GroupPage, "<span id=\"count_text\">", "members</span>").Replace(",", string.Empty);
+                                                int GroupMemberCount = int.Parse(GroupMembersCountVal);
+                                                if (GroupUrlScraperCheckMembersMin < GroupMemberCount && GroupUrlScraperCheckMembersMax > GroupMemberCount)
+                                                {
+
+                                                    list.Add("https://www.facebook.com/groups/" + item);
+                                                    GlobusHttpHelper objNewHttp = httpHelper;
+                                                    Thread threadGroupInfoScrape = new Thread(ScrapegroupInformation);
+
+                                                    threadGroupInfoScrape.Start(new object[] { objNewHttp, GetCountMember, "https://www.facebook.com/groups/" + item });
+                                                    // ScrapegroupInformation(ref httpHelper, CheckDuplicates, GetCountMember, "https://www.facebook.com/groups/" + item);
+                                                    GlobusLogHelper.log.Info("Added Group Id : " + item + " Group Member Count :" + GroupMemberCount);
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+
+                                            }
+
+                                        }
+                                    }//).Start();
+                                }
+                                catch { };
+
+                            }
+                            if (countForlistIteminPrvious == list.Count())
+                            {
+                                GlobusLogHelper.log.Info("No of Groups Found To Scrap  : " + list.Count());
+                                break;
+                            }
+                            list = list.Distinct().ToList();
+
+                        }
+                        catch { };
+                    }
+
+
+                }
+
+
+                list = list.Distinct().ToList();
+
+
+
+                sgroupid.AddRange(list);
+                #region commented
+                //}
+                // foreach (string lsturl in sgroupid)
+                //{
+                //    try
+                //    {
+                //        string findstatus = httpHelper.getHtmlfromUrl(new Uri(lsturl));
+
+
+                //        GetCountMember = GetMemberCounts(GetCountMember, findstatus);
+
+                //        //if (GroupUrlScraperCheckMembersMin <= GetCountMember && GroupUrlScraperCheckMembersMax >= GetCountMember)
+                //        {
+                //            List<string> GroupType = new List<string>();
+                //            List<string> Groupmember = new List<string>();
+                //            List<string> GroupName = new List<string>();
+
+
+
+                //            try
+                //            {
+                //                if (GroupType[0].Contains("Closed Group"))
+                //                {
+                //                    try
+                //                    {
+                //                        string[] owner = Regex.Split(findstatus, "uiInfoTable mtm profileInfoTable uiInfoTableFixed noBorder");
+
+                //                        string[] ownerlink = Regex.Split(owner[1], "uiProfilePortrait");
+
+                //                        if (ownerlink[0].Contains("Admins"))
+                //                        {
+                //                            string stradminlink = ownerlink[1].Substring(ownerlink[1].IndexOf("href=\""), (ownerlink[1].IndexOf(">", ownerlink[1].IndexOf("href=\"")) - ownerlink[1].IndexOf("href=\""))).Replace("href=\"", string.Empty).Replace("\"", string.Empty).Trim();
+                //                            string stradminname = ownerlink[1].Substring(ownerlink[1].IndexOf("/>"), (ownerlink[1].IndexOf("</a>", ownerlink[1].IndexOf("/>")) - ownerlink[1].IndexOf("/>"))).Replace("/>", string.Empty).Replace("\"", string.Empty).Trim();
+                //                        }
+                //                    }
+                //                    catch (Exception ex)
+                //                    {
+                //                        Console.WriteLine("Error : " + ex.StackTrace);
+                //                    }
+                //                }
+                //            }
+                //            catch (Exception ex)
+                //            {
+                //                Console.WriteLine("Error : " + ex.StackTrace);
+                //            }
+
+                //            string NoOfGroupMember = string.Empty;
+                //            if (Groupmember != null)
+                //            {
+
+
+                //                foreach (string item in Groupmember)
+                //                {
+                //                    try
+                //                    {
+                //                        if (!item.Contains("Facebook © 2012 English (US)") && item.Contains("members"))
+                //                        {
+                //                            NoOfGroupMember = item;
+                //                        }
+                //                    }
+                //                    catch (Exception ex)
+                //                    {
+                //                        Console.WriteLine("Error : " + ex.StackTrace);
+                //                    }
+
+                //                }
+                //            }
+                //            if (findstatus.Contains("uiHeaderActions fsm fwn fcg"))
+                //            {
+                //                string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus, "uiHeaderActions fsm fwn fcg");
+                //                if (Arr.Count() == 3)
+                //                {
+                //                    try
+                //                    {
+                //                        NoOfGroupMember = GlobusHttpHelper.getBetween(Arr[2], "/\">", "members</a>").Replace(",", string.Empty);
+                //                    }
+                //                    catch (Exception ex)
+                //                    {
+                //                        Console.WriteLine("Error : " + ex.StackTrace);
+                //                    }
+                //                }
+
+                //            }
+                //            if (string.IsNullOrEmpty(NoOfGroupMember))
+                //            {
+                //                string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus, "uiHeader uiHeaderTopAndBottomBorder uiHeaderSection");
+
+                //                try
+                //                {
+                //                    NoOfGroupMember = GlobusHttpHelper.getBetween(Arr[1], "Members (", ")</h3>").Replace(",", string.Empty);
+                //                }
+                //                catch (Exception ex)
+                //                {
+                //                    Console.WriteLine("Error : " + ex.StackTrace);
+                //                }
+                //            }
+
+                //            string fanpageTitle = "";
+                //            if (findstatus.Contains("id=\"pageTitle\">"))
+                //            {
+                //                try
+                //                {
+                //                    fanpageTitle = FBUtils.getBetween(findstatus, "id=\"pageTitle\">", "</title>");
+                //                }
+                //                catch { };
+
+                //            }
+
+                //            string fanpageCatagory = "";
+                //            if (findstatus.Contains("_5mo6"))
+                //            {
+                //                try
+                //                {
+
+                //                    string[] fanpageCatagoryList = Regex.Split(findstatus, "_5mo6");
+                //                    fanpageCatagory = FBUtils.getBetween(fanpageCatagoryList[1], ">", "<");
+                //                }
+                //                catch { };
+
+                //            }
+
+
+                //            if (fanpageTitle.Contains("&amp"))
+                //            {
+                //                fanpageTitle = fanpageTitle.Replace("&amp", "");
+                //            }
+
+
+                //            string groupType = string.Empty;
+                //            try
+                //            {
+                //                groupType = GroupType[0];
+                //            }
+                //            catch (Exception ex)
+                //            {
+                //                Console.WriteLine("Error : " + ex.StackTrace);
+                //            }
+
+                //            //if (CheckScrapeOpenGroupUrlsScraper)
+                //            {
+                //                try
+                //                {
+                //                    //	if (groupType.Contains("Open group") || groupType.Contains("Open Group") || groupType.Contains("Public Group"))
+                //                    {
+                //                        //objclsgrpmngr.InsertGroupUrl(strKeyword, lsturl, groupType, Selectedusername);
+                //                        try
+                //                        {
+                //                            //lsturl = lsturl.Replace(",","-");
+                //                            strKeyword = strKeyword.Replace(",", "-");
+                //                            Username = Username.Replace(",", "-");
+                //                            fanpageTitle = fanpageTitle.Replace(",", "-");
+                //                            fanpageCatagory = fanpageCatagory.Replace(",", "-");
+                //                        }
+                //                        catch { };
+
+                //                        GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username + " fanpageTitle : " + fanpageTitle + "fanpageCatagory : " + fanpageCatagory);
+
+                //                        try
+                //                        {
+
+                //                            if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords))
+                //                            {
+                //                                //StreamReader  objStreamReader = new StreamReader(ExportFilePathGroupMemberScraperByKeyWords,Encoding.GetEncoding(1250));
+                //                                //string ReadExportFilePathGroupMemberScraperByKeyWords = objStreamReader.ReadToEnd();
+                //                                //objStreamReader.Close();
+                //                                List<string> lst_wholeDataOfCsv = Globussoft.GlobusFileHelper.readcsvfile(ExportFilePathGroupMemberScraperByKeyWords);
+                //                                string wholeDataOfCsv = "";
+                //                                foreach (string str in lst_wholeDataOfCsv)
+                //                                {
+                //                                    wholeDataOfCsv = wholeDataOfCsv + str;
+
+                //                                }
+                //                                if (!wholeDataOfCsv.Contains(lsturl))
+                //                                {
+
+
+
+
+                //                                    string Grppurl = string.Empty;
+                //                                    string Grpkeyword = string.Empty;
+                //                                    string GrpTypes = string.Empty;
+
+                //                                    Grppurl = lsturl;
+                //                                    Grpkeyword = strKeyword;
+                //                                    GrpTypes = groupType;
+
+
+                //                                    try
+                //                                    {
+                //                                        CheckDuplicates.Add(Grppurl, Grppurl);
+
+
+                //                                        string CSVHeader = "GroupUrl" + "," + "SearchKeyword" + "," + "NumberOfMember" + "," + "PageTitle" + "," + "PageCatagory";
+                //                                        string CSV_Content = Grppurl.Replace(",", "-") + "," + Grpkeyword.Replace(",", "-") + "," + GetCountMember + "," + fanpageTitle.Replace(",", "-") + "," + fanpageCatagory.Replace(",", "-");
+
+                //                                        string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + "," + GetCountMember;
+
+                //                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);   //FBGlobals.path_LinuxSuccessFullyLike
+
+                //                                        //Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
+                //                                        GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
+
+
+
+                //                                    }
+                //                                    catch (Exception ex)
+                //                                    {
+                //                                        Console.WriteLine("Error : " + ex.StackTrace);
+                //                                    }
+                //                                }
+                //                                else
+                //                                {
+                //                                    GlobusLogHelper.log.Info("Data Aleady Exist in the csv path !");
+                //                                }
+                //                            }
+                //                        }
+                //                        catch (Exception ex)
+                //                        {
+                //                            Console.WriteLine("Error : " + ex.StackTrace);
+                //                        }
+
+                //                    }
+
+                //                }
+                //                catch (Exception ex)
+                //                {
+                //                    Console.WriteLine("Error : " + ex.StackTrace);
+                //                }
+
+
+                //            }
+
+
+
+                //        }
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        Console.WriteLine("Error : " + ex.StackTrace);
+                //    }
+                //}
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error : " + ex.StackTrace);
+            }
+
+
+            //return GetCountMember;
+        }
+
+        Dictionary<string, string> CheckDuplicates = new Dictionary<string, string>();
+        public void ScrapegroupInformation(object Parameters)//(ref GlobusHttpHelper httpHelper,, int GetCountMember, string lsturl)
+        {
+            //GlobusHttpHelper httpHelper = fbUser.globusHttpHelper;
+            // lock (this)
+            {
+                try
+                {
+                    Array ParamArray = new object[3];
+                    ParamArray = (Array)Parameters;
+                    int GetCountMember = 500;
+                    string lsturl = string.Empty;
+                    GlobusHttpHelper httpHelper;
+                    httpHelper = (GlobusHttpHelper)ParamArray.GetValue(0);
+                    GetCountMember = (int)ParamArray.GetValue(1);
+                    lsturl = ParamArray.GetValue(2).ToString();
+                    CheckDuplicates.Add(lsturl, lsturl);
+                    string strKeyword = string.Empty;
+                    string Username = string.Empty;
+
+                    string findstatus = httpHelper.getHtmlfromUrl(new Uri(lsturl));
+
+
+
+                    GetCountMember = GetMemberCounts(GetCountMember, findstatus);
+
+                    //if (GroupUrlScraperCheckMembersMin <= GetCountMember && GroupUrlScraperCheckMembersMax >= GetCountMember)
+                    {
+                        List<string> GroupType = new List<string>();
+                        List<string> Groupmember = new List<string>();
+                        List<string> GroupName = new List<string>();
+
+
+
+                        try
+                        {
+                            if (GroupType[0].Contains("Closed Group"))
+                            {
+                                try
+                                {
+                                    string[] owner = Regex.Split(findstatus, "uiInfoTable mtm profileInfoTable uiInfoTableFixed noBorder");
+
+                                    string[] ownerlink = Regex.Split(owner[1], "uiProfilePortrait");
+
+                                    if (ownerlink[0].Contains("Admins"))
+                                    {
+                                        string stradminlink = ownerlink[1].Substring(ownerlink[1].IndexOf("href=\""), (ownerlink[1].IndexOf(">", ownerlink[1].IndexOf("href=\"")) - ownerlink[1].IndexOf("href=\""))).Replace("href=\"", string.Empty).Replace("\"", string.Empty).Trim();
+                                        string stradminname = ownerlink[1].Substring(ownerlink[1].IndexOf("/>"), (ownerlink[1].IndexOf("</a>", ownerlink[1].IndexOf("/>")) - ownerlink[1].IndexOf("/>"))).Replace("/>", string.Empty).Replace("\"", string.Empty).Trim();
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Error : " + ex.StackTrace);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error : " + ex.StackTrace);
+                        }
+
+                        string NoOfGroupMember = string.Empty;
+                        if (Groupmember != null)
+                        {
+
+
+                            foreach (string item in Groupmember)
+                            {
+                                try
+                                {
+                                    if (!item.Contains("Facebook © 2012 English (US)") && item.Contains("members"))
+                                    {
+                                        NoOfGroupMember = item;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Error : " + ex.StackTrace);
+                                }
+
+                            }
+                        }
+                        if (findstatus.Contains("uiHeaderActions fsm fwn fcg"))
+                        {
+                            string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus, "uiHeaderActions fsm fwn fcg");
+                            if (Arr.Count() == 3)
+                            {
+                                try
+                                {
+                                    NoOfGroupMember = GlobusHttpHelper.getBetween(Arr[2], "/\">", "members</a>").Replace(",", string.Empty);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Error : " + ex.StackTrace);
+                                }
+                            }
+
+                        }
+                        if (string.IsNullOrEmpty(NoOfGroupMember))
+                        {
+                            string[] Arr = System.Text.RegularExpressions.Regex.Split(findstatus, "uiHeader uiHeaderTopAndBottomBorder uiHeaderSection");
+
+                            try
+                            {
+                                NoOfGroupMember = GlobusHttpHelper.getBetween(Arr[1], "Members (", ")</h3>").Replace(",", string.Empty);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Error : " + ex.StackTrace);
+                            }
+                        }
+
+                        string fanpageTitle = "";
+                        if (findstatus.Contains("id=\"pageTitle\">"))
+                        {
+                            try
+                            {
+                                fanpageTitle = FBUtils.getBetween(findstatus, "id=\"pageTitle\">", "</title>");
+                            }
+                            catch { };
+
+                        }
+
+                        string fanpageCatagory = "";
+                        if (findstatus.Contains("_5mo6"))
+                        {
+                            try
+                            {
+
+                                string[] fanpageCatagoryList = Regex.Split(findstatus, "_5mo6");
+                                fanpageCatagory = FBUtils.getBetween(fanpageCatagoryList[1], ">", "<");
+                            }
+                            catch { };
+
+                        }
+
+
+                        if (fanpageTitle.Contains("&amp"))
+                        {
+                            fanpageTitle = fanpageTitle.Replace("&amp", "");
+                        }
+
+
+                        string groupType = string.Empty;
+                        try
+                        {
+                            groupType = GroupType[0];
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error : " + ex.StackTrace);
+                        }
+
+                        //if (CheckScrapeOpenGroupUrlsScraper)
+                        {
+                            try
+                            {
+                                //	if (groupType.Contains("Open group") || groupType.Contains("Open Group") || groupType.Contains("Public Group"))
+                                {
+                                    //objclsgrpmngr.InsertGroupUrl(strKeyword, lsturl, groupType, Selectedusername);
+                                    try
+                                    {
+                                        //lsturl = lsturl.Replace(",","-");
+                                        strKeyword = strKeyword.Replace(",", "-");
+                                        Username = Username.Replace(",", "-");
+                                        fanpageTitle = fanpageTitle.Replace(",", "-");
+                                        fanpageCatagory = fanpageCatagory.Replace(",", "-");
+                                    }
+                                    catch { };
+
+                                    GlobusLogHelper.log.Info("Scrap GroupUrl Is :" + lsturl + "  GroupMember : " + GetCountMember + " Keyword : " + strKeyword + "UserName : " + Username + " fanpageTitle : " + fanpageTitle + "fanpageCatagory : " + fanpageCatagory);
+
+                                    try
+                                    {
+
+                                        if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraperByKeyWords))
+                                        {
+                                            //StreamReader  objStreamReader = new StreamReader(ExportFilePathGroupMemberScraperByKeyWords,Encoding.GetEncoding(1250));
+                                            //string ReadExportFilePathGroupMemberScraperByKeyWords = objStreamReader.ReadToEnd();
+                                            //objStreamReader.Close();
+                                            List<string> lst_wholeDataOfCsv = Globussoft.GlobusFileHelper.readcsvfile(ExportFilePathGroupMemberScraperByKeyWords);
+                                            string wholeDataOfCsv = "";
+                                            foreach (string str in lst_wholeDataOfCsv)
+                                            {
+                                                wholeDataOfCsv = wholeDataOfCsv + str;
+
+                                            }
+                                            if (!wholeDataOfCsv.Contains(lsturl))
+                                            {
+
+
+
+
+                                                string Grppurl = string.Empty;
+                                                string Grpkeyword = string.Empty;
+                                                string GrpTypes = string.Empty;
+
+                                                Grppurl = lsturl;
+                                                Grpkeyword = strKeyword;
+                                                GrpTypes = groupType;
+
+
+                                                try
+                                                {
+
+
+
+                                                    string CSVHeader = "GroupUrl" + "," + "SearchKeyword" + "," + "NumberOfMember" + "," + "PageTitle" + "," + "PageCatagory";
+                                                    string CSV_Content = Grppurl.Replace(",", "-") + "," + Grpkeyword.Replace(",", "-") + "," + GetCountMember + "," + fanpageTitle.Replace(",", "-") + "," + fanpageCatagory.Replace(",", "-");
+
+                                                    string Txt_Content = Grppurl + "\t\t\t" + "," + Grpkeyword + "\t\t\t" + "," + GetCountMember;
+
+                                                    Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathGroupMemberScraperByKeyWords);   //FBGlobals.path_LinuxSuccessFullyLike
+
+                                                    //Globussoft.GlobusFileHelper.AppendStringToTextfileNewLine(Txt_Content, ExportFilePathGroupMemberScraperTxt);
+                                                    GlobusLogHelper.log.Info("Data Export In csv File !" + CSV_Content);
+
+
+
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    Console.WriteLine("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                GlobusLogHelper.log.Info("Data Aleady Exist in the csv path !");
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine("Error : " + ex.StackTrace);
+                                    }
+
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Error : " + ex.StackTrace);
+                            }
+
+
+                        }
+
+
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error : " + ex.StackTrace);
+                }
+            }
+        }
+
+        public void ScrapeUserInfo(ref FacebookUser fbuser, string profileUrl, string CSVFilePath, string refUrl)
+        {
+
+            try
+            {
+                GlobusHttpHelper HttpHelper = fbuser.globusHttpHelper;
+                string Urls = string.Empty;
+                string id = string.Empty;
+                string name = string.Empty;
+                string first_name = string.Empty;
+                string last_name = string.Empty;
+                string link = string.Empty;
+                string gender = string.Empty;
+                string locale = string.Empty;
+                string birthday = "";
+                string language = "";
+                string website = "";
+                string email = "";
+                string location = "";
+                string jobposition = "";
+                string jobcompany = "";
+                string Mobile_Phones = "";
+                string University = "";
+                string Secondaryschool = "";
+                string Hometown = "";
+                string Currentlocation = "";
+                string pagesourceofProfileUrl = string.Empty;
+                string FBEmailId = string.Empty;
+                string FBUserName = string.Empty;
+
+                Urls = profileUrl;
+
+
+                string pageSrc = HttpHelper.getHtmlfromUrl(new Uri(Urls));
+                try
+                {
+                    id = Utils.getBetween(pageSrc, "\"profile_id\":", ",");
+
+                    FBUserName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                    string aboutUrl = string.Empty;
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        aboutUrl = "https://www.facebook.com/" + FBUserName + "/about";
+                    }
+                    else
+                    {
+                        aboutUrl = "https://www.facebook.com/profile.php?id=" + id + "&sk=about";
+                    }
+
+                    string AboutPage = HttpHelper.getHtmlfromUrl(new Uri(aboutUrl));
+                    string WorkDetails = Utils.getBetween(Utils.getBetween(AboutPage, "Works at <a", "</div>"), ">", "</a>").Replace(",", string.Empty);
+                    name = Utils.getBetween(AboutPage, "setPageTitle\",[],[\"", "\"");
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        name = Utils.getBetween(AboutPage, "<title id=\"pageTitle\">", "</title>");
+
+                    }
+                    name = name.Replace(",", string.Empty);
+                    University = Utils.getBetween(Utils.getBetween(AboutPage, "Studied at <a", "</div>"), ">", "</a>").Replace(",", string.Empty);
+                    location = Utils.getBetween(Utils.getBetween(AboutPage, "Lives in <a", "</div>"), ">", "</a>").Replace(",", string.Empty);
+                    birthday = Utils.getBetween(AboutPage, "Birthday</span></div><div>", "</div>").Replace(",", string.Empty);
+                    if (AboutPage.Contains("Phones</span></div><div><span dir=\"ltr\">"))
+                    {
+                        Mobile_Phones = Utils.getBetween(AboutPage, "Phones</span></div><div><span dir=\"ltr\">", "</span>");
+                    }
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        FBEmailId = FBUserName + "@facebook.com";
+
+                    }
+                    else
+                    {
+                        FBEmailId = id + "@facebook.com";
+                    }
+                    string basicInfoUrl = string.Empty;
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        basicInfoUrl = aboutUrl + "?section=contact-info&pnref=about";
+                    }
+                    else
+                    {
+                        basicInfoUrl = aboutUrl + "&section=contact-info&pnref=about";
+                    }
+                    string basicInfoPage = HttpHelper.getHtmlfromUrl(new Uri(basicInfoUrl));
+                    string genderInfo = Utils.getBetween(basicInfoPage, "Gender</span>", "</span>");
+                    if (genderInfo.Contains("Male"))
+                    {
+                        gender = "Male";
+                    }
+                    else
+                    {
+                        gender = "Female";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+                if (!string.IsNullOrEmpty(CSVFilePath))
+                {
+                    try
+                    {
+                        string ProfileLink = string.Empty;
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+                            ProfileLink = "https://www.facebook.com/" + FBUserName;
+                        }
+                        else
+                        {
+                            ProfileLink = "https://www.facebook.com/" + id;
+                        }
+
+                        // string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
+
+                        string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "University" + "," + "Location" + "," + "Birthday" + "," + "FbEmail" + "," + "Reffered Url";
+                        string CSV_Content = ProfileLink + "," + id + "," + name + "," + University + "," + location + "," + birthday + "," + FBEmailId + "," + refUrl;
+
+                        // string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Birthday" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "Email" + "," + "Telephone" + "," + "UserAccount";
+
+                        // string CSV_Content = ProfileLink + "," + id + "," + name + "," + first_name + "," + last_name + "," + birthday + "," + link + "," + gender + "," + locale + "," + Hometown + "," + Currentlocation + ", " + jobcompany + "," + University + "," + Secondaryschool + "," + email + "," + Mobile_Phones + ",," + fbUser.username;// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, CSVFilePath);
+                        GlobusLogHelper.log.Info("Profile Info Saved In CSV");
+                        GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+        }
+
+        private void GetGrpMember_Ajax(ref FacebookUser fbuser, string userId, string grpId, int start, string grpUrl)
+        {
+            try
+            {
+                GlobusHttpHelper HttpHelper = fbuser.globusHttpHelper;
+                //int start = 96;
+
+                bool isContinue = false;
+
+                if (start == 10000)
+                {
+                }
+
+
+                string pageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.GroupsGroupCampaignManagerPostAjaxBrowserListGroupMemberUrl + grpId + "&gid=" + grpId + "&edge=groups%3Amembers&order=default&view=grid&start=" + start + "&__user=" + userId + "&__a=1"));  // "https://www.facebook.com/ajax/browser/list/group_members/?id="
+
+                // Not find Toatal Members Since Page Source Contains...
+                // for (;;);{"__ar":1,"payload":null,"domops":[["appendContent","^div.fbProfileBrowserListContainer",true,{"__html":""}],["remove","^.morePager",true,{"__html":""}]],"jsmods":{"require":[["Arbiter","inform",[],["ProfileBrowser\/LoadMoreContent"]]]},"ixData":[]}
+
+                if (pageSource.Contains("user.php?id="))
+                {
+                    isContinue = true;
+
+                    string[] arrId = Regex.Split(pageSource, "user.php");
+
+                    foreach (string item1 in arrId)
+                    {
+                        string link = string.Empty;
+                        try
+                        {
+                            if (!item1.Contains("<!DOCTYPE"))
+                            {
+                                if (item1.Contains("/a>"))
+                                {
+                                    string idName = item1.Substring(0, item1.IndexOf("/a>"));
+
+                                    if (idName.Contains(">"))
+                                    {
+                                        string[] arrIdName = Regex.Split(idName, ">");
+
+                                        if (arrIdName.Length > 1)
+                                        {
+                                            string id = arrIdName[0].Replace("//", string.Empty).Replace("\"", string.Empty).Replace("?id=", string.Empty).Replace("&amp;extragetparams=%7B%22hc_location%22%3A%22friend_browser%22%7D", string.Empty).Replace("\\", string.Empty).Trim();
+                                            if (id.Contains("&amp;"))
+                                            {
+                                                string[] arr = System.Text.RegularExpressions.Regex.Split(id, "&amp;");
+                                                id = arr[0];
+                                            }
+                                            string name = arrIdName[1].Replace("//", string.Empty).Replace("\"", string.Empty).Replace("\\u003C\\", string.Empty).Trim();
+
+
+                                            if (!id.Contains("for"))
+                                            {
+                                                DicIds.Add(id, id);
+
+                                                string profileURL = FBGlobals.Instance.fbProfileUrl + id;            // "https://www.facebook.com/profile.php?id="
+
+
+
+
+
+
+                                                if (!string.IsNullOrEmpty(ExportFilePathGroupMemberScraper))
+                                                {
+                                                    try
+                                                    {
+
+                                                        GlobusLogHelper.log.Info("Found  ProfileLink : " + profileURL);
+
+                                                        GlobusLogHelper.log.Info("Found  GroupUrl : " + grpUrl);
+
+                                                        GlobusLogHelper.log.Info("Data Saved IN CSV File");
+                                                        ScrapeUserInfo(ref fbuser, profileURL, ExportFilePathGroupMemberScraper, grpUrl);
+                                                        GlobusLogHelper.log.Debug("Data Saved IN CSV File");
+                                                        GlobusLogHelper.log.Info("________________________");
+
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error >>> " + ex.StackTrace);
+                        }
+                    }
+
+                    if (isContinue)
+                    {
+                        System.Threading.Thread.Sleep(5 * 1000);
+
+                        start = start + 96;
+
+                        GetGrpMember_Ajax(ref fbuser, userId, grpId, start, grpUrl);
+                    }
+
+                    // Calling Ajax Fn..
+                }
+
+                GlobusLogHelper.log.Debug("Process Completed !");
+                GlobusLogHelper.log.Info("Process Completed !");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error >>> " + ex.StackTrace);
+            }
+        }
     }
 
     public class CustomAudiencesScraper
@@ -8249,7 +9680,7 @@ namespace Scrapers
         public static string ExportFilePathCustomAudiencesScraper = string.Empty;
         public static string ExportFilePathCustomAudiencesScraperNotepad = string.Empty;
         public static string CustomAudiencesScraperUsingAccount = string.Empty;
-      //  public static string StartProcessUsingCustomAudiencesScraper = string.Empty;
+        //  public static string StartProcessUsingCustomAudiencesScraper = string.Empty;
         public bool isStopCustomAudiencesScraper = false;
         int countThreadControllerCustomAudiencesScraper = 0;
         public List<Thread> lstThreadsCustomAudiencesscraper = new List<Thread>();
@@ -8258,19 +9689,19 @@ namespace Scrapers
 
 
         #region Property For CustomAudiencesscraper
-        
+
         public int NoOfThreadsCustomAudiencesscraper
         {
             get;
             set;
         }
-        
+
         public List<string> KeyWordLstCustomAudiencesscraper
         {
             get;
             set;
         }
-        public List<string>UrlsLstCustomAudiencesscraper
+        public List<string> UrlsLstCustomAudiencesscraper
         {
             get;
             set;
@@ -8301,7 +9732,7 @@ namespace Scrapers
                 {
                     list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
 
-                    foreach(List<string> listAccounts in list_listAccounts)
+                    foreach (List<string> listAccounts in list_listAccounts)
                     {
                         //int tempCounterAccounts = 0; 
 
@@ -8364,7 +9795,7 @@ namespace Scrapers
         {
             try
             {
-               // if (!isStopFanPageScraper)
+                // if (!isStopFanPageScraper)
                 {
                     try
                     {
@@ -8377,48 +9808,48 @@ namespace Scrapers
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
                     try
-                    {                       
-                            Array paramsArray = new object[1];
-                            paramsArray = (Array)parameters;
+                    {
+                        Array paramsArray = new object[1];
+                        paramsArray = (Array)parameters;
 
-                            FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+                        FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
 
-                            if (!objFacebookUser.isloggedin)
+                        if (!objFacebookUser.isloggedin)
+                        {
+                            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+                            objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+
+                            //Login Process
+                            Accounts.AccountManager objAccountManager = new AccountManager();
+                            objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                        }
+                        if (objFacebookUser.isloggedin)
+                        {
+                            if (StartProcessUsingCustomAudiencesScraper == "Custom Scraper  by KeyWords")
                             {
-                                GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
-                                objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
-
-                                //Login Process
-                                Accounts.AccountManager objAccountManager = new AccountManager();
-                                objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);                            
+                                StartActionAudiencesScraper(ref objFacebookUser);
                             }
-                            if (objFacebookUser.isloggedin)
+                            else if (StartProcessUsingCustomAudiencesScraper == "Custom Scraper by Urls")
                             {
-                                if (StartProcessUsingCustomAudiencesScraper == "Custom Scraper  by KeyWords")
-                                {
-                                    StartActionAudiencesScraper(ref objFacebookUser);
-                                }
-                                else if (StartProcessUsingCustomAudiencesScraper == "Custom Scraper by Urls")
-                                {
-                                    StartActionAudiencesScraperByUrls(ref objFacebookUser);
-                                }
-                                else if (StartProcessUsingCustomAudiencesScraper == "Custom Groups Scraper by Urls")
-                                {
-                                    StartActionAudiencesGroupsScraperByUrls(ref objFacebookUser);
-                                }
-                                else if (StartProcessUsingCustomAudiencesScraper == "Custom Groups Scraper by Keywords")
-                                {
-                                    StartActionAudiencesScraperGroupUsingKeywords(ref objFacebookUser);
-                                }
-                                
-                                // Call StartActionEventInviter
-                                
+                                StartActionAudiencesScraperByUrls(ref objFacebookUser);
                             }
-                            else
+                            else if (StartProcessUsingCustomAudiencesScraper == "Custom Groups Scraper by Urls")
                             {
-                                GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                                GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
-                            }                       
+                                StartActionAudiencesGroupsScraperByUrls(ref objFacebookUser);
+                            }
+                            else if (StartProcessUsingCustomAudiencesScraper == "Custom Groups Scraper by Keywords")
+                            {
+                                StartActionAudiencesScraperGroupUsingKeywords(ref objFacebookUser);
+                            }
+
+                            // Call StartActionEventInviter
+
+                        }
+                        else
+                        {
+                            GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                            GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                        }
 
                     }
                     catch (Exception ex)
@@ -8515,7 +9946,7 @@ namespace Scrapers
                         string GroupName = string.Empty;
                         string GroupUrl = ListGroupUrl_item;
                         string GroupId = string.Empty;
-                        int MemberCount = 0; 
+                        int MemberCount = 0;
 
                         string PageSource = HttpHelper.getHtmlfromUrl(new Uri(ListGroupUrl_item));
                         try
@@ -8543,9 +9974,9 @@ namespace Scrapers
                         {
                             try
                             {
-                                string CSVHeader ="GroupUrl"+","+"ID"+ ","+"Group Name"+","+"GroupMemberCount";
+                                string CSVHeader = "GroupUrl" + "," + "ID" + "," + "Group Name" + "," + "GroupMemberCount";
 
-                                string CSV_Content = GroupUrl + "," + GroupId + "," + GroupName + "," + MemberCount;                             
+                                string CSV_Content = GroupUrl + "," + GroupId + "," + GroupName + "," + MemberCount;
 
                                 Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathCustomAudiencesScraper);
 
@@ -8577,7 +10008,7 @@ namespace Scrapers
             }
         }
 
-        private static int GetMemberCounts( string findstatus)
+        private static int GetMemberCounts(string findstatus)
         {
             int GetCountMember = 0;
             string GetTagCountMember = Utils.getBetween(findstatus, "<div class=\"groupsAddMemberSideBox\">", "</div>");
@@ -8614,10 +10045,10 @@ namespace Scrapers
             }
             if (string.IsNullOrEmpty(GetGroupMemberCount))
             {
-                 return GetCountMember;
+                return GetCountMember;
             }
-           
-             GetGroupMemberCount = GetGroupMemberCount.Replace("members", "").Replace(",", "").Replace("Members", "").Replace("(", "").Replace(")", "");     
+
+            GetGroupMemberCount = GetGroupMemberCount.Replace("members", "").Replace(",", "").Replace("Members", "").Replace("(", "").Replace(")", "");
             try
             {
                 GetCountMember = Convert.ToInt32(GetGroupMemberCount);
@@ -8632,14 +10063,14 @@ namespace Scrapers
         private void GetGroupUrls_Ajax(string pageSource, ref FacebookUser FBuser, string UserID, string searchResult)
         {
 
-           List<string>ListGroupUrl=GetGroups_FBSearch(pageSource);
+            List<string> ListGroupUrl = GetGroups_FBSearch(pageSource);
 
-             GlobusHttpHelper HttpHelper = FBuser.globusHttpHelper;
-           // group Parse
+            GlobusHttpHelper HttpHelper = FBuser.globusHttpHelper;
+            // group Parse
 
-             GetGroupDetails(ref FBuser, ListGroupUrl);
+            GetGroupDetails(ref FBuser, ListGroupUrl);
 
-           
+
             string AjaxPageSource = string.Empty;
             List<string> ProfileUrlList = new List<string>();
             List<string> ProfileUrlListPagination = new List<string>();
@@ -8681,12 +10112,12 @@ namespace Scrapers
 
                 int i = 2;
                 while (true)
-                 {
+                {
                     List<string> NewListLcal = new List<string>();
                     bool CheckCursor = false;
                     //Edited By Mahesh 29-12-2014
                     encoded_query = "{" + encoded_query + "}";
-                    encoded_query = encoded_query.Replace("{{", "{").Replace("}}", "}");                   
+                    encoded_query = encoded_query.Replace("{{", "{").Replace("}}", "}");
                     string[] ArrLocal = System.Text.RegularExpressions.Regex.Split(pageSource, "BrowseScrollingPager");
                     string Data = string.Empty;
                     string SearchData = string.Empty;
@@ -8695,15 +10126,15 @@ namespace Scrapers
                         SearchData = Utils.getBetween(searchResult, "search/", "keywords_groups");
                         SearchData = SearchData + "keywords_groups";
                     }
-                   // Data = Uri.EscapeDataString("{\"view\":\"list\",\"encoded_query\":\"" + encoded_query + "\",\"encoded_title\":\"" + encoded_title + "\",\"ref\":\"unknown\",\"logger_source\":\"www_main\",\"typeahead_sid\":\"\",\"tl_log\":false,\"impression_id\":\"89ec6c8d\",\"filter_ids\":" + filter_id + ",\"experience_type\":\"grammar\",\"exclude_ids\":null,\"browse_location\":\"\",\"trending_source\":null,\"cursor\":\"" + Cursor + "\"}");
+                    // Data = Uri.EscapeDataString("{\"view\":\"list\",\"encoded_query\":\"" + encoded_query + "\",\"encoded_title\":\"" + encoded_title + "\",\"ref\":\"unknown\",\"logger_source\":\"www_main\",\"typeahead_sid\":\"\",\"tl_log\":false,\"impression_id\":\"89ec6c8d\",\"filter_ids\":" + filter_id + ",\"experience_type\":\"grammar\",\"exclude_ids\":null,\"browse_location\":\"\",\"trending_source\":null,\"cursor\":\"" + Cursor + "\"}");
                     Data = Uri.EscapeDataString("{\"view\":\"list\",\"encoded_query\":\"" + encoded_query + "\",\"encoded_title\":\"" + encoded_title + "\",\"ref\":\"top_filter\",\"logger_source\":\"www_main\",\"typeahead_sid\":\"\",\"tl_log\":false,\"impression_id\":\"dcd588ab\",\"filter_ids\":" + filter_id + ",\"experience_type\":\"grammar\",\"exclude_ids\":null,\"browse_location\":\"\",\"trending_source\":null,\"ref_path\":\"/search/" + SearchData + "\",\"is_trending\":false,\"topic_id\":null,\"story_id\":null,\"cursor\":\"" + Cursor + "\",\"page_number\":" + i + "}");
-                  //  string AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + Data + "&__user=" + UserID + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizGomyp9Esx6bF3pqzCC-C26m6oKexm48jhHx2Vo&__req=b&__rev=1396250";
+                    //  string AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + Data + "&__user=" + UserID + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizGomyp9Esx6bF3pqzCC-C26m6oKexm48jhHx2Vo&__req=b&__rev=1396250";
                     string AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + Data + "&__user=" + UserID + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizGomyp9Esx6bF3pqzCC-C26m6oKexm48jhHx2Vo&__req=b&__rev=1396250";
                     AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + Data + "&__user=" + UserID + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUW5ogDyQqUkBBzEy6Kdy8-&__req=2q&__rev=1543317";
 
                     AjaxPageSource = HttpHelper.getHtmlfromUrl(new Uri(AjaxUrl));
                     i++;
-                    List<string> ListGroupUrlNextPage = new List<string>() ;
+                    List<string> ListGroupUrlNextPage = new List<string>();
                     pageSource = AjaxPageSource;
                     if (AjaxPageSource.Contains("cursor\":\""))
                     {
@@ -8714,11 +10145,11 @@ namespace Scrapers
                     {
                         CheckCursor = false;
                     }
-                   // group Parse
+                    // group Parse
 
 
                     string[] GropData = Regex.Split(AjaxPageSource, "8o _8s lfloat _ohe");
-                    ArrLocal=ArrLocal.Skip(1).ToArray();
+                    ArrLocal = ArrLocal.Skip(1).ToArray();
                     string temp = string.Empty;
                     foreach (string GroupURL in GropData)
                     {
@@ -8728,7 +10159,7 @@ namespace Scrapers
                             string[] TempData = Regex.Split(ProfileLinkUrl, "\\/");
                             ProfileLinkUrl = TempData[2].Replace("\\", string.Empty);
                             // ProfileLinkUrl = ProfileLinkUrl;
-                            ProfileLinkUrl = "https://www.facebook.com/groups/"+ProfileLinkUrl;
+                            ProfileLinkUrl = "https://www.facebook.com/groups/" + ProfileLinkUrl;
                             ProfileUrlList.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
                             ListGroupUrlNextPage.Add(ProfileLinkUrl);
                         }
@@ -8744,9 +10175,9 @@ namespace Scrapers
                     {
                         break;
                     }
-                 
+
                 }
-               
+
                 GlobusLogHelper.log.Debug("Process Completed !");
                 GlobusLogHelper.log.Info("Process Completed !");
             }
@@ -8864,7 +10295,7 @@ namespace Scrapers
         {
             string pageSource_Home = string.Empty;
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-            
+
             pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
 
             string UserId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
@@ -8876,10 +10307,10 @@ namespace Scrapers
             {
                 try
                 {
-                    
-                    string searchURL = "https://www.facebook.com/typeahead/search/facebar/query/?value=[%22" + Uri.EscapeDataString(KeyWordLstCustomAudiencesscraper_item) + "%22]&context=facebar&grammar_version=90a525db12a8700dec0db939c6cb250e4f8e8de2&viewer="+UserId+"&rsp=search&qid=1&max_results=10&sid=0.666867780033499&__user="+UserId+"&__a=1&__dyn=7n8ahyj35zoSt2u6aWizG85oCiq78hyWgSmEVFLFwxBxCbzElx24QqUgKm&__req=a&__rev=1380031";
+
+                    string searchURL = "https://www.facebook.com/typeahead/search/facebar/query/?value=[%22" + Uri.EscapeDataString(KeyWordLstCustomAudiencesscraper_item) + "%22]&context=facebar&grammar_version=90a525db12a8700dec0db939c6cb250e4f8e8de2&viewer=" + UserId + "&rsp=search&qid=1&max_results=10&sid=0.666867780033499&__user=" + UserId + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizG85oCiq78hyWgSmEVFLFwxBxCbzElx24QqUgKm&__req=a&__rev=1380031";
                     string pageSource_Search = HttpHelper.getHtmlfromUrl(new Uri(searchURL));
-                    string searchResult=string.Empty;;
+                    string searchResult = string.Empty; ;
                     string CustPageSource = string.Empty;
                     if (pageSource_Search.Contains("semantic"))
                     {
@@ -8887,17 +10318,18 @@ namespace Scrapers
                         searchResult = Utils.getBetween(pageSource_Search, "\"semantic\":\"", "\",\"cost");
                         if (searchResult.Contains("u0025"))
                         {
-                              searchResult = searchResult.Replace("u00252B","%20");
+                            searchResult = searchResult.Replace("u00252B", "%20").Replace("\\u00252527", string.Empty);
+
                         }
 
 
-                        string[] URLArr = searchResult.Split('(',',');
+                        string[] URLArr = searchResult.Split('(', ',');
                         string query = "https://www.facebook.com/search/str";
-                        for (int i = URLArr.Length-1; i >= 0;i-- )
+                        for (int i = URLArr.Length - 1; i >= 0; i--)
                         {
-                            query += "/"+URLArr[i];
+                            query += "/" + URLArr[i];
                         }
-                        query=query.Replace(")","");
+                        query = query.Replace(")", "");
                         if (query.Contains("str\\/"))
                         {
                             query = query.Replace("str\\/", string.Empty);
@@ -8905,17 +10337,19 @@ namespace Scrapers
                         query = query.Replace("\\", string.Empty);
                         query = query.Replace("u0025", "%");
                         query = query.Replace("keywords_top", "keywords_users");
+                        string keywordTerm = Uri.EscapeDataString(Uri.EscapeDataString(KeyWordLstCustomAudiencesscraper_item));
+                        query = "https://www.facebook.com/ajax/home/generic.php?ajaxpipe=1&ajaxpipe_token=AXikskHgTFvNOAar&sidecol=true&path=%2Fsearch%2Fstr%2F" + keywordTerm + "%2Fkeywords_users&sk=search&key=search&ref=top_filter&endpoint=%2Fajax%2Fhome%2Fgeneric.php&__user=" + UserId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWOGeFDzECQqbx2mbAKGiyEyupFLRwxBxC9V8CdwIhEyfyUnwPUS2J1bxjy9A8GqcEwydCxt7gjyXSiVWz9Epw&__req=jsonp_8&__rev=1828992&__adt=8";
                         CustPageSource = HttpHelper.getHtmlfromUrl(new Uri(query));
                     }
-                  
 
-                    GetGrpMember_Ajax(CustPageSource, ref fbUser,UserId,searchResult,"");
+
+                    GetGrpMember_Ajax(CustPageSource, ref fbUser, UserId, searchResult, "");
                 }
                 catch (Exception ex)
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
-            }         
+            }
 
         }
 
@@ -8931,14 +10365,14 @@ namespace Scrapers
             if (string.IsNullOrEmpty(UserId))
             {
                 UserId = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
-            }            
+            }
             GrammarVersion = Utils.getBetween(pageSource_Home, "grammar_version\":\"", "\"");
 
             foreach (string KeyWordLstCustomAudiencesscraper_item in KeyWordLstCustomAudiencesscraper)
             {
                 try
                 {
-                    string searchURL = "https://www.facebook.com/typeahead/search/facebar/query/?value=[%22" + Uri.EscapeDataString(KeyWordLstCustomAudiencesscraper_item.Replace("\"","")) + "%22]&context=facebar&grammar_version=" + GrammarVersion + "&viewer=" + UserId + "&rsp=search&qid=2&max_results=10&sid=0.15900980797596276&__user=" + UserId + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizG85oCiq78hyWgSmEVFLFwxBxCbzElx24QqUgKm&__req=a&__rev=1380031";
+                    string searchURL = "https://www.facebook.com/typeahead/search/facebar/query/?value=[%22" + Uri.EscapeDataString(KeyWordLstCustomAudiencesscraper_item.Replace("\"", "")) + "%22]&context=facebar&grammar_version=" + GrammarVersion + "&viewer=" + UserId + "&rsp=search&qid=2&max_results=10&sid=0.15900980797596276&__user=" + UserId + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizG85oCiq78hyWgSmEVFLFwxBxCbzElx24QqUgKm&__req=a&__rev=1380031";
                     string pageSource_Search = HttpHelper.getHtmlfromUrl(new Uri(searchURL));
                     string searchResult = string.Empty; ;
                     string CustPageSource = string.Empty;
@@ -8951,8 +10385,8 @@ namespace Scrapers
                         for (int i = URLArr.Length - 1; i >= 0; i--)
                         {
                             query += "/" + URLArr[i];
-                            
-                        }                        
+
+                        }
                         query = query.Replace(")", "");
                         if (query.Contains("str\\/"))
                         {
@@ -8981,9 +10415,9 @@ namespace Scrapers
             try
             {
                 string[] arrId = Regex.Split(pageSource, "_zs fwb");
-                if (arrId.Count()==1)
+                if (arrId.Count() == 1)
                 {
-                   arrId = Regex.Split(pageSource, "clearfix _zw"); 
+                    arrId = Regex.Split(pageSource, "clearfix _zw");
                 }
                 foreach (var arrId_item in arrId)
                 {
@@ -8991,12 +10425,12 @@ namespace Scrapers
                     {
                         if (!arrId_item.Contains("<!DOCTYPE html>"))
                         {
-                            string ProfileLink = Utils.getBetween(arrId_item,"<a href=\"","?ref=br_rs&amp;");
+                            string ProfileLink = Utils.getBetween(arrId_item, "<a href=\"", "?ref=br_rs&amp;");
                             if (ProfileLink.Contains("www.facebook.com"))
                             {
-                                ProfileUrlList.Add(ProfileLink);   
+                                ProfileUrlList.Add(ProfileLink);
                             }
-                                                    
+
                         }
                     }
                     catch (Exception ex)
@@ -9014,7 +10448,147 @@ namespace Scrapers
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }        
+            }
+        }
+
+
+        public void ScrapeUserInfo(ref FacebookUser fbuser, string profileUrl, string CSVFilePath, string refUrl)
+        {
+
+            try
+            {
+                GlobusHttpHelper HttpHelper = fbuser.globusHttpHelper;
+                string Urls = string.Empty;
+                string id = string.Empty;
+                string name = string.Empty;
+                string first_name = string.Empty;
+                string last_name = string.Empty;
+                string link = string.Empty;
+                string gender = string.Empty;
+                string locale = string.Empty;
+                string birthday = "";
+                string language = "";
+                string website = "";
+                string email = "";
+                string location = "";
+                string jobposition = "";
+                string jobcompany = "";
+                string Mobile_Phones = "";
+                string University = "";
+                string Secondaryschool = "";
+                string Hometown = "";
+                string Currentlocation = "";
+                string pagesourceofProfileUrl = string.Empty;
+                string FBEmailId = string.Empty;
+                string FBUserName = string.Empty;
+
+                Urls = profileUrl;
+
+
+                string pageSrc = HttpHelper.getHtmlfromUrl(new Uri(Urls));
+                try
+                {
+                    id = Utils.getBetween(pageSrc, "\"profile_id\":", ",");
+
+                    FBUserName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                    string aboutUrl = string.Empty;
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        aboutUrl = "https://www.facebook.com/" + FBUserName + "/about";
+                    }
+                    else
+                    {
+                        aboutUrl = "https://www.facebook.com/profile.php?id=" + id + "&sk=about";
+                    }
+
+                    string AboutPage = HttpHelper.getHtmlfromUrl(new Uri(aboutUrl));
+                    string WorkDetails = Utils.getBetween(Utils.getBetween(AboutPage, "Works at <a", "</div>"), ">", "</a>").Replace(",", string.Empty);
+                    name = Utils.getBetween(AboutPage, "setPageTitle\",[],[\"", "\"");
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        name = Utils.getBetween(AboutPage, "<title id=\"pageTitle\">", "</title>");
+
+                    }
+                    name = name.Replace(",", string.Empty);
+                    University = Utils.getBetween(Utils.getBetween(AboutPage, "Studied at <a", "</div>"), ">", "</a>").Replace(",", string.Empty); ;
+                    location = Utils.getBetween(Utils.getBetween(AboutPage, "Lives in <a", "</div>"), ">", "</a>").Replace(",", string.Empty);
+                    birthday = Utils.getBetween(AboutPage, "Birthday</span></div><div>", "</div>").Replace(",", string.Empty);
+                    if (AboutPage.Contains("Phones</span></div><div><span dir=\"ltr\">"))
+                    {
+                        Mobile_Phones = Utils.getBetween(AboutPage, "Phones</span></div><div><span dir=\"ltr\">", "</span>");
+                    }
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        FBEmailId = FBUserName + "@facebook.com";
+
+                    }
+                    else
+                    {
+                        FBEmailId = id + "@facebook.com";
+                    }
+                    string basicInfoUrl = string.Empty;
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        basicInfoUrl = aboutUrl + "?section=contact-info&pnref=about";
+                    }
+                    else
+                    {
+                        basicInfoUrl = aboutUrl + "&section=contact-info&pnref=about";
+                    }
+                    string basicInfoPage = HttpHelper.getHtmlfromUrl(new Uri(basicInfoUrl));
+                    string genderInfo = Utils.getBetween(basicInfoPage, "Gender</span>", "</span>");
+                    if (genderInfo.Contains("Male"))
+                    {
+                        gender = "Male";
+                    }
+                    else
+                    {
+                        gender = "Female";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+                if (!string.IsNullOrEmpty(CSVFilePath))
+                {
+                    try
+                    {
+                        string ProfileLink = string.Empty;
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+                            ProfileLink = FBGlobals.Instance.fbhomeurl + FBUserName;
+                        }
+                        else
+                        {
+                            ProfileLink = FBGlobals.Instance.fbhomeurl + id;
+                        }
+
+                        // string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
+
+                        string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "University" + "," + "Location" + "," + "Birthday" + "," + "FbEmail" + "," + "Reffered Url";
+                        string CSV_Content = ProfileLink + "," + id + "," + name + "," + University + "," + location + "," + birthday + "," + FBEmailId + "," + refUrl;
+
+                        // string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Birthday" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "Email" + "," + "Telephone" + "," + "UserAccount";
+
+                        // string CSV_Content = ProfileLink + "," + id + "," + name + "," + first_name + "," + last_name + "," + birthday + "," + link + "," + gender + "," + locale + "," + Hometown + "," + Currentlocation + ", " + jobcompany + "," + University + "," + Secondaryschool + "," + email + "," + Mobile_Phones + ",," + fbUser.username;// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, CSVFilePath);
+                        GlobusLogHelper.log.Info("Profile Info Saved In CSV");
+                        GlobusLogHelper.log.Debug("Profile Info Saved In CSV");
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
         }
 
         private void GetGrpMember_Ajax(string pageSource, ref FacebookUser FBuser, string UserID, string searchResult, string refererUrl)
@@ -9026,116 +10600,137 @@ namespace Scrapers
             string encoded_title = string.Empty;
             string encoded_query = string.Empty;
             string filter_id = string.Empty;
-            string Cursor=string.Empty;
-         //   string searchResult = string.Empty;
+            string Cursor = string.Empty;
+            //   string searchResult = string.Empty;
 
-            string newdata = Utils.getBetween(pageSource,"{\"view\":\"list","display_params\":[]},");
-            newdata = "{\"view\":\"list"+newdata+"display_params\":[]}";
+            string newdata = Utils.getBetween(pageSource, "{\"view\":\"list", "display_params\":[]},");
+            newdata = "{\"view\":\"list" + newdata + "display_params\":[]}";
             string newdata1 = Uri.EscapeDataString(newdata);
             newdata1 = newdata1.Replace("%5Cu002520", "%252B");
-            string get = Utils.getBetween(newdata1, "ref_path", "keywords_users");
-            string newget=get.Replace("%5C","");
-            newdata1 = newdata1.Replace(get,newget);
-            newdata1 = newdata1.Replace("%5B", "[").Replace("%5D","]");
-           string[] newdata2=newdata1.Split(']');
-            newdata1=newdata2[0]+"]";
+            //string get = Utils.getBetween(newdata1, "ref_path", "keywords_users");
+            //string newget=get.Replace("%5C","");
+            //newdata1 = newdata1.Replace(get,newget);
+            newdata1 = newdata1.Replace("%5B", "[").Replace("%5D", "]");
+            string[] newdata2 = newdata1.Split(']');
+            newdata1 = newdata2[0] + "]";
             Cursor = Utils.getBetween(pageSource, "cursor\":\"", "\"");
-            int ij= 2;
+            int ij = 2;
             string Url = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + newdata1 + "%2C%22cursor%22%3A%22" + Cursor + "%22%2C%22page_number%22%3A" + ij + "%2C%22em%22%3Afalse%2C%22mr%22%3Afalse%2C%22tr%22%3Anull%7D&__user=" + UserID + "&__a=1&__dyn=7nmajEyl35xKt2u6aOGeFxq9ACxO4oKAdy8VFLO0xBxembzES2N6xybxu3fzoaUjUkUgx-Gy9E&__req=k&__rev=1674690";
             try
             {
                 bool isContinue = false;
                 encoded_query = Utils.getBetween(pageSource, "encoded_query\":\"", "\"");  //\",
-               // 
+                // 
                 if (encoded_query.Contains(":\\\"") || encoded_query.Contains("{"))
                 {
                     encoded_query = Utils.getBetween(pageSource, "encoded_query\":\"", "vertical");
-                     encoded_query = Utils.getBetween(encoded_query, ":\\\"", "\\\"");
+                    encoded_query = Utils.getBetween(encoded_query, ":\\\"", "\\\"");
                 }
                 string[] encodedQueries = Regex.Split(pageSource, "encoded_query");
                 encoded_query = Utils.getBetween(encodedQueries[1], "{", "}");
                 encoded_title = Utils.getBetween(pageSource, "encoded_title\":\"", "\"");
-                filter_id = Utils.getBetween(pageSource,"filter_ids\":","},")+"}";
+                filter_id = Utils.getBetween(pageSource, "filter_ids\":", "},") + "}";
                 pageSource = pageSource.Replace("\\\"", "\"").Replace("\\", "");
 
 
                 if (pageSource.Contains("user.php?id=") || pageSource.Contains("browse_search") || pageSource.Contains("type_self_timeline"))
+                {
+                    isContinue = true;
+
+                    // string[] arrId = Regex.Split(pageSource, "browse_search");
+                    string[] arrId = Regex.Split(pageSource, "_8o _8s lfloat _ohe");  //changed by Mahesh 24-12-2014
+                    foreach (var arrId_item in arrId)
                     {
-                        isContinue = true;
-
-                       // string[] arrId = Regex.Split(pageSource, "browse_search");
-                        string[] arrId = Regex.Split(pageSource, "_8o _8s lfloat _ohe");  //changed by Mahesh 24-12-2014
-                        foreach (var arrId_item in arrId)
+                        try
                         {
-                            try
+                            if (!arrId_item.Contains("<html><body><script type") && arrId_item.Contains("data-bt=") && !arrId_item.Contains("_7kf _8o _8s lfloat _ohe"))
                             {
-                                if (!arrId_item.Contains("<html><body><script type") && arrId_item.Contains("data-bt=") && !arrId_item.Contains("_7kf _8o _8s lfloat _ohe"))
+                                try
                                 {
-                                    try
+                                    string ProfileLinkUrl = Utils.getBetween(arrId_item, "href=\"", "\"").Replace("?ref=br_rs", string.Empty).Replace("&amp;ref=br_rs", string.Empty);
+                                    // ProfileLinkUrl = ProfileLinkUrl;
+                                    if (!ProfileLinkUrl.Contains("fbstatic"))
                                     {
-                                        string ProfileLinkUrl = Utils.getBetween(arrId_item, "href=\"", "\"").Replace("?ref=br_rs", string.Empty).Replace("&amp;ref=br_rs",string.Empty);
-                                       // ProfileLinkUrl = ProfileLinkUrl;
                                         ProfileUrlList.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
                                     }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
                                 }
-                                else if (!arrId_item.Contains("<html><body><script type") && arrId_item.Contains("data-bt=") && arrId_item.Contains("_7kf _8o _8s lfloat _ohe"))
+                                catch (Exception ex)
                                 {
-                                    try
-                                    {
-                                        string ProfileLinkUrl = Utils.getBetween(arrId_item, "_7kf _8o _8s lfloat _ohe", "?ref").Replace("\"", "").Replace("href=", "");
-                                       // ProfileLinkUrl = ProfileLinkUrl;
-                                        ProfileUrlList.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                        GlobusLogHelper.log.Info("Found  The Profile Link : " + ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                        GlobusLogHelper.log.Debug("Found  The Profile Link : " + ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
                             }
-                            catch (Exception ex)
+                            else if (!arrId_item.Contains("<html><body><script type") && arrId_item.Contains("data-bt=") && arrId_item.Contains("_7kf _8o _8s lfloat _ohe"))
                             {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                try
+                                {
+                                    string ProfileLinkUrl = Utils.getBetween(arrId_item, "_7kf _8o _8s lfloat _ohe", "?ref").Replace("\"", "").Replace("href=", "");
+                                    // ProfileLinkUrl = ProfileLinkUrl;
+                                    ProfileUrlList.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
+                                    GlobusLogHelper.log.Info("Found  The Profile Link : " + ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
+                                    GlobusLogHelper.log.Debug("Found  The Profile Link : " + ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
                             }
                         }
-                        if (pageSource.Contains("cursor\":\""))
+                        catch (Exception ex)
                         {
-                            Cursor = Utils.getBetween(pageSource, "cursor\":\"", "\"");
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
-                        ProfileUrlList = ProfileUrlList.Distinct().ToList();
-                        ProfileUrlList.Remove("");
-                        if (ProfileUrlList.Count != 0)
-                        {
-                            ExtractUserInformationFacebooker(ref FBuser, ProfileUrlList);
-                        }
-                       
-
-                       
                     }
+                    if (pageSource.Contains("cursor\":\""))
+                    {
+                        Cursor = Utils.getBetween(pageSource, "cursor\":\"", "\"");
+                    }
+                    ProfileUrlList = ProfileUrlList.Distinct().ToList();
+                    ProfileUrlList.Remove("");
+                    if (ProfileUrlList.Count != 0)
+                    {
+                        //ExtractUserInformationFacebooker(ref FBuser, ProfileUrlList);
+                        foreach (var item in ProfileUrlList)
+                        {
+                            ScrapeUserInfo(ref FBuser, item, ExportFilePathCustomAudiencesScraper, string.Empty);
+                        }
+                    }
+
+
+
+                }
                 int i = 2;
                 while (true)
                 {
                     List<string> NewListLcal = new List<string>();
                     encoded_query = "{" + encoded_query + "}";
-                    encoded_query = encoded_query.Replace("{{", "{").Replace("}}", "}");
+                    encoded_query = encoded_query.Replace("{{", "{").Replace("}}", "}").Replace("\\\\u002527", string.Empty);
                     bool CheckCursor = false;
                     string[] ArrLocal = System.Text.RegularExpressions.Regex.Split(pageSource, "BrowseScrollingPager");
-                    string Data = string.Empty;                  
+                    string Data = string.Empty;
                     //Eddited By Mahesh 24-12-2014
-                    searchResult=searchResult.Replace("\\",string.Empty).Replace("u0025","%").Replace("keywords_users","keywords_top");
+                    searchResult = searchResult.Replace("\\", string.Empty).Replace("u0025", "%").Replace("keywords_users", "keywords_top");
                     //Data = Uri.EscapeDataString("{\"view\":\"list\",\"encoded_query\":\""+encoded_query+"\",\"encoded_title\":\""+encoded_title+"\",\"ref\":\"unknown\",\"logger_source\":\"www_main\",\"typeahead_sid\":\"\",\"tl_log\":false,\"impression_id\":\"89ec6c8d\",\"filter_ids\":"+filter_id+",\"experience_type\":\"grammar\",\"exclude_ids\":null,\"browse_location\":\"\",\"trending_source\":null,\"cursor\":\""+Cursor+"\"}");
-                    string impression_id = Utils.getBetween(pageSource, "impression_id", "filter_ids").Replace("\\&quot;", "").Replace(":", "").Replace("\\\\","").Replace("\\","").Replace(",","");
-                    Data = Uri.EscapeDataString("{\"view\":\"list\",\"encoded_query\":\""+encoded_query+"\",\"encoded_title\":\""+encoded_title+"\",\"ref\":\"top_filter\",\"logger_source\":\"www_main\",\"typeahead_sid\":\"\",\"tl_log\":false,\"impression_id\":\"dcd588ab\",\"filter_ids\":"+filter_id+",\"experience_type\":\"grammar\",\"exclude_ids\":null,\"browse_location\":\"\",\"trending_source\":null,\"ref_path\":\"//search//"+searchResult+"\",\"is_trending\":false,\"topic_id\":null,\"story_id\":null,\"cursor\":\""+Cursor+"\",\"page_number\":"+i+"}");
-                   i++;
-                    string AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data="+Data+"&__user="+UserID+"&__a=1&__dyn=7n8ahyj35zoSt2u6aWizGomyp9Esx6bF3pqzCC-C26m6oKexm48jhHx2Vo&__req=b&__rev=1396250";
-                    AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + Data + "&__user=" + UserID + "&__a=1&__dyn=7nmajEyl2qm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC_826m4XUKezo88J6xybxu3fzoaUjUkUKi7WQ&__req=2q&__rev=1543317";
-                  //  AjaxUrl = AjaxUrl.Replace("(", "%28").Replace(")", "%29");
-                 
+                    string impression_id = string.Empty;
+                    try
+                    {
+                        impression_id = Utils.getBetween(pageSource, "impression_id", "filter_ids").Replace("\\&quot;", "").Replace(":", "").Replace("\\\\", "").Replace("\\", "").Replace(",", "").Replace("\"", string.Empty);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                    if (string.IsNullOrEmpty(impression_id))
+                    {
+                        string TempPageSrc = System.Web.HttpUtility.HtmlDecode(pageSource).Replace("\\\\", string.Empty);
+                        impression_id = Utils.getBetween(TempPageSrc, "impression_id\":\"", "\"");
+                    }
+                    Data = Uri.EscapeDataString("{\"view\":\"list\",\"encoded_query\":\"" + encoded_query + "\",\"encoded_title\":\"" + encoded_title + "\",\"ref\":\"top_filter\",\"logger_source\":\"www_main\",\"typeahead_sid\":\"\",\"tl_log\":false,\"impression_id\":\"dcd588ab\",\"filter_ids\":" + filter_id + ",\"experience_type\":\"grammar\",\"exclude_ids\":null,\"browse_location\":\"\",\"trending_source\":null,\"ref_path\":\"//search//" + searchResult + "\",\"is_trending\":false,\"topic_id\":null,\"story_id\":null,\"cursor\":\"" + Cursor + "\",\"page_number\":" + i + "}");
+                    Data = Uri.EscapeDataString("{\"typeahead_sid\":\"\",\"tr\":null,\"topic_id\":null,\"em\":false,\"mr\":false,\"view\":\"list\",\"display_params\":[],\"logger_source\":\"www_main\",\"encoded_query\":\"" + encoded_query + "\",\"trending_source\":null,\"ref_path\":\"/ajax/home/generic.php\",\"tl_log\":false,\"encoded_title\":\"" + encoded_title + "\",\"is_trending\":false,\"page_number\":" + i + ",\"browse_location\":\"\",\"filter_ids\":" + filter_id + ",\"callsite\":\"browse_ui:init_result_set\",\"cursor\":\"" + Cursor + "\",\"exclude_ids\":null,\"impression_id\":\"" + impression_id + "\",\"ref\":\"top_filter\",\"experience_type\":\"grammar\",\"story_id\":null}");
+                    i++;
+                    string AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + Data + "&__user=" + UserID + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizGomyp9Esx6bF3pqzCC-C26m6oKexm48jhHx2Vo&__req=b&__rev=1396250";
+                    AjaxUrl = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=" + Data + "&__user=" + UserID + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWOGeFDzECQqbx2mbAKGiyEyupFLRwxBxC9V8CdwIhEyfyUnwPUS2J1bxjy9A8GqcEwydCxt7gjyXSiVWz9Epw&__req=24&__rev=1828992";
+                    //  AjaxUrl = AjaxUrl.Replace("(", "%28").Replace(")", "%29");
+
                     if (!string.IsNullOrEmpty(FBuser.proxyip))
                     {
                         if (string.IsNullOrEmpty(FBuser.proxyport))
@@ -9146,11 +10741,11 @@ namespace Scrapers
                     }
                     else
                     {
-                      //  string JustTest = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/chat/hovercard/sidebar.php?ids[0]=100004100903864&ids[1]=100004408057272&ids[2]=100003232738289&ids[3]=100006609976116&ids[4]=100004882864541&ids[5]=100008197008802&ids[6]=100001717051982&ids[7]=100001433269126&__user=100001006024349&__a=1&__dyn=7nmajEyl2lm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC_826m4XUKezo88J6xybxu3fzoaUjUkUKi4EOGy9E&__req=h&__rev=1673637"));
-                      //  AjaxPageSource = HttpHelper.getHtmlfromUrl(new Uri(AjaxUrl),refererUrl);
+                        //  string JustTest = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/chat/hovercard/sidebar.php?ids[0]=100004100903864&ids[1]=100004408057272&ids[2]=100003232738289&ids[3]=100006609976116&ids[4]=100004882864541&ids[5]=100008197008802&ids[6]=100001717051982&ids[7]=100001433269126&__user=100001006024349&__a=1&__dyn=7nmajEyl2lm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC_826m4XUKezo88J6xybxu3fzoaUjUkUKi4EOGy9E&__req=h&__rev=1673637"));
+                        //  AjaxPageSource = HttpHelper.getHtmlfromUrl(new Uri(AjaxUrl),refererUrl);
                         AjaxPageSource = HttpHelper.getHtmlfromUrl(new Uri(AjaxUrl));
                     }
-                   
+
                     pageSource = AjaxPageSource;
                     if (AjaxPageSource.Contains("cursor\":\""))
                     {
@@ -9166,53 +10761,24 @@ namespace Scrapers
                     if (AjaxPageSource.Contains("8o _8s lfloat _ohe") || AjaxPageSource.Contains("browse_search") || AjaxPageSource.Contains("user.php?id="))
                     {
                         isContinue = true;
-                        AjaxPageSource = AjaxPageSource.Replace("\\", "").Replace("u003C", "<");
+                        AjaxPageSource = System.Web.HttpUtility.HtmlDecode(AjaxPageSource);
                         string[] arrId = Regex.Split(AjaxPageSource, "8o _8s lfloat _ohe");
-                        if (arrId.Count()==2)
+                        if (arrId.Count() == 2)
                         {
                             arrId = Regex.Split(AjaxPageSource, "_8o _8s lfloat _ohe");
 
                         }
 
-                 
+
 
                         foreach (var arrId_item in arrId)
                         {
                             try
                             {
-                                if (!arrId_item.Contains("<html><body><script type") && arrId_item.Contains("data-bt=") && !arrId_item.Contains("_7kf _8o _8s lfloat _ohe"))
-                                {
-                                    try
-                                    {
-                                        string ProfileLinkUrl = Utils.getBetween(arrId_item, "<a href=\"", "=br_rs&amp;fref=");
-                                        if (string.IsNullOrEmpty(ProfileLinkUrl))
-                                        {
-                                            ProfileLinkUrl = Utils.getBetween(arrId_item, "href=\\\"", "\"");                                           
-                                        }
-                                        ProfileLinkUrl=ProfileLinkUrl.Replace("\\/","/");
-                                        ProfileUrlList.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                        NewListLcal.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("=br_rs\\","").Replace("?", "").Trim());
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
-                                else if (!arrId_item.Contains("<html><body><script type") && !arrId_item.Contains("for (;;)") && arrId_item.Contains("data-bt=") && arrId_item.Contains("_7kf _8o _8s lfloat _ohe"))
-                                {
-                                    try
-                                    {
-                                        string ProfileLinkUrl = Utils.getBetween(arrId_item, "_7kf _8o _8s lfloat _ohe", "?ref").Replace("\"", "").Replace("href=", "").Replace("\\", "");
-                                        ProfileUrlList.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                        NewListLcal.Add(ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Replace("=br_rs\\","").Trim());
-                                        GlobusLogHelper.log.Info("Found  The Profile Link : " + ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                        GlobusLogHelper.log.Debug("Found  The Profile Link : " + ProfileLinkUrl.Replace("&amp", "").Replace("ref", "").Replace("?", "").Trim());
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
+                                string TempItem = arrId_item.Replace("\\", string.Empty);
+                                string temp = Utils.getBetween(TempItem, "href=\"", "\"");
+                                NewListLcal.Add(temp);
+
                             }
                             catch (Exception ex)
                             {
@@ -9225,7 +10791,10 @@ namespace Scrapers
                         NewListLcal.Remove("");
                         if (NewListLcal.Count != 0)
                         {
-                            ExtractUserInformationFacebooker(ref FBuser, NewListLcal);
+                            foreach (string item in NewListLcal)
+                            {
+                                ScrapeUserInfo(ref FBuser, item, ExportFilePathCustomAudiencesScraper, string.Empty);
+                            }
                         }
                         #region MyRegion
 
@@ -9326,7 +10895,7 @@ namespace Scrapers
             {
 
 
-            
+
                 GlobusLogHelper.log.Debug("Start Scraping Profile Information !");
 
                 List<string> lstid = lstFriendId.Distinct().ToList();
@@ -9335,7 +10904,7 @@ namespace Scrapers
                 {
                     try
                     {
-                      
+
                         string Urls = string.Empty;
                         string id = string.Empty;
                         string name = string.Empty;
@@ -9351,7 +10920,7 @@ namespace Scrapers
                             ProfileId = Utils.getBetween(listFriendIditem + "@@@@@@@", "=", "@@@@@@@").Replace(";", "").Trim();
 
 
-                            UrlProfile ="http://graph.facebook.com/"+ ProfileId.Replace("https://www.facebook.com/", FBGlobals.Instance.fbgraphUrl).Replace("?ref/about", "/").Replace("=br_rs", string.Empty);
+                            UrlProfile = "http://graph.facebook.com/" + ProfileId.Replace("https://www.facebook.com/", FBGlobals.Instance.fbgraphUrl).Replace("?ref/about", "/").Replace("=br_rs", string.Empty);
                         }
                         else
                         {
@@ -9371,9 +10940,9 @@ namespace Scrapers
                         }
                         else
                         {
-                           pageSrc = chilkatHttpHelper.getHtmlfromUrl(new Uri(Urls));
+                            pageSrc = chilkatHttpHelper.getHtmlfromUrl(new Uri(Urls));
                         }
-                        
+
                         if (pageSrc.Contains("id"))
                         {
                             try
@@ -9394,10 +10963,10 @@ namespace Scrapers
                         {
                             try
                             {
-                                string supsstring=string.Empty;
+                                string supsstring = string.Empty;
                                 try
                                 {
-                                    supsstring = pageSrc.Substring(pageSrc.IndexOf("\"name\": \""), 30).Replace("\"name\": \"", "").Replace("\",\n", "").Replace("\"\n}",string.Empty);
+                                    supsstring = pageSrc.Substring(pageSrc.IndexOf("\"name\": \""), 30).Replace("\"name\": \"", "").Replace("\",\n", "").Replace("\"\n}", string.Empty);
                                 }
                                 catch (Exception ex)
                                 {
@@ -9486,7 +11055,7 @@ namespace Scrapers
                         }
                         if (string.IsNullOrEmpty(link))
                         {
-                            link = listFriendIditem.Replace("=br_rs",string.Empty);                              
+                            link = listFriendIditem.Replace("=br_rs", string.Empty);
                         }
                         if (pageSrc.Contains("gender"))
                         {
@@ -9541,14 +11110,28 @@ namespace Scrapers
                                 }
                             }
                             string FBEmailId = string.Empty;
+
+
+
                             if (!string.IsNullOrEmpty(UserName))
                             {
-                                FBEmailId = UserName + "@facebook.com";
+                                FBEmailId = UserName + "@" + "facebook.com";
                             }
                             else
                             {
-                                FBEmailId = ProfileId.Replace("=br_rs",string.Empty) + "@facebook.com"; ;
+                                FBEmailId = ProfileId.Replace("=br_rs", string.Empty) + "@" + "facebook.com";
                             }
+
+
+
+                            //if (!string.IsNullOrEmpty(UserName))
+                            //{
+                            //    FBEmailId = UserName + "@facebook.com";
+                            //}
+                            //else
+                            //{
+                            //    FBEmailId = ProfileId.Replace("=br_rs",string.Empty) + "@facebook.com";
+                            //}
 
 
                             if (string.IsNullOrEmpty(name))
@@ -9562,7 +11145,7 @@ namespace Scrapers
                             }
                             else
                             {
-                                ownprofileUrl = listFriendIditem.Replace("=br_rs","") + "/info";      
+                                ownprofileUrl = listFriendIditem.Replace("=br_rs", "") + "/info";
                             }
                             #region MyRegion
                             //string pagesourceofProfileUrl = chilkatHttpHelper.getHtmlfromUrl(new Uri(ownprofileUrl));
@@ -10006,12 +11589,12 @@ namespace Scrapers
                                     {
                                         string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
 
-                                        string CSVHeader = "ExtractUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale"+","+"FBEmails";// +"," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
+                                        string CSVHeader = "ExtractUrl" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "FBEmails";// +"," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "College" + "," + "Email" + "," + "Telephone";
 
                                         //   string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + ", " + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ") + "," + "-".Replace(",", " ");// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
-                                        string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ")+","+FBEmailId;
+                                        string CSV_Content = link.Replace(",", " ") + "," + id.Replace(",", " ") + "," + name.Replace(",", " ") + "," + first_name.Replace(",", " ") + "," + last_name.Replace(",", " ") + "," + link.Replace(",", " ") + "," + gender.Replace(",", " ") + "," + locale.Replace(",", " ") + "," + FBEmailId;
 
-                                       
+
                                         Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportFilePathCustomAudiencesScraper);
 
                                         string CSVHeaderNotPade = "ID";
@@ -10019,7 +11602,7 @@ namespace Scrapers
 
                                         Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeaderNotPade, CSV_ContentNotPade, ExportFilePathCustomAudiencesScraperNotepad);
 
-                                        
+
 
                                         GlobusLogHelper.log.Info("Data Saved IN CSV File");
                                         GlobusLogHelper.log.Debug("Data Saved IN CSV File");
@@ -10046,13 +11629,13 @@ namespace Scrapers
                     }
                 }
 
-              //  GlobusLogHelper.log.Debug("Process Completed Of Scraping Profile Information With Username >>> " + fbUser.username);
+                //  GlobusLogHelper.log.Debug("Process Completed Of Scraping Profile Information With Username >>> " + fbUser.username);
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Debug("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + fbUser.username);
             }
-           // GlobusLogHelper.log.Info("Process Completed Of Scraping Profile Information With Username >>> " + fbUser.username);
+            // GlobusLogHelper.log.Info("Process Completed Of Scraping Profile Information With Username >>> " + fbUser.username);
         }
 
         public static bool ValidateNumber(string strInputNo)

@@ -193,7 +193,7 @@ namespace Scheduler
                     {
                         List<string> lstFanPageURLsTemp = new List<string>();
 
-                        
+
                         string schedulerStartDate = Convert.ToDateTime(schStartDate).Date.ToString("dd/MM/yyyy");
 
                         DateTime schStartDateTemp = (Convert.ToDateTime(schStartDate).Date);
@@ -309,7 +309,7 @@ namespace Scheduler
             }
         }
 
-        public void StartSchFanPageLikerProcess(ref FacebookUser fbUser,string schProcess,List<string> lstSchFanPageURLs, List<string> lstSchFanPageMessages, List<string> lstSchFanPageComments)
+        public void StartSchFanPageLikerProcess(ref FacebookUser fbUser, string schProcess, List<string> lstSchFanPageURLs, List<string> lstSchFanPageMessages, List<string> lstSchFanPageComments)
         {
             try
             {
@@ -318,7 +318,7 @@ namespace Scheduler
 
                     try
                     {
-                       
+
                         Pages.PageManager objPageManager = new Pages.PageManager();
 
                         if (schProcess == "Like Page")

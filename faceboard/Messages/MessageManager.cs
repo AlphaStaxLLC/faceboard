@@ -21,7 +21,7 @@ namespace Messages
         readonly object lockrThreadControllerMessageReply = new object();
         public bool isStopMessageReply = false;
         int countThreadControllerMessageReply = 0;
-        
+
         public List<Thread> lstThreadsMessageReply = new List<Thread>();
         public List<string> LstReplyDetailsMessageReply = new List<string>();
 
@@ -35,7 +35,7 @@ namespace Messages
 
         public static int TotalNoofSeneMessage_Counter = 0;
 
-     
+
 
         #endregion
 
@@ -95,6 +95,8 @@ namespace Messages
         public static Queue<string> MessageMessageLoadProfileUrlQueue = new Queue<string>();
         #endregion
 
+        public string MessageSendingDetailsCSV = string.Empty;
+
         private void RaiseEvent(DataSet ds, params string[] parameters)
         {
             try
@@ -121,7 +123,7 @@ namespace Messages
         }
 
         List<string> lstFBAccounts = new List<string>();
-        Queue<string> qImagePathMesssage = new Queue<string>(); 
+        Queue<string> qImagePathMesssage = new Queue<string>();
         public void StartMessageReply()
         {
             try
@@ -150,7 +152,7 @@ namespace Messages
                 {
 
                     list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
-                    
+
                     foreach (List<string> listAccounts in list_listAccounts)
                     {
                         //int tempCounterAccounts = 0; 
@@ -209,7 +211,7 @@ namespace Messages
 
         public void StartMultiThreadsMessageReply(object parameters)
         {
-           // lock (this)
+            // lock (this)
             {
 
                 try
@@ -316,26 +318,8 @@ namespace Messages
 
                         }
                         catch (Exception ex)
-                    {
-                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    }
-                    }
-                }
-                catch (Exception ex)
-            {
-                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }
-
-            finally
-            {
-                try
-                {
-                  //  if (!isStopMessageReply)
-                    {
-                        lock (lockrThreadControllerMessageReply)
                         {
-                            countThreadControllerMessageReply--;
-                            Monitor.Pulse(lockrThreadControllerMessageReply);
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
                     }
                 }
@@ -343,7 +327,25 @@ namespace Messages
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
-            }
+
+                finally
+                {
+                    try
+                    {
+                        //  if (!isStopMessageReply)
+                        {
+                            lock (lockrThreadControllerMessageReply)
+                            {
+                                countThreadControllerMessageReply--;
+                                Monitor.Pulse(lockrThreadControllerMessageReply);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
             }
         }
 
@@ -399,7 +401,7 @@ namespace Messages
             {
                 try
                 {
-                   
+
                     string messageUserName = string.Empty;
                     string editMessage = string.Empty;
                     string friendIdValue = string.Empty;
@@ -472,13 +474,13 @@ namespace Messages
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }                           
+                            }
                         }
 
                         SingaleOriginalMessage = editMessage;
                         string MessageFriend = editMessage;
                         int Conunter = 1;
-                         
+
                         int indexname = 0;
                         foreach (string item in LstReplyDetailsMessageReply)
                         {
@@ -571,7 +573,7 @@ namespace Messages
 
                                             if (!string.IsNullOrWhiteSpace(strGreetingWord) || !string.IsNullOrWhiteSpace(strGreetingWord))
                                             {
-                                                PostDataMsg = "forward_msgs&body=" + strGreetingWord + " " + FriendName + " ! \n" + Environment.NewLine +Uri.EscapeDataString(MessageFriend) + Environment.NewLine + Environment.NewLine + userFirstName + "&action=send&recipients[0]=" + friendIdValue + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
+                                                PostDataMsg = "forward_msgs&body=" + strGreetingWord + " " + FriendName + " ! \n" + Environment.NewLine + Uri.EscapeDataString(MessageFriend) + Environment.NewLine + Environment.NewLine + userFirstName + "&action=send&recipients[0]=" + friendIdValue + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
                                             }
                                             else
                                             {
@@ -581,7 +583,7 @@ namespace Messages
                                             }
                                         }
                                     }
-                                    else 
+                                    else
                                     {
                                         if (!string.IsNullOrEmpty(MessageFriend) && !string.IsNullOrWhiteSpace(MessageFriend))
                                         {
@@ -604,7 +606,7 @@ namespace Messages
                                                                 Name = Utils.getBetween(PageSource, "\"name\": \"", "\",\n");
                                                             }
                                                             catch (Exception ex)
-                                                            {                                                            
+                                                            {
                                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                             }
 
@@ -613,15 +615,15 @@ namespace Messages
                                                         {
                                                             try
                                                             {
-                                                                string[] arr = System.Text.RegularExpressions.Regex.Split(PageSource,"locale\"");
-                                                                Name = Utils.getBetween(arr[1], "name", "\"\n}").Replace("\"","").Replace(":","");
+                                                                string[] arr = System.Text.RegularExpressions.Regex.Split(PageSource, "locale\"");
+                                                                Name = Utils.getBetween(arr[1], "name", "\"\n}").Replace("\"", "").Replace(":", "");
                                                             }
                                                             catch (Exception ex)
                                                             {
                                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                             }
                                                         }
-                                                         
+
                                                         if (MessageFriend.Contains("<>"))
                                                         {
                                                             string[] Arr = System.Text.RegularExpressions.Regex.Split(MessageFriend, "<>");
@@ -637,7 +639,7 @@ namespace Messages
                                                             catch { };
                                                         }
                                                         FriendName = "";
-                                                       // PostDataMsg = "forward_msgs&body=" + strGreetingWord + " " + FriendName + " ! \n" + Environment.NewLine + MessageFriend + "&action=send&recipients[0]=" + friendIdValue + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
+                                                        // PostDataMsg = "forward_msgs&body=" + strGreetingWord + " " + FriendName + " ! \n" + Environment.NewLine + MessageFriend + "&action=send&recipients[0]=" + friendIdValue + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
                                                         PostDataMsg = "forward_msgs&body=" + strGreetingWord + " " + FriendName + Environment.NewLine + Uri.EscapeDataString(MessageFriend) + "&action=send&recipients[0]=" + friendIdValue + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
                                                     }
                                                     catch (Exception ex)
@@ -650,15 +652,15 @@ namespace Messages
                                                     FriendName = "";
                                                     PostDataMsg = "forward_msgs&body=" + strGreetingWord + " " + FriendName + Environment.NewLine + Uri.EscapeDataString(MessageFriend) + "&action=send&recipients[0]=" + friendIdValue + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
                                                 }
-                                            }                                            
+                                            }
                                         }
                                     }
                                     indexname++;
-                                    string ResponseMsg=string.Empty;
-                                    
-                                     ResponseMsg = GlobusHttpHelper.postFormData(new Uri(postUrlMsg), PostDataMsg);
-                                   
-                               
+                                    string ResponseMsg = string.Empty;
+
+                                    ResponseMsg = GlobusHttpHelper.postFormData(new Uri(postUrlMsg), PostDataMsg);
+
+
                                     if (ResponseMsg.Contains("errorSummary\":"))
                                     {
                                         string errorSummery = FBUtils.GetErrorSummary(ResponseMsg);//Regex.Split(ResponseMsg, "errorSummary\":");
@@ -684,7 +686,17 @@ namespace Messages
 
                                         GlobusLogHelper.log.Info(Conunter + " Sent Message with " + fbUser.username);
                                         GlobusLogHelper.log.Debug(Conunter + " Sent Message with " + fbUser.username);
-                                        if (Conunter>=MessageMessageSendNoOfFriends)
+                                        try
+                                        {
+                                            string CSVHeader = "UserName" + "," + "ProfileUrl" + "," + "Message";
+                                            string CSV_Content = fbUser.username + "," + FriendUrl + "," + MessageFriend;
+                                            Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, MessageSendingDetailsCSV);
+                                        }
+                                        catch (Exception ex)
+                                        {
+
+                                        }
+                                        if (Conunter >= MessageMessageSendNoOfFriends)
                                         {
                                             break;
                                         }
@@ -722,7 +734,7 @@ namespace Messages
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
                 finally
-                { 
+                {
                     //msgSendingThreadCount--;
                 }
 
@@ -735,6 +747,7 @@ namespace Messages
 
         public void SendMessageFacebookerUpdated(ref FacebookUser fbUser)
         {
+            int countnumberOfMessagesSent = 1;
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
             {
@@ -748,7 +761,7 @@ namespace Messages
 
                 GlobusLogHelper.log.Debug("Sending Message with " + Username);
 
-                string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri((FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookUrl)));    
+                string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri((FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookUrl)));
 
 
                 string tempUserID = string.Empty;
@@ -759,27 +772,27 @@ namespace Messages
                     UsreId = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
                 }
 
-               int count_Friends = ExtractFriendCount(ref fbUser, UsreId);
+                int count_Friends = ExtractFriendCount(ref fbUser, UsreId);
 
-               // int count_Friends = FBUtils.GetAllFriends(ref HttpHelper, UsreId);              
+                // int count_Friends = FBUtils.GetAllFriends(ref HttpHelper, UsreId);              
 
                 lstFriend.Clear();
 
-                lstFriend = ExtractFriendIdsFb(ref fbUser, ref UsreId, count_Friends);
+                //lstFriend = ExtractFriendIdsFb(ref fbUser, ref UsreId, count_Friends, numberOfMessages);
+                lstFriend = FBUtils.GetAllFriends(ref HttpHelper, UsreId);
 
-             
                 GlobusLogHelper.log.Debug("Please wait Getting Friends Id...");
                 GlobusLogHelper.log.Info("Please wait Getting Friends Id...");
-                List<string> lstfriendss = GetIdFromFacebook(ref fbUser, UsreId);
-                GlobusLogHelper.log.Debug(" Find Friend count : " + lstfriendss.Count);
-                GlobusLogHelper.log.Info(" Find Friend count : " + lstfriendss.Count);
+                List<string> lstfriendss = GetIdFromFacebook(ref fbUser, UsreId, numberOfMessages);
+                GlobusLogHelper.log.Debug(" Find Friend count : " + lstFriend.Count);
+                GlobusLogHelper.log.Info(" Find Friend count : " + lstFriend.Count);
 
                 lstFriend = lstFriend.Distinct().ToList();
                 lstFriend.AddRange(lstfriendss);
                 lstFriend = lstFriend.Distinct().ToList();
                 //lstFriend = lstFriend.Distinct().ToList();              
 
-               
+                lstFriend.Shuffle();
                 int Counter = 1;
                 foreach (string FriendId in lstFriend)
                 {
@@ -791,26 +804,27 @@ namespace Messages
                     if (SendMessageUsingMessage == "Random")
                     {
                         MessageFriend = LstReplyMessageMessageReply[Utils.GenerateRandom(0, LstReplyMessageMessageReply.Count)];
+                        ReplyMessageMessageSingle = MessageFriend;
                     }
-                    MessageFriend= Uri.EscapeDataString(MessageFriend);
+                    MessageFriend = Uri.EscapeDataString(MessageFriend);
                     try
                     {
                         if (countnumberOfMessagesSent > numberOfMessages)
-                        {                            
+                        {
                             break;
                         }
 
-                        string FriendUrl = FBGlobals.Instance.fbProfileUrl + FriendId;                               
+                        string FriendUrl = FBGlobals.Instance.fbProfileUrl + FriendId;
                         GlobusLogHelper.log.Debug(countnumberOfMessagesSent + " Sending Message with " + Username);
                         GlobusLogHelper.log.Info(countnumberOfMessagesSent + " Sending Message with " + Username);
 
-                        string PageSrcMsg = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbMessagesUrl));     
+                        string PageSrcMsg = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbMessagesUrl));
 
                         string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSrcMsg);
                         //sendUrlWithThumnail(ref fbUser, "https://www.tumblr.com/", fb_dtsg,UsreId,FriendId);
 
                         string UrlMsgAjax = string.Empty;
-                        UrlMsgAjax = FBGlobals.Instance.MessageReplyGetAjaxAsyncDialogUrl + UsreId;                   
+                        UrlMsgAjax = FBGlobals.Instance.MessageReplyGetAjaxAsyncDialogUrl + UsreId;
                         string PageSrcMsgAjax = HttpHelper.getHtmlfromUrl(new Uri(UrlMsgAjax));
 
                         if (CheckSendMessageWithTage)
@@ -848,31 +862,40 @@ namespace Messages
                                 {
                                     string[] Arr = System.Text.RegularExpressions.Regex.Split(MessageFriend, "<>");
                                     MessageFriend = Arr[0] + " " + Name + " " + Arr[1];
-                                }                               
+                                }
                             }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
-
-                        if (!ReplyMessageMessageSingle.Contains("www"))
+                        string ResponseMsg = string.Empty;
+                        string message_id = string.Empty;
+                        if (!ReplyMessageMessageSingle.Contains("www") && !ReplyMessageMessageSingle.Contains("http"))
                         {
+                            string TT1 = Uri.EscapeDataString(DateTime.Now.ToString("hh:mmtt"));
                             string postUrlMsg = FBGlobals.Instance.MessageReplyPostAjaxMessagingSendUrl;
+                            postUrlMsg = "https://www.facebook.com/ajax/mercury/send_messages.php";
                             string PostDataMsg = "forward_msgs&body=" + MessageFriend + "&action=send&recipients[0]=" + FriendId + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
+                            PostDataMsg = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "&message_batch[0][author_email]&message_batch[0][timestamp]=" + Utils.GenerateTimeStamp() + "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=" + TT1 + "&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_filtered_content_bh]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Achat%3Aweb&message_batch[0][source_tags][0]=source%3Achat&message_batch[0][body]=" + MessageFriend + "&message_batch[0][has_attachment]=false&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "&message_batch[0][specific_to_list][1]=fbid%3A" + UsreId + "&message_batch[0][signatureID]=323f4d0b&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][threading_id]=%3C" + Utils.GenerateTimeStamp() + "%3A3553105176-3438118645%40mail.projektitan.com%3E&message_batch[0][offline_threading_id]=6022984790793514836&message_batch[0][message_id]=%3C" + Utils.GenerateTimeStamp() + "%3A3553105176-3438118645%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&message_batch[0][client_thread_id]=user%3A" + FriendId + "&client=mercury&__user=" + UsreId + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-K26m6oKezob4q68K5Uc-dwIxbxjy9Uiza88ybhEngx1abLCKuEOq&__req=p&fb_dtsg=" + fb_dtsg + "&ttstamp=26581701128810395499510867112&__rev=1819236";
 
-                            string ResponseMsg = HttpHelper.postFormData(new Uri(postUrlMsg), PostDataMsg, "");
+                            ResponseMsg = HttpHelper.postFormData(new Uri(postUrlMsg), PostDataMsg, "");
+                            message_id = Utils.getBetween(ResponseMsg, "message_id\":\"", "\"");
 
-                            string postUrlMsg1 = FBGlobals.Instance.MessageReplyPostAjaxMessagingPhp;
-                            string PostDataMsg1 = "fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
 
-                            string ResponseMsg1 = HttpHelper.postFormData(new Uri(postUrlMsg1), PostDataMsg1, "");
                         }
-                        if (ReplyMessageMessageSingle.Contains("www"))
+                        if (ReplyMessageMessageSingle.Contains("www") || ReplyMessageMessageSingle.Contains("http"))
                         {
                             string MessagePage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/messages/" + UsreId));
-                            string postUrl = Uri.EscapeDataString(ReplyMessageMessageSingle);
-
+                            string[] messsageData = ReplyMessageMessageSingle.Split(':');
+                            string UrlinMessage = string.Empty;
+                            string postUrl = string.Empty;
+                            if (messsageData.Length == 3)
+                            {
+                                postUrl = messsageData[1] + ":" + messsageData[2];
+                            }
+                            postUrl = Uri.EscapeDataString(postUrl);
+                            ReplyMessageMessageSingle = messsageData[0] + " " + messsageData[1] + ":" + messsageData[2];
                             string postThumbnail = "u=" + postUrl + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1a&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
                             string postThumbnailResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/share_scrape.php"), postThumbnail);
 
@@ -909,7 +932,7 @@ namespace Messages
                             string postFinalThumbnail = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "" +
                                                         "&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0]" +
                                                         "[timestamp]=" + tt + "" +
-                                                        "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=" + TT1 + "&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_cleared]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Atitan%3Aweb&&message_batch[0][body]=" + postUrl + "" +
+                                                        "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=" + TT1 + "&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_cleared]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Atitan%3Aweb&&message_batch[0][body]=" + Uri.EscapeDataString(ReplyMessageMessageSingle) + "" +
                                                         "&message_batch[0][has_attachment]=true&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "" +
                                                         "&message_batch[0][specific_to_list][1]=fbid%3A" + FriendId + "" +
                                                         "&message_batch[0][content_attachment][subject]=" + Subject + "&message_batch[0][content_attachment][app_id]=" + appId + "" +
@@ -959,18 +982,40 @@ namespace Messages
                             string ThreadPost1 = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/messaging/typ.php"), "typ=1&to=" + FriendId + "&source=mercury-chat&thread=" + FriendId + "&__user=" + UsreId + "&__a=1&__dyn=7nmanEyl2lm9o-t2u5bGya4Au74qbx2mbAKGiyEyut9LFwxBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=45&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170831091124811651677495&__rev=1694181");
 
                             string postFinalTumbnailresp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), postFinalThumbnail, "https://www.facebook.com/messages/" + FriendId + "");
-                            string message_id = Utils.getBetween(postFinalTumbnailresp, "message_id\":\"", "\"");
+                            message_id = Utils.getBetween(postFinalTumbnailresp, "message_id\":\"", "\"");
 
-                            string postFinalTumbnail1 = "message_ids[0]=" + message_id + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1e&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
-                            string postFinalResult = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/attachments/fetch_shares.php"), postFinalTumbnail1);
+                            try
+                            {
+                                string postFinalTumbnail1 = "message_ids[0]=" + message_id + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1e&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
+                                string postFinalResult = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/attachments/fetch_shares.php"), postFinalTumbnail1);
+                            }
+                            catch (Exception ex)
+                            {
 
+                            }
 
                         }
-
+                        //if (ResponseMsg.Contains("This message contains content that has been blocked by our security systems") && !string.IsNullOrEmpty(message_id))
+                        if (string.IsNullOrEmpty(message_id))
+                        {
+                            GlobusLogHelper.log.Info("Unable To Send Message With Username : " + UsreId + " To FriendId :" + FriendId + " Reason:This message contains content that has been blocked by our security systems");
+                            GlobusLogHelper.log.Debug("Unable To Send Message With Username : " + UsreId + " To FriendId :" + FriendId + " Reason:This message contains content that has been blocked by our security systems");
+                        }
 
                         TotalNoofSeneMessage_Counter++;
                         GlobusLogHelper.log.Debug(countnumberOfMessagesSent + " Sent Message with " + Username);
                         GlobusLogHelper.log.Info(countnumberOfMessagesSent + " Sent Message with " + Username);
+
+                        try
+                        {
+                            string CSVHeader = "UserName" + "," + "ProfileUrl" + "," + "Message";
+                            string CSV_Content = fbUser.username + "," + FriendUrl + "," + MessageFriend;
+                            Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, MessageSendingDetailsCSV);
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
 
                         try
                         {
@@ -997,17 +1042,17 @@ namespace Messages
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }         
+            }
         }
 
-        public void sendUrlWithThumnail(ref FacebookUser fbUser,string SiteUrl,string fbDtsg,string UserId,string FriendsId)
+        public void sendUrlWithThumnail(ref FacebookUser fbUser, string SiteUrl, string fbDtsg, string UserId, string FriendsId)
         {
             GlobusHttpHelper objhttp = fbUser.globusHttpHelper;
             try
             {
                 string ScrapeUrl = "https://www.facebook.com/ajax/share_scrape.php";
                 string PostData = "chat=true&u=" + Uri.EscapeDataString(SiteUrl) + "&__user=" + UserId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-C26m6oKeDBwIhEoyUnwPUS2O4K5e8Gi4EOGy9KVaK&__req=1e&fb_dtsg=" + fbDtsg + "&ttstamp=2658169757610850101120818283&__rev=1691974";
-                string Scraperesp = objhttp.postFormData(new Uri(ScrapeUrl),PostData);
+                string Scraperesp = objhttp.postFormData(new Uri(ScrapeUrl), PostData);
                 string currentTime = DateTime.Now.ToString("TT:MM");
                 string Subject = string.Empty;
                 string AppId = string.Empty;
@@ -1037,7 +1082,7 @@ namespace Messages
                 Title = Utils.getBetween(Scraperesp, "params][title]\\\" value=\\\"", "\\\"");
                 Summery = Utils.getBetween(Scraperesp, "[params][summary]\\\" value=\\\"", "\\\"");
                 Images = Utils.getBetween(Scraperesp, "params][images][0]\\\" value=\\\"", "\\\"");
-                Domain = Utils.getBetween(Scraperesp, "link_metrics][domain]\\\" value=\\\"","\\\"");
+                Domain = Utils.getBetween(Scraperesp, "link_metrics][domain]\\\" value=\\\"", "\\\"");
                 baseDomain = Utils.getBetween(Scraperesp, "link_metrics][base_domain]\\\" value=\\\"", "\\\"");
                 title_len = Utils.getBetween(Scraperesp, "link_metrics][title_len]\\\" value=\\\"", "\\\"");
                 summaryLen = Utils.getBetween(Scraperesp, "link_metrics][summary_len]\\\" value=\\\"", "\\\"");
@@ -1048,11 +1093,11 @@ namespace Messages
                 imageDim1 = Utils.getBetween(Scraperesp, "link_metrics][image_dimensions][1]\\\" value=\\\"", "\\\"");
                 msgId = Utils.getBetween(Scraperesp, "[0][message_id]\\\" value=\\\"", "\\\"");
 
-                string PostThumbnail = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A100001132466717&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0][timestamp]=1429186765657&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=17%3A49&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Achat%3Aweb&message_batch[0][source_tags][0]=source%3Achat&message_batch[0][body]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][has_attachment]=true&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A100007427978343&message_batch[0][specific_to_list][1]=fbid%3A100001132466717&message_batch[0][content_attachment][subject]=Sign%20up%20%7C%20Tumblr&message_batch[0][content_attachment][app_id]=2309869772&message_batch[0][content_attachment][attachment][params][urlInfo][canonical]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][final]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][user]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][log][1416522210]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][log][1416522239]=https%3A%2F%2Fwww.Tumblr.com%2F&message_batch[0][content_attachment][attachment][params][favicon]=https%3A%2F%2Fsecure.assets.tumblr.com%2Fimages%2Ffavicons%2Ffavicon.ico%3F_v%3D2f32b762e629b447737e25d2f97b808a&message_batch[0][content_attachment][attachment][params][title]=Sign%20up%20%7C%20Tumblr&message_batch[0][content_attachment][attachment][params][summary]=Post%20anything%20(from%20anywhere!)%2C%20customize%20everything%2C%20and%20find%20and%20follow%20what%20you%20love.%20Create%20your%20own%20Tumblr%20blog%20today.&message_batch[0][content_attachment][attachment][params][images][0]=https%3A%2F%2Ffbexternal-a.akamaihd.net%2Fsafe_image.php%3Fd%3DAQBpEWlFfsGQ2IHX%26w%3D100%26h%3D100%26url%3Dhttps%253A%252F%252F41.media.tumblr.com%252Fcd7ecaa794dd58fb2e05dee3002a08b4%252Ftumblr_nla7keszEu1u7s19xo1_1280.jpg%26cfs%3D1%26upscale%3D1&message_batch[0][content_attachment][attachment][params][medium]=106&message_batch[0][content_attachment][attachment][params][url]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][type]=100&message_batch[0][content_attachment][link_metrics][source]=ShareStageExternal&message_batch[0][content_attachment][link_metrics][domain]=www.tumblr.com&message_batch[0][content_attachment][link_metrics][base_domain]=tumblr.com&message_batch[0][content_attachment][link_metrics][title_len]=16&message_batch[0][content_attachment][link_metrics][summary_len]=123&message_batch[0][content_attachment][link_metrics][min_dimensions][0]=70&message_batch[0][content_attachment][link_metrics][min_dimensions][1]=70&message_batch[0][content_attachment][link_metrics][images_with_dimensions]=3&message_batch[0][content_attachment][link_metrics][images_pending]=0&message_batch[0][content_attachment][link_metrics][images_fetched]=0&message_batch[0][content_attachment][link_metrics][image_dimensions][0]=700&message_batch[0][content_attachment][link_metrics][image_dimensions][1]=782&message_batch[0][content_attachment][link_metrics][images_selected]=1&message_batch[0][content_attachment][link_metrics][images_considered]=4&message_batch[0][content_attachment][link_metrics][images_cap]=3&message_batch[0][content_attachment][link_metrics][images_type]=ranked&message_batch[0][content_attachment][composer_metrics][best_image_w]=100&message_batch[0][content_attachment][composer_metrics][best_image_h]=100&message_batch[0][content_attachment][composer_metrics][image_selected]=0&message_batch[0][content_attachment][composer_metrics][images_provided]=1&message_batch[0][content_attachment][composer_metrics][images_loaded]=1&message_batch[0][content_attachment][composer_metrics][images_shown]=1&message_batch[0][content_attachment][composer_metrics][load_duration]=488&message_batch[0][content_attachment][composer_metrics][timed_out]=0&message_batch[0][content_attachment][composer_metrics][sort_order]=&message_batch[0][content_attachment][composer_metrics][selector_type]=UIThumbPager_6&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][message_id]=%3C1429186765657%3A2768739321-851827929%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&&message_batch[0][client_thread_id]=user%3A100007427978343&client=mercury&__user=100001132466717&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-C26m6oKeDBwIhEoyUnwPUS2O4K5e8Gi4EOGy9KVaK&__req=1g&fb_dtsg="+fbDtsg+"&ttstamp=2658169757610850101120818283&__rev=1691974";
+                string PostThumbnail = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A100001132466717&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0][timestamp]=1429186765657&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=17%3A49&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Achat%3Aweb&message_batch[0][source_tags][0]=source%3Achat&message_batch[0][body]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][has_attachment]=true&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A100007427978343&message_batch[0][specific_to_list][1]=fbid%3A100001132466717&message_batch[0][content_attachment][subject]=Sign%20up%20%7C%20Tumblr&message_batch[0][content_attachment][app_id]=2309869772&message_batch[0][content_attachment][attachment][params][urlInfo][canonical]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][final]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][user]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][log][1416522210]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][params][urlInfo][log][1416522239]=https%3A%2F%2Fwww.Tumblr.com%2F&message_batch[0][content_attachment][attachment][params][favicon]=https%3A%2F%2Fsecure.assets.tumblr.com%2Fimages%2Ffavicons%2Ffavicon.ico%3F_v%3D2f32b762e629b447737e25d2f97b808a&message_batch[0][content_attachment][attachment][params][title]=Sign%20up%20%7C%20Tumblr&message_batch[0][content_attachment][attachment][params][summary]=Post%20anything%20(from%20anywhere!)%2C%20customize%20everything%2C%20and%20find%20and%20follow%20what%20you%20love.%20Create%20your%20own%20Tumblr%20blog%20today.&message_batch[0][content_attachment][attachment][params][images][0]=https%3A%2F%2Ffbexternal-a.akamaihd.net%2Fsafe_image.php%3Fd%3DAQBpEWlFfsGQ2IHX%26w%3D100%26h%3D100%26url%3Dhttps%253A%252F%252F41.media.tumblr.com%252Fcd7ecaa794dd58fb2e05dee3002a08b4%252Ftumblr_nla7keszEu1u7s19xo1_1280.jpg%26cfs%3D1%26upscale%3D1&message_batch[0][content_attachment][attachment][params][medium]=106&message_batch[0][content_attachment][attachment][params][url]=https%3A%2F%2Fwww.tumblr.com%2F&message_batch[0][content_attachment][attachment][type]=100&message_batch[0][content_attachment][link_metrics][source]=ShareStageExternal&message_batch[0][content_attachment][link_metrics][domain]=www.tumblr.com&message_batch[0][content_attachment][link_metrics][base_domain]=tumblr.com&message_batch[0][content_attachment][link_metrics][title_len]=16&message_batch[0][content_attachment][link_metrics][summary_len]=123&message_batch[0][content_attachment][link_metrics][min_dimensions][0]=70&message_batch[0][content_attachment][link_metrics][min_dimensions][1]=70&message_batch[0][content_attachment][link_metrics][images_with_dimensions]=3&message_batch[0][content_attachment][link_metrics][images_pending]=0&message_batch[0][content_attachment][link_metrics][images_fetched]=0&message_batch[0][content_attachment][link_metrics][image_dimensions][0]=700&message_batch[0][content_attachment][link_metrics][image_dimensions][1]=782&message_batch[0][content_attachment][link_metrics][images_selected]=1&message_batch[0][content_attachment][link_metrics][images_considered]=4&message_batch[0][content_attachment][link_metrics][images_cap]=3&message_batch[0][content_attachment][link_metrics][images_type]=ranked&message_batch[0][content_attachment][composer_metrics][best_image_w]=100&message_batch[0][content_attachment][composer_metrics][best_image_h]=100&message_batch[0][content_attachment][composer_metrics][image_selected]=0&message_batch[0][content_attachment][composer_metrics][images_provided]=1&message_batch[0][content_attachment][composer_metrics][images_loaded]=1&message_batch[0][content_attachment][composer_metrics][images_shown]=1&message_batch[0][content_attachment][composer_metrics][load_duration]=488&message_batch[0][content_attachment][composer_metrics][timed_out]=0&message_batch[0][content_attachment][composer_metrics][sort_order]=&message_batch[0][content_attachment][composer_metrics][selector_type]=UIThumbPager_6&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][message_id]=%3C1429186765657%3A2768739321-851827929%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&&message_batch[0][client_thread_id]=user%3A100007427978343&client=mercury&__user=100001132466717&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-C26m6oKeDBwIhEoyUnwPUS2O4K5e8Gi4EOGy9KVaK&__req=1g&fb_dtsg=" + fbDtsg + "&ttstamp=2658169757610850101120818283&__rev=1691974";
 
-                string PostThumbResp = objhttp.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"),PostThumbnail);
+                string PostThumbResp = objhttp.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), PostThumbnail);
 
-                string FinalPost = objhttp.postFormData(new Uri("https://www.facebook.com/ajax/messaging/typ.php"), "typ=0&to=100007427978343&source=mercury-chat&thread=100007427978343&__user=100001132466717&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-C26m6oKeDBwIhEoyUnwPUS2O4K5e8Gi4EOGy9KVaK&__req=1h&fb_dtsg="+fbDtsg+"&ttstamp=2658169757610850101120818283&__rev=1691974");
+                string FinalPost = objhttp.postFormData(new Uri("https://www.facebook.com/ajax/messaging/typ.php"), "typ=0&to=100007427978343&source=mercury-chat&thread=100007427978343&__user=100001132466717&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-C26m6oKeDBwIhEoyUnwPUS2O4K5e8Gi4EOGy9KVaK&__req=1h&fb_dtsg=" + fbDtsg + "&ttstamp=2658169757610850101120818283&__rev=1691974");
                 string MiDPost = objhttp.postFormData(new Uri("https://www.facebook.com/ajax/mercury/attachments/fetch_shares.php"), "message_ids[0]=mid.1429192999548%3A5ef3439898019b2725&__user=100001132466717&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-C26m6oKeDBwIhEoyUnwPUS2O4K5e8Gi4EOGy9KVaK&__req=1i&fb_dtsg=" + fbDtsg + "&ttstamp=2658169757610850101120818283&__rev=1691974");
 
             }
@@ -1065,17 +1110,17 @@ namespace Messages
         public static int ExtractFriendCount(ref FacebookUser fbUser, string UserId)
         {
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-           
+
             int FriendCountNumber = 0;
             try
             {
 
-                string url = FBGlobals.Instance.fbProfileUrl + UserId;                                                
+                string url = FBGlobals.Instance.fbProfileUrl + UserId;
                 string PageSrcFriendCountOLd = HttpHelper.getHtmlfromUrl(new Uri(url));
                 Regex NumChk = new Regex("^[0-9]*$");
                 if (PageSrcFriendCountOLd.Contains("Friends ("))
                 {
-                  
+
                     string FriendCount = string.Empty;
                     string[] ArrFrdProfile = Regex.Split(PageSrcFriendCountOLd, "v=friends");
                     string strSub = ArrFrdProfile[1].Substring(0, 20);
@@ -1090,7 +1135,7 @@ namespace Messages
                     return FriendCountNumber;
                 }
                 else
-                {                  
+                {
 
                     string FriendCount = string.Empty;
                     string PageSrcFriendCount = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbProfileUrl + UserId + "&sk=friends"));
@@ -1111,7 +1156,8 @@ namespace Messages
                     }
                     else
                     {
-                        string Countfrnds = Utils.getBetween(PageSrcFriendCount,"<span class=\"_gs6\">","</span>");
+                        string Countfrnds = Utils.getBetween(PageSrcFriendCount, "<span class=\"_gs6\">", "</span>");
+                        Countfrnds = Countfrnds.Replace(",", string.Empty);
                         FriendCountNumber = int.Parse(Countfrnds);
                     }
                     return FriendCountNumber;
@@ -1123,7 +1169,7 @@ namespace Messages
             }
         }
 
-        public static List<string> ExtractFriendIdsFb(ref FacebookUser fbUser, ref string userID, int FriendCount)
+        public static List<string> ExtractFriendIdsFb(ref FacebookUser fbUser, ref string userID, int FriendCount, int noOfSendCount)
         {
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
@@ -1133,12 +1179,12 @@ namespace Messages
                 do
                 {
 
-                    string FriendUrl = FBGlobals.Instance.fbAllFriendsUIdUrl + userID + "&infinitescroll=1&location=friends_tab_tl&start=" + i + "&__user=" + userID + "&__a=1";    
+                    string FriendUrl = FBGlobals.Instance.fbAllFriendsUIdUrl + userID + "&infinitescroll=1&location=friends_tab_tl&start=" + i + "&__user=" + userID + "&__a=1";
 
                     string pageScrFriend = HttpHelper.getHtmlfromUrl(new Uri(FriendUrl));
                     if (string.IsNullOrEmpty(pageScrFriend))
                     {
-                        FriendUrl = FBGlobals.Instance.fbAllFriendsUIdUrl + userID + "&infinitescroll=1&location=friends_tab&start=" + i + "&__a=1&__user=" + userID;   
+                        FriendUrl = FBGlobals.Instance.fbAllFriendsUIdUrl + userID + "&infinitescroll=1&location=friends_tab&start=" + i + "&__a=1&__user=" + userID;
                     }
                     pageScrFriend = HttpHelper.getHtmlfromUrl(new Uri(FriendUrl));
                     if (pageScrFriend.Contains("user.php?"))
@@ -1181,6 +1227,11 @@ namespace Messages
                     {
                         i = i + 16;
                     }
+                    if (lstFriendTemp.Count > noOfSendCount)
+                    {
+                        break;
+                    }
+
                 }
                 while (i < FriendCount);
 
@@ -1192,7 +1243,7 @@ namespace Messages
             }
         }
 
-        public static List<string> GetIdFromFacebook(ref FacebookUser fbUser, string item)
+        public static List<string> GetIdFromFacebook(ref FacebookUser fbUser, string item, int noOfSendCount)
         {
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             List<string> lstOwnFriendIds = new List<string>();
@@ -1200,7 +1251,7 @@ namespace Messages
             {
                 string UserId = string.Empty;
 
-                string pageSource_HomePage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl)); 
+                string pageSource_HomePage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
                 string fb_dtsg = string.Empty;
                 UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
                 if (string.IsNullOrEmpty(UserId))
@@ -1211,13 +1262,13 @@ namespace Messages
                 List<string> lstOwnFriendId = GetFirendId(ref fbUser, UserId, item);
 
 
-                string posturl = FBGlobals.Instance.fbAllFriendsUrl;                                           
+                string posturl = FBGlobals.Instance.fbAllFriendsUrl;
                 string PostdataForFriends = "uid=" + UserId + "&infinitescroll=1&location=friends_tab_tl&start=14&nctr[_mod]=pagelet_friends&__user=" + UserId + "&__a=1&__req=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816811649895156150";
                 string response = HttpHelper.postFormData(new Uri(posturl), PostdataForFriends, "");
-          
+
                 if (string.IsNullOrEmpty(response))
                 {
-                    posturl = FBGlobals.Instance.fbAllFriendsUrl;                                               
+                    posturl = FBGlobals.Instance.fbAllFriendsUrl;
                     response = HttpHelper.postFormData(new Uri(posturl), PostdataForFriends, "");
 
                 }
@@ -1241,9 +1292,13 @@ namespace Messages
                         }
                     }
                     catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                    if (lstnewfriendid.Count > noOfSendCount)
+                    {
+                        break;
+                    }
                 }
                 try
                 {
@@ -1272,6 +1327,11 @@ namespace Messages
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
+                        if (lstOwnFriendIds.Count > noOfSendCount)
+                        {
+                            break;
+                        }
+
                     }
 
                 }
@@ -1295,9 +1355,9 @@ namespace Messages
             List<string> lstfriendid = new List<string>();
             try
             {
-              
+
                 string UserId = UId;
-                string GraphApiSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + UserId));   
+                string GraphApiSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + UserId));
                 string grpusername = string.Empty;
                 if (GraphApiSource.Contains("username"))
                 {
@@ -1316,7 +1376,7 @@ namespace Messages
                 string FriendlistUrl = string.Empty;
                 if (!string.IsNullOrEmpty(grpusername))
                 {
-                    FriendlistUrl = FBGlobals.Instance.fbhomeurl + grpusername + "/friends?ft_ref=mni";                 
+                    FriendlistUrl = FBGlobals.Instance.fbhomeurl + grpusername + "/friends?ft_ref=mni";
                     if (FriendlistUrl.Contains("//"))
                     {
                         //FriendlistUrl = FriendlistUrl.Replace("//", "/").Trim();
@@ -1344,7 +1404,7 @@ namespace Messages
                     try
                     {
                         FriendlistUrl = FriendlistUrl.Replace("http", "https");
-                        FriendsResponse = HttpHelper.getHtmlfromUrl(new Uri(FriendlistUrl));                       
+                        FriendsResponse = HttpHelper.getHtmlfromUrl(new Uri(FriendlistUrl));
                     }
                     catch (Exception ex)
                     {
@@ -1402,7 +1462,7 @@ namespace Messages
                     {
                         string extractkeywordslimit = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbAllFriendsUIdUrl + Id + "&infinitescroll=1&location=friends_tab_tl&start=" + offset + "&__user=" + user + "&__a=1"));   //"https://www.facebook.com/ajax/browser/list/allfriends/?uid=
 
-                      
+
                         if (extractkeywordslimit.Contains("user.php"))
                         {
                             string[] keyword_idarr = Regex.Split(extractkeywordslimit, "user.php");
@@ -1411,7 +1471,7 @@ namespace Messages
                                 string keyword_idarritem = keyword_idarr[i].Substring(keyword_idarr[i].IndexOf("id="), keyword_idarr[i].IndexOf(">") - keyword_idarr[i].IndexOf("id=")).Replace("id=", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty);
 
                                 toatalid.Add(keyword_idarritem);
-                                toatalid = toatalid.Distinct().ToList();                              
+                                toatalid = toatalid.Distinct().ToList();
                             }
 
                             offset = offset + 24;
@@ -1441,319 +1501,356 @@ namespace Messages
         int ProfilesCounter = 0;
         public void SendMessageTargatedProfile(ref FacebookUser fbUser)
         {
-           // lock(this)
+            // lock(this)
             {
-            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
-            string MessageFriend = string.Empty;
-            string Username = string.Empty;
-            Username = fbUser.username;
-            string FriendId = string.Empty;
-            string UsreId = string.Empty;
-            numberOfMessages = MessageMessageSendNoOfFriends;
-            
-            try
-            {
-                
-                /*string MessageMessageLoadProfileUrl_item = string.Empty;
-                if (MessageMessageLoadProfileUrlQueue.Count != 0)
+                string MessageFriend = string.Empty;
+                string Username = string.Empty;
+                Username = fbUser.username;
+                string FriendId = string.Empty;
+                string UsreId = string.Empty;
+                numberOfMessages = MessageMessageSendNoOfFriends;
+
+                try
                 {
-                    MessageMessageLoadProfileUrl_item = MessageMessageLoadProfileUrlQueue.Dequeue();
-                }*/
-                //foreach (var MessageMessageLoadProfileUrl_item in MessageMessageLoadProfileUrl)
-                foreach (var MessageMessageLoadProfileUrl_item in MessageMessageLoadProfileUrlQueue)
-                {
-                    try
+
+                    /*string MessageMessageLoadProfileUrl_item = string.Empty;
+                    if (MessageMessageLoadProfileUrlQueue.Count != 0)
                     {
-                        string temp=string.Empty;
+                        MessageMessageLoadProfileUrl_item = MessageMessageLoadProfileUrlQueue.Dequeue();
+                    }*/
+                    //foreach (var MessageMessageLoadProfileUrl_item in MessageMessageLoadProfileUrl)
 
-                        ProfilesCounter++;
-                        if (!MessageMessageLoadProfileUrl_item.Contains("https://"))
+                    for (int i = 0; i < MessageMessageSendNoOfFriends; i++)
+                    // foreach (var MessageMessageLoadProfileUrl_item in MessageMessageLoadProfileUrlQueue)
+                    {
+                        string MessageMessageLoadProfileUrl_item = string.Empty;
+                        if (MessageMessageLoadProfileUrlQueue.Count > 0)
                         {
-                            temp = "https://" + MessageMessageLoadProfileUrl_item;
+                            MessageMessageLoadProfileUrl_item = MessageMessageLoadProfileUrlQueue.Dequeue();
                         }
-                        else
+                        if (!string.IsNullOrEmpty(MessageMessageLoadProfileUrl_item))
                         {
-                            temp =MessageMessageLoadProfileUrl_item;
-                        }
-                        string PageSource = HttpHelper.getHtmlfromUrl(new Uri(temp));
-
-                        FriendId = GetFriendUserId(ref fbUser,temp);
-                        if (string.IsNullOrEmpty(FriendId))
-                        { 
-                          FriendId=Utils.getBetween(PageSource,"\\/profile.php?id=","&");
-                          if (FriendId.Length > 24)
-                          {
-                              FriendId = Utils.getBetween(PageSource, "\\/profile.php?id=", "\"");
-                          }
-                        }
-                        UsreId = GlobusHttpHelper.GetParamValue(PageSource, "user");
-                        if (string.IsNullOrEmpty(UsreId))
-                        {
-                            UsreId = GlobusHttpHelper.ParseJson(PageSource, "user");
-                        }
-                        if (SendMessageUsingMessage == "Single")
-                        {
-                            MessageFriend = ReplyMessageMessageSingle;
-                        }
-
-                        if (SendMessageUsingMessage == "Random")
-                        {
-                            MessageFriend = LstReplyMessageMessageReply[Utils.GenerateRandom(0, LstReplyMessageMessageReply.Count)];
-                        }
-                        MessageFriend = Uri.EscapeDataString(MessageFriend);
-                        try
-                        {
-                            if (countnumberOfMessagesSent > numberOfMessages)
+                            try
                             {
-                                break;
-                            }
+                                string temp = string.Empty;
 
-                            string FriendUrl = FBGlobals.Instance.fbProfileUrl + FriendId;
-                            GlobusLogHelper.log.Debug(countnumberOfMessagesSent + " Sending Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
-                            GlobusLogHelper.log.Info(countnumberOfMessagesSent + " Sending Message with " + Username);
+                                ProfilesCounter++;
+                                if (!MessageMessageLoadProfileUrl_item.Contains("https://"))
+                                {
+                                    temp = "https://" + MessageMessageLoadProfileUrl_item;
+                                }
+                                else
+                                {
+                                    temp = MessageMessageLoadProfileUrl_item;
+                                }
+                                string PageSource = HttpHelper.getHtmlfromUrl(new Uri(temp));
 
-                            string PageSrcMsg = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbMessagesUrl));    
+                                FriendId = GetFriendUserId(ref fbUser, temp);
+                                if (string.IsNullOrEmpty(FriendId))
+                                {
+                                    FriendId = Utils.getBetween(PageSource, "{\"profile_id\":", ",");
+                                    if (FriendId.Length > 24)
+                                    {
+                                        FriendId = Utils.getBetween(PageSource, "\\/profile.php?id=", "\"");
+                                    }
+                                }
+                                UsreId = GlobusHttpHelper.GetParamValue(PageSource, "user");
+                                if (string.IsNullOrEmpty(UsreId))
+                                {
+                                    UsreId = GlobusHttpHelper.ParseJson(PageSource, "user");
+                                }
+                                if (SendMessageUsingMessage == "Single")
+                                {
+                                    MessageFriend = ReplyMessageMessageSingle;
+                                }
 
-                            string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSrcMsg);
-                          
-                            string UrlMsgAjax = string.Empty;
-                            UrlMsgAjax = FBGlobals.Instance.MessageReplyGetAjaxAsyncDialogUrl + UsreId;                   
-                            string PageSrcMsgAjax = HttpHelper.getHtmlfromUrl(new Uri(UrlMsgAjax));
-
-
-                            if (CheckSendMessageWithTage)
-                            {
+                                if (SendMessageUsingMessage == "Random")
+                                {
+                                    MessageFriend = LstReplyMessageMessageReply[Utils.GenerateRandom(0, LstReplyMessageMessageReply.Count)];
+                                }
+                                MessageFriend = Uri.EscapeDataString(MessageFriend);
                                 try
                                 {
-                                    string Name = string.Empty;
-                                    string PageSource1 = HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/" + FriendId));
-                                    if (PageSource1.Contains("\"name\": \""))
+                                    if (i > numberOfMessages)
+                                    {
+                                        break;
+                                    }
+
+                                    string FriendUrl = FBGlobals.Instance.fbProfileUrl + FriendId;
+                                    GlobusLogHelper.log.Info((i + 1) + " Sending Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
+                                    //GlobusLogHelper.log.Info(countnumberOfMessagesSent + " Sending Message with " + Username);
+
+                                    string PageSrcMsg = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbMessagesUrl));
+
+                                    string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSrcMsg);
+
+                                    string UrlMsgAjax = string.Empty;
+                                    UrlMsgAjax = FBGlobals.Instance.MessageReplyGetAjaxAsyncDialogUrl + UsreId;
+                                    string PageSrcMsgAjax = HttpHelper.getHtmlfromUrl(new Uri(UrlMsgAjax));
+
+
+                                    if (CheckSendMessageWithTage)
                                     {
                                         try
                                         {
-                                            Name = Utils.getBetween(PageSource1, "\"name\": \"", "\",\n");
+                                            string Name = string.Empty;
+                                            string PageSource1 = HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/" + FriendId));
+                                            if (PageSource1.Contains("\"name\": \""))
+                                            {
+                                                try
+                                                {
+                                                    Name = Utils.getBetween(PageSource1, "\"name\": \"", "\",\n");
 
-                                            #region MyRegion
+                                                    #region MyRegion
 
-                                            //  Name = System.Web.HttpUtility.(Name);
-                                            // Name = Uri.(Name);
-                                            //Name = System.Text.Encoding.ASCII.GetString(System.Text.Encoding.ASCII.GetBytes(Name));
-                                            //string asAscii = Encoding.ASCII.GetString(Encoding.UTF8.(Name));
-                                            // Name = System.Web.HttpUtility.UrlEncode(Name);
-                                            //Name = System.Web.HttpUtility.UrlDecode(Name); 
-                                            #endregion
+                                                    //  Name = System.Web.HttpUtility.(Name);
+                                                    // Name = Uri.(Name);
+                                                    //Name = System.Text.Encoding.ASCII.GetString(System.Text.Encoding.ASCII.GetBytes(Name));
+                                                    //string asAscii = Encoding.ASCII.GetString(Encoding.UTF8.(Name));
+                                                    // Name = System.Web.HttpUtility.UrlEncode(Name);
+                                                    //Name = System.Web.HttpUtility.UrlDecode(Name); 
+                                                    #endregion
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+
+                                            }
+                                            if (string.IsNullOrEmpty(Name))
+                                            {
+                                                try
+                                                {
+                                                    string[] arr = System.Text.RegularExpressions.Regex.Split(PageSource1, "locale\"");
+                                                    Name = Utils.getBetween(arr[1], "name", "\"\n}").Replace("\"", "").Replace(":", "");
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+
+                                            if (MessageFriend.Contains("<>"))
+                                            {
+                                                string[] Arr = System.Text.RegularExpressions.Regex.Split(MessageFriend, "<>");
+                                                MessageFriend = Arr[0] + " " + Name + " " + Arr[1];
+                                            }
                                         }
                                         catch (Exception ex)
                                         {
                                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
+                                    }
+                                    try
+                                    {
+                                        if (!ReplyMessageMessageSingle.Contains("www"))
+                                        {
+                                            string postUrlMsg = FBGlobals.Instance.MessageReplyPostAjaxMessagingSendUrl;
+                                            string PostDataMsg = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "&message_batch[0][author_email]&message_batch[0][timestamp]=" + Utils.GenerateTimeStamp() + "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=18%3A47&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Achat%3Aweb&message_batch[0][source_tags][0]=source%3Achat&message_batch[0][body]=" + MessageFriend + "&message_batch[0][has_attachment]=false&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "&message_batch[0][specific_to_list][1]=fbid%3A" + UsreId + "&message_batch[0][signatureID]=46b7554f&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][message_id]=%3C" + Utils.GenerateTimeStamp() + "%3A3069191019-3045065422%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&message_batch[0][client_thread_id]=user%3A" + FriendId + "&client=mercury&__user=" + UsreId + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bGya4Au7pEsx6iqA8Ay9VQC-K26m6oKezob4q68K5Uc-dwIxbxjy9Uiza88ybhEnyk4EK-qVWw&__req=t&fb_dtsg=" + fb_dtsg + "&ttstamp=26581721101211227911151578486&__rev=1793104";
+                                            //string postUrlMsg = FBGlobals.Instance.MessageReplyPostAjaxMessagingSendUrl;
+                                            //string PostDataMsg = "forward_msgs&body=" + MessageFriend + "&action=send&recipients[0]=" + FriendId + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
+
+                                            //string ResponseMsg = HttpHelper.postFormData(new Uri(postUrlMsg), PostDataMsg, "");
+
+                                            //string postUrlMsg1 = FBGlobals.Instance.MessageReplyPostAjaxMessagingPhp;
+                                            //string PostDataMsg1 = "fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
+
+                                            //string ResponseMsg1 = HttpHelper.postFormData(new Uri(postUrlMsg1), PostDataMsg1, "");
+                                            string ResponseMsg1 = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), PostDataMsg, FriendUrl);
+                                            string errorSummary = string.Empty;
+                                            errorSummary = Utils.getBetween(ResponseMsg1, "errorSummary\":\"", "\"");
+                                        }
+
+
+                                        //if (!string.IsNullOrEmpty(errorSummary))
+                                        //    {
+                                        //         string messageBox = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/messaging/composer.php?ids[0]=" + FriendId + "&ref=timeline&__asyncDialog=1&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxCbzElx2ubhHximmey8qUS8zU&__req=d&__rev=1559767"));
+                                        //         string inputMsg = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/typeahead/first_degree.php?viewer=" + UsreId + "&token=v7&filter[0]=user&options[0]=friends_only&context=messages_bootstrap&request_id=3f97f076-15fb-423e-f92f-02a1e933228e&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9vyVQ9UoHaEWCueyp9Esx6iWF299qzCC-C26m6oKexm49UJ6K59poW8xHzoyfw&__req=f&__rev=1559767"));
+                                        //         string messagePostData = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0][timestamp]=1421174982880&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=12%3A19am&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_cleared]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Atitan%3Aweb&&message_batch[0][body]=" + MessageFriend + "&message_batch[0][has_attachment]=false&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "&message_batch[0][specific_to_list][1]=fbid%3A" + UsreId + "&message_batch[0][force_sms]=true&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][message_id]=%3C1421174982880%3A3081462591-2044752731%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&&message_batch[0][client_thread_id]=user%3A"+FriendId+"&client=mercury&__user="+UsreId+"&__a=1&__dyn=7nmajEyl2qm9vyVQ9UoHaEWCueyp9Esx6iWF299qzCC-C26m6oKexm49UJ6K59poW8xHzoyfw&__req=i&fb_dtsg="+fb_dtsg+"&ttstamp=26581729584113995279115118108&__rev=1559767";
+
+                                        //         string messgaePostResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), messagePostData);
+                                        //     }
+
+
+
+                                        TotalNoofSeneMessage_Counter++;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error(ex.Message);
+                                    }
+                                    // ReplyMessageMessageSingle = "https://www.tumblr.com/"; 
+                                    if (ReplyMessageMessageSingle.Contains("www"))
+                                    {
+                                        string MessagePage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/messages/" + UsreId));
+
+                                        string scrapeUrl = ReplyMessageMessageSingle.Substring(ReplyMessageMessageSingle.IndexOf("http"));
+                                        string postUrl = Uri.EscapeDataString(scrapeUrl);
+                                        {
+
+                                            string postThumbnail = "u=" + postUrl + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1a&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
+                                            string postThumbnailResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/share_scrape.php"), postThumbnail);
+
+
+                                            string Subject = Uri.EscapeDataString(Utils.getBetween(postThumbnailResp, "subject\\\" value=\\\"", "\\"));
+                                            string appId = Utils.getBetween(postThumbnailResp, "app_id\\\" value=\\\"", "\\");
+                                            string favicon = Utils.getBetween(postThumbnailResp, "favicon]\\\" value=\\\"", "\"");
+                                            favicon = favicon.Replace("/", string.Empty);
+                                            favicon = Uri.EscapeDataString(favicon);
+                                            string title = Uri.EscapeDataString(Utils.getBetween(postThumbnailResp, "title]\\\" value=\\\"", "\\"));
+                                            string thumbImgSrc = Utils.getBetween(postThumbnailResp, "Thumb img\\\" src=\\\"", "\"");
+                                            thumbImgSrc = thumbImgSrc.Replace("\\u00253A", ":");
+                                            thumbImgSrc = thumbImgSrc.Replace("\\u00252F", "/");
+
+                                            thumbImgSrc = thumbImgSrc.Replace("\\", string.Empty);
+                                            thumbImgSrc = thumbImgSrc.Replace("u002", string.Empty);
+                                            thumbImgSrc = thumbImgSrc.Replace("amp;", string.Empty);
+                                            thumbImgSrc = Uri.EscapeDataString(thumbImgSrc);
+                                            string Medium = Utils.getBetween(postThumbnailResp, "[medium]\\\" value=\\\"", "\\");
+                                            string type = Utils.getBetween(postThumbnailResp, "type]\\\" value=\\\"", "\\");
+                                            string domain = Utils.getBetween(postThumbnailResp, "domain]\\\" value=\\\"", "\\");
+                                            string baseDomain = Utils.getBetween(postThumbnailResp, "base_domain]\\\" value=\\\"", "\\");
+                                            string title_len = Utils.getBetween(postThumbnailResp, "title_len]\\\" value=\\\"", "\\");
+                                            string summary_len = Utils.getBetween(postThumbnailResp, "summary_len]\\\" value=\\\"", "\\");
+                                            string min_dimensions0 = Utils.getBetween(postThumbnailResp, "min_dimensions][0]\\\" value=\\\"", "\\");
+                                            string min_dimensions1 = Utils.getBetween(postThumbnailResp, "min_dimensions][1]\\\" value=\\\"", "\\");
+                                            string image_dimensions0 = Utils.getBetween(postThumbnailResp, "image_dimensions][0]\\\" value=\\\"", "\\");
+                                            string image_dimensions1 = Utils.getBetween(postThumbnailResp, "image_dimensions][1]\\\" value=\\\"", "\\");
+                                            string summary = Uri.EscapeDataString(Utils.getBetween(postThumbnailResp, "params][summary]\\\" value=\\\"", "\\"));
+                                            //params][summary]\" value=\"
+                                            string tt = Utils.GenerateTimeStamp();
+                                            string TT1 = Uri.EscapeDataString(DateTime.Now.ToString("HH:mm"));
+
+                                            string postFinalThumbnail = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "" +
+                                                                        "&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0]" +
+                                                                        "[timestamp]=" + tt + "" +
+                                                                        "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=" + TT1 + "&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_cleared]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Atitan%3Aweb&&message_batch[0][body]=" + postUrl + "" +
+                                                                        "&message_batch[0][has_attachment]=true&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "" +
+                                                                        "&message_batch[0][specific_to_list][1]=fbid%3A" + FriendId + "" +
+                                                                        "&message_batch[0][content_attachment][subject]=" + Subject + "&message_batch[0][content_attachment][app_id]=" + appId + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][urlInfo][canonical]=" + postUrl + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][urlInfo][final]=" + postUrl + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][urlInfo][user]=" + postUrl + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][favicon]=" + favicon + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][title]=" + title + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][summary]=" + summary + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][images][0]=" + thumbImgSrc + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][medium]=" + Medium + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][params][url]=" + postUrl + "" +
+                                                                        "&message_batch[0][content_attachment][attachment][type]=" + type + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][source]=ShareStageExternal&message_batch[0][content_attachment][link_metrics][domain]=" + domain + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][base_domain]=" + baseDomain + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][title_len]=" + title_len + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][summary_len]=0" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][min_dimensions][0]=" + min_dimensions0 + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][min_dimensions][1]=" + min_dimensions1 + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][images_with_dimensions]=2" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][images_pending]=0" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][images_fetched]=0" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][image_dimensions][0]=" + image_dimensions0 + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][image_dimensions][1]=" + image_dimensions1 + "" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][images_selected]=1" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][images_considered]=2" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][images_cap]=3" +
+                                                                        "&message_batch[0][content_attachment][link_metrics][images_type]=ranked" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][best_image_w]=100" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][best_image_h]=100" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][image_selected]=0" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][images_provided]=1" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][images_loaded]=1" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][images_shown]=1" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][load_duration]=4136" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][timed_out]=0" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][sort_order]=" +
+                                                                        "&message_batch[0][content_attachment][composer_metrics][selector_type]=UIThumbPager_6" +
+                                                                        "&message_batch[0][force_sms]=true&message_batch[0][ui_push_phase]=V2p" +
+                                                                        "&message_batch[0][status]=0&message_batch[0][message_id]=%3C" + tt + "%3A3925954697-2587754773%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&&message_batch[0][client_thread_id]=user%3A" + FriendId + "" +
+                                                                        "&client=web_messenger&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1c" +
+                                                                        "&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
+
+
+                                            if (scrapeUrl.Contains("facebook"))
+                                            {
+                                                postThumbnailResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/message_share_attachment/fromURI/"), "image_height=960&image_width=960&uri=" + postUrl + "&__user=" + UsreId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xNaUK49oKiWFami8DDirZo8ponUDAyoS2N6y8-bxu3fzob8iUkUyp2aCza88ybhEnhS4EKZAKuEO&__req=35&fb_dtsg=" + fb_dtsg + "&ttstamp=26581726611250757157658256&__rev=1806460");
+
+                                                string shareParam = Utils.getBetween(postThumbnailResp, "share_params\":[", "]");
+                                                string shareparam1 = shareParam.Split(',')[0];
+                                                string shareparam2 = shareParam.Split(',')[1];
+                                                postFinalThumbnail = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "&message_batch[0][author_email]&message_batch[0][timestamp]=" + tt + "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=" + TT1 + "&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Achat%3Aweb&message_batch[0][source_tags][0]=source%3Achat&message_batch[0][body]=" + Uri.EscapeDataString(ReplyMessageMessageSingle) + "&message_batch[0][has_attachment]=true&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "&message_batch[0][specific_to_list][1]=fbid%3A" + UsreId + "&message_batch[0][shareable_attachment][share_type]=2&message_batch[0][shareable_attachment][share_params][0]=" + shareparam1 + "&message_batch[0][shareable_attachment][share_params][1]=" + shareparam2 + "&message_batch[0][signatureID]=276b7ff0&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][message_id]=%3C1435306672053%3A2594317926-3368119847%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&message_batch[0][client_thread_id]=user%3A" + FriendId + "&client=mercury&__user=" + UsreId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xNaUK49oKiWFami8DDirZo8ponUDAyoS2N6y8-bxu3fzob8iUkUyp2aCza88ybhEnhS4EKZAKuEO&__req=38&fb_dtsg=" + fb_dtsg + "&ttstamp=26581726611250757157658256&__rev=1806460";
+                                            }
+
+                                            string ThreadPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/messaging/typ.php"), "typ=1&to=" + FriendId + "&source=mercury-chat&thread=" + FriendId + "&__user=" + UsreId + "&__a=1&__dyn=7nmanEyl2lm9o-t2u5bGya4Au74qbx2mbAKGiyEyut9LFwxBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=45&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170831091124811651677495&__rev=1694181");
+                                            string ThreadPost1 = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/messaging/typ.php"), "typ=1&to=" + FriendId + "&source=mercury-chat&thread=" + FriendId + "&__user=" + UsreId + "&__a=1&__dyn=7nmanEyl2lm9o-t2u5bGya4Au74qbx2mbAKGiyEyut9LFwxBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=45&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170831091124811651677495&__rev=1694181");
+
+                                            string postFinalTumbnailresp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), postFinalThumbnail, "https://www.facebook.com/messages/" + FriendId + "");
+                                            string message_id = Utils.getBetween(postFinalTumbnailresp, "message_id\":\"", "\"");
+                                            //string 
+
+                                            try
+                                            {
+                                                string postFinalTumbnail1 = "message_ids[0]=" + message_id + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1e&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
+                                                string postFinalResult = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/attachments/fetch_shares.php"), postFinalTumbnail1);
+                                            }
+                                            catch { }
+
+
+                                        }
+                                    }
+                                    //GlobusLogHelper.log.Debug(countnumberOfMessagesSent + " Sent Message with " + Username);
+                                    //GlobusLogHelper.log.Info(countnumberOfMessagesSent + " Sent Message with " + Username);
+
+                                    try
+                                    {
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayMessageReply * 1000, maxDelayMessageReply * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                    try
+                                    {
+                                        string CSVHeader = "UserName" + "," + "ProfileUrl" + "," + "Message";
+                                        string CSV_Content = fbUser.username + "," + FriendUrl + "," + MessageFriend;
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, MessageSendingDetailsCSV);
+                                    }
+                                    catch (Exception ex)
+                                    {
 
                                     }
-                                    if (string.IsNullOrEmpty(Name))
+                                    countnumberOfMessagesSent++;
+                                    if (useDivideDataOption)
                                     {
-                                        try
+                                        if ((NoProfileUrlsPerUser / ProfilesCounter) == 1)
                                         {
-                                            string[] arr = System.Text.RegularExpressions.Regex.Split(PageSource1, "locale\"");
-                                            Name = Utils.getBetween(arr[1], "name", "\"\n}").Replace("\"", "").Replace(":", "");
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            MessageMessageLoadProfileUrlQueue.Dequeue();
+                                            ProfilesCounter = 0;
+                                            break;
                                         }
                                     }
-
-                                    if (MessageFriend.Contains("<>"))
-                                    {
-                                        string[] Arr = System.Text.RegularExpressions.Regex.Split(MessageFriend, "<>");
-                                        MessageFriend = Arr[0] + " " + Name + " " + Arr[1];
-                                    }                                  
                                 }
                                 catch (Exception ex)
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-                            }
-                            try
-                            {
-                                if (!ReplyMessageMessageSingle.Contains("www"))
-                                {
-                                    string postUrlMsg = FBGlobals.Instance.MessageReplyPostAjaxMessagingSendUrl;
-                                    string PostDataMsg = "forward_msgs&body=" + MessageFriend + "&action=send&recipients[0]=" + FriendId + "&force_sms=true&fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
 
-                                    string ResponseMsg = HttpHelper.postFormData(new Uri(postUrlMsg), PostDataMsg, "");
-
-                                    string postUrlMsg1 = FBGlobals.Instance.MessageReplyPostAjaxMessagingPhp;
-                                    string PostDataMsg1 = "fb_dtsg=" + fb_dtsg + "&__user=" + UsreId + "&phstamp=";
-
-                                    string ResponseMsg1 = HttpHelper.postFormData(new Uri(postUrlMsg1), PostDataMsg1, "");
-                                    string errorSummary = string.Empty;
-                                    errorSummary = Utils.getBetween(ResponseMsg1, "errorSummary\":\"", "\"");
-                                }
-
-
-                            //if (!string.IsNullOrEmpty(errorSummary))
-                            //    {
-                            //         string messageBox = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/messaging/composer.php?ids[0]=" + FriendId + "&ref=timeline&__asyncDialog=1&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxCbzElx2ubhHximmey8qUS8zU&__req=d&__rev=1559767"));
-                            //         string inputMsg = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/typeahead/first_degree.php?viewer=" + UsreId + "&token=v7&filter[0]=user&options[0]=friends_only&context=messages_bootstrap&request_id=3f97f076-15fb-423e-f92f-02a1e933228e&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9vyVQ9UoHaEWCueyp9Esx6iWF299qzCC-C26m6oKexm49UJ6K59poW8xHzoyfw&__req=f&__rev=1559767"));
-                            //         string messagePostData = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0][timestamp]=1421174982880&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=12%3A19am&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_cleared]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Atitan%3Aweb&&message_batch[0][body]=" + MessageFriend + "&message_batch[0][has_attachment]=false&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "&message_batch[0][specific_to_list][1]=fbid%3A" + UsreId + "&message_batch[0][force_sms]=true&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][message_id]=%3C1421174982880%3A3081462591-2044752731%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&&message_batch[0][client_thread_id]=user%3A"+FriendId+"&client=mercury&__user="+UsreId+"&__a=1&__dyn=7nmajEyl2qm9vyVQ9UoHaEWCueyp9Esx6iWF299qzCC-C26m6oKexm49UJ6K59poW8xHzoyfw&__req=i&fb_dtsg="+fb_dtsg+"&ttstamp=26581729584113995279115118108&__rev=1559767";
-
-                            //         string messgaePostResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), messagePostData);
-                            //     }
-
-
-
-                            TotalNoofSeneMessage_Counter++;
-                            }
-                            catch(Exception ex)
-                            {
-                              GlobusLogHelper.log.Error(ex.Message);
-                            }
-                           // ReplyMessageMessageSingle = "https://www.tumblr.com/"; 
-                            if (ReplyMessageMessageSingle.Contains("www"))
-                            {
-                                string MessagePage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/messages/"+UsreId));
-                                string postUrl = Uri.EscapeDataString(ReplyMessageMessageSingle);
-                                {
-                                string postThumbnail = "u="+postUrl+"&__user="+UsreId+"&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1a&fb_dtsg="+fb_dtsg+"&ttstamp=26581711077653995245897990&__rev=1527549";
-                                string postThumbnailResp=HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/share_scrape.php"),postThumbnail);
-                                
-
-                                string Subject =Uri.EscapeDataString(Utils.getBetween(postThumbnailResp, "subject\\\" value=\\\"", "\\"));
-                                string appId = Utils.getBetween(postThumbnailResp, "app_id\\\" value=\\\"", "\\");
-                                string favicon = Utils.getBetween(postThumbnailResp, "favicon]\\\" value=\\\"", "\"");
-                                favicon=favicon.Replace("/",string.Empty);
-                                favicon = Uri.EscapeDataString(favicon);
-                                string title = Uri.EscapeDataString(Utils.getBetween(postThumbnailResp, "title]\\\" value=\\\"", "\\"));
-                                string thumbImgSrc = Utils.getBetween(postThumbnailResp, "Thumb img\\\" src=\\\"", "\"");
-                                thumbImgSrc = thumbImgSrc.Replace("\\u00253A", ":");
-                                thumbImgSrc = thumbImgSrc.Replace("\\u00252F", "/");
-                                    
-                                thumbImgSrc = thumbImgSrc.Replace("\\", string.Empty);
-                                thumbImgSrc = thumbImgSrc.Replace("u002", string.Empty);
-                                thumbImgSrc = thumbImgSrc.Replace("amp;", string.Empty);
-                                thumbImgSrc = Uri.EscapeDataString(thumbImgSrc);
-                                string Medium = Utils.getBetween(postThumbnailResp, "[medium]\\\" value=\\\"", "\\");
-                                string type = Utils.getBetween(postThumbnailResp, "type]\\\" value=\\\"", "\\");
-                                string domain = Utils.getBetween(postThumbnailResp, "domain]\\\" value=\\\"", "\\");
-                                string baseDomain = Utils.getBetween(postThumbnailResp, "base_domain]\\\" value=\\\"", "\\");
-                                string title_len = Utils.getBetween(postThumbnailResp, "title_len]\\\" value=\\\"", "\\");
-                                string summary_len = Utils.getBetween(postThumbnailResp, "summary_len]\\\" value=\\\"", "\\");
-                                string min_dimensions0 = Utils.getBetween(postThumbnailResp, "min_dimensions][0]\\\" value=\\\"", "\\");
-                                string min_dimensions1 = Utils.getBetween(postThumbnailResp, "min_dimensions][1]\\\" value=\\\"", "\\");
-                                string image_dimensions0 = Utils.getBetween(postThumbnailResp, "image_dimensions][0]\\\" value=\\\"", "\\");
-                                string image_dimensions1 = Utils.getBetween(postThumbnailResp, "image_dimensions][1]\\\" value=\\\"", "\\");
-                                string summary =Uri.EscapeDataString(Utils.getBetween(postThumbnailResp, "params][summary]\\\" value=\\\"", "\\"));
-                                //params][summary]\" value=\"
-                                string tt = Utils.GenerateTimeStamp();
-                                string TT1 =Uri.EscapeDataString(DateTime.Now.ToString("HH:mm"));
-
-                                string postFinalThumbnail = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A"+UsreId+""+
-                                                            "&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0]"+
-                                                            "[timestamp]="+tt+""+
-                                                            "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]="+TT1+"&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_cleared]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Atitan%3Aweb&&message_batch[0][body]="+postUrl+""+
-                                                            "&message_batch[0][has_attachment]=true&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A"+FriendId+""+
-                                                            "&message_batch[0][specific_to_list][1]=fbid%3A"+FriendId+""+
-                                                            "&message_batch[0][content_attachment][subject]="+Subject+"&message_batch[0][content_attachment][app_id]="+appId+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][urlInfo][canonical]="+postUrl+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][urlInfo][final]="+postUrl+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][urlInfo][user]="+postUrl+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][favicon]="+favicon+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][title]="+title+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][summary]="+summary+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][images][0]="+thumbImgSrc+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][medium]="+Medium+""+
-                                                            "&message_batch[0][content_attachment][attachment][params][url]="+postUrl+""+
-                                                            "&message_batch[0][content_attachment][attachment][type]="+type+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][source]=ShareStageExternal&message_batch[0][content_attachment][link_metrics][domain]="+domain+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][base_domain]="+baseDomain+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][title_len]="+title_len+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][summary_len]=0"+
-                                                            "&message_batch[0][content_attachment][link_metrics][min_dimensions][0]="+min_dimensions0+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][min_dimensions][1]="+min_dimensions1+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][images_with_dimensions]=2"+
-                                                            "&message_batch[0][content_attachment][link_metrics][images_pending]=0"+
-                                                            "&message_batch[0][content_attachment][link_metrics][images_fetched]=0"+
-                                                            "&message_batch[0][content_attachment][link_metrics][image_dimensions][0]="+image_dimensions0+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][image_dimensions][1]="+image_dimensions1+""+
-                                                            "&message_batch[0][content_attachment][link_metrics][images_selected]=1"+
-                                                            "&message_batch[0][content_attachment][link_metrics][images_considered]=2"+
-                                                            "&message_batch[0][content_attachment][link_metrics][images_cap]=3"+
-                                                            "&message_batch[0][content_attachment][link_metrics][images_type]=ranked"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][best_image_w]=100"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][best_image_h]=100"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][image_selected]=0"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][images_provided]=1"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][images_loaded]=1"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][images_shown]=1"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][load_duration]=4136"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][timed_out]=0"+
-                                                            "&message_batch[0][content_attachment][composer_metrics][sort_order]="+
-                                                            "&message_batch[0][content_attachment][composer_metrics][selector_type]=UIThumbPager_6"+
-                                                            "&message_batch[0][force_sms]=true&message_batch[0][ui_push_phase]=V2p"+
-                                                            "&message_batch[0][status]=0&message_batch[0][message_id]=%3C"+tt+"%3A3925954697-2587754773%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&&message_batch[0][client_thread_id]=user%3A"+FriendId+""+
-                                                            "&client=web_messenger&__user="+UsreId+"&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1c"+
-                                                            "&fb_dtsg="+fb_dtsg+"&ttstamp=26581711077653995245897990&__rev=1527549";
-
-                                
-
-                                string ThreadPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/messaging/typ.php"), "typ=1&to="+FriendId+"&source=mercury-chat&thread="+FriendId+"&__user="+UsreId+"&__a=1&__dyn=7nmanEyl2lm9o-t2u5bGya4Au74qbx2mbAKGiyEyut9LFwxBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=45&fb_dtsg="+fb_dtsg+"&ttstamp=2658170831091124811651677495&__rev=1694181");
-                                string ThreadPost1 = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/messaging/typ.php"), "typ=1&to=" + FriendId + "&source=mercury-chat&thread=" + FriendId + "&__user=" + UsreId + "&__a=1&__dyn=7nmanEyl2lm9o-t2u5bGya4Au74qbx2mbAKGiyEyut9LFwxBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=45&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170831091124811651677495&__rev=1694181");
-                               
-                                string postFinalTumbnailresp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), postFinalThumbnail, "https://www.facebook.com/messages/" + FriendId + "");
-                                string message_id=Utils.getBetween(postFinalTumbnailresp,"message_id\":\"","\"");
-                                //string 
-                              
-
-                                string postFinalTumbnail1 = "message_ids[0]=" + message_id + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1e&fb_dtsg="+fb_dtsg+"&ttstamp=26581711077653995245897990&__rev=1527549";
-                                string postFinalResult = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/attachments/fetch_shares.php"), postFinalTumbnail1);
-
-                               
-                            
-                                }
-                            }
-                            //GlobusLogHelper.log.Debug(countnumberOfMessagesSent + " Sent Message with " + Username);
-                            //GlobusLogHelper.log.Info(countnumberOfMessagesSent + " Sent Message with " + Username);
-
-                            try
-                            {
-                                int delayInSeconds = Utils.GenerateRandom(minDelayMessageReply * 1000, maxDelayMessageReply * 1000);
-                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                Thread.Sleep(delayInSeconds);
                             }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
-                            countnumberOfMessagesSent++;
-                            if (useDivideDataOption)
-                            {
-                                if ((NoProfileUrlsPerUser / ProfilesCounter) == 1)
-                                {
-                                    MessageMessageLoadProfileUrlQueue.Dequeue();
-                                    ProfilesCounter = 0;
-                                    break;
-                                }
-                            }
                         }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-
                     }
-                    catch (Exception ex)
-                    {
-                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    }                    
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
             }
-            catch (Exception ex)
-            {
-                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }
-        }
         }
 
         public void SendMessageWithImage(ref FacebookUser fbUser)
@@ -1783,10 +1880,10 @@ namespace Messages
                         List<string> lstFriend = new List<string>();
                         lstFriend.Clear();
 
-                        lstFriend = ExtractFriendIdsFb(ref fbUser, ref UsreId, count_Friends);
-                        for(int i=0;i<MessageMessageSendNoOfFriends;i++)
+                        lstFriend = ExtractFriendIdsFb(ref fbUser, ref UsreId, count_Friends, numberOfMessages);
+                        for (int i = 0; i < MessageMessageSendNoOfFriends; i++)
                         {
-                            MessageMessageLoadProfileUrlQueue.Enqueue("https://www.facebook.com/"+lstFriend[i]);
+                            MessageMessageLoadProfileUrlQueue.Enqueue("https://www.facebook.com/" + lstFriend[i]);
                         }
                     }
                     foreach (var MessageMessageLoadProfileUrl_item in MessageMessageLoadProfileUrlQueue)
@@ -1861,7 +1958,7 @@ namespace Messages
                                             try
                                             {
                                                 Name = Utils.getBetween(PageSource1, "\"name\": \"", "\",\n");
-                                               
+
                                             }
                                             catch (Exception ex)
                                             {
@@ -1902,38 +1999,53 @@ namespace Messages
                                         imagepath = qImagePathMesssage.Dequeue();
                                     }
                                     else
-                                    { 
-                                      imagepath=lstImagePathMessage[new Random().Next(0,lstImagePathMessage.Count-1)];
+                                    {
+                                        imagepath = lstImagePathMessage[new Random().Next(0, lstImagePathMessage.Count - 1)];
                                     }
                                     string AjaxPipeToken = string.Empty;
                                     string QNVal = string.Empty;
                                     AjaxPipeToken = Utils.getBetween(PageSrcMsg, "ajaxpipe_token\":\"", "\"");
-                                   
+
                                     QNVal = Utils.getBetween(PageSrcMsg, "waterfallID\":\"", "\"");
                                     NameValueCollection nvc = new NameValueCollection();
                                     nvc.Add("fb_dtsg", fb_dtsg);
                                     nvc.Add("source", "8");
-                                    nvc.Add("profile_id",UsreId);
+                                    nvc.Add("profile_id", UsreId);
                                     nvc.Add("grid_id", "u_jsonp_2_4");
-                                    nvc.Add("qn",QNVal);
+                                    nvc.Add("qn", QNVal);
                                     nvc.Add("0", "" + imagepath + "<:><:><:>image/jpeg");
-                                    nvc.Add("upload_id","1024");
+                                    nvc.Add("upload_id", "1024");
 
-                                    string ImagePostResp = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?qn=" + QNVal + "&__user=" + UsreId + "&__a=1&__dyn=7nmanEyl2lm9r88DgDxiWEyx97xN6yUgByVbGAF9oyut9LO0xBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=q&fb_dtsg=" + fb_dtsg + "&ttstamp=265817095491141126911211310183&__rev=1696458", "https://www.facebook.com/messages/" + UsreId,nvc,"upload_id","0");
-                                    string PhotoFbId = Utils.getBetween(ImagePostResp,"photoFBID\":",",");
+                                    string ImagePostResp = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?qn=" + QNVal + "&__user=" + UsreId + "&__a=1&__dyn=7nmanEyl2lm9r88DgDxiWEyx97xN6yUgByVbGAF9oyut9LO0xBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=q&fb_dtsg=" + fb_dtsg + "&ttstamp=265817095491141126911211310183&__rev=1696458", "https://www.facebook.com/messages/" + UsreId, nvc, "upload_id", "0");
+                                    string PhotoFbId = Utils.getBetween(ImagePostResp, "\"photoFBID\":\"", "\"");
+                                    if (string.IsNullOrEmpty(PhotoFbId))
+                                    {
+                                        PhotoFbId = Utils.getBetween(ImagePostResp, "\"fbid\":\"", "\"");
+                                    }
                                     string TimeStamp = Utils.GenerateTimeStamp();
-                                    string CurrentTime =Uri.EscapeDataString(DateTime.Now.ToString("hh:mm"));
+                                    string CurrentTime = Uri.EscapeDataString(DateTime.Now.ToString("hh:mm"));
                                     string PostPhotoId = "message_batch[0][action_type]=ma-type%3Auser-generated-message&message_batch[0][thread_id]&message_batch[0][author]=fbid%3A" + UsreId + "&message_batch[0][author_email]&message_batch[0][coordinates]&message_batch[0][timestamp]=" + TimeStamp + "&message_batch[0][timestamp_absolute]=Today&message_batch[0][timestamp_relative]=" + CurrentTime + "&message_batch[0][timestamp_time_passed]=0&message_batch[0][is_unread]=false&message_batch[0][is_forward]=false&message_batch[0][is_filtered_content]=false&message_batch[0][is_spoof_warning]=false&message_batch[0][source]=source%3Atitan%3Aweb&&message_batch[0][body]=" + MessageFriend + "&message_batch[0][has_attachment]=true&message_batch[0][html_body]=false&&message_batch[0][specific_to_list][0]=fbid%3A" + FriendId + "&message_batch[0][specific_to_list][1]=fbid%3A" + UsreId + "&message_batch[0][photo_fbids][0]=" + PhotoFbId + "&message_batch[0][force_sms]=true&message_batch[0][ui_push_phase]=V3&message_batch[0][status]=0&message_batch[0][message_id]=%3C" + TimeStamp + "%3A269461266-1713744050%40mail.projektitan.com%3E&message_batch[0][manual_retry_cnt]=0&&message_batch[0][client_thread_id]=user%3A" + FriendId + "&client=web_messenger&__user=" + UsreId + "&__a=1&__dyn=7nmanEyl2lm9r88DgDxiWEyx97xN6yUgByVbGAF9oyut9LO0xBxC9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcGEyryXw&__req=10&fb_dtsg=" + fb_dtsg + "&ttstamp=265817095491141126911211310183&__rev=1696458";
                                     string PostPhotoResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/send_messages.php"), PostPhotoId);
-                                 
+
                                     string errorSummary = string.Empty;
                                     errorSummary = Utils.getBetween(PostPhotoResp, "errorSummary\":\"", "\"");
                                     string messageId = string.Empty;
-                                    messageId = Utils.getBetween(PostPhotoResp,"message_id\":\"","\"");
+                                    messageId = Utils.getBetween(PostPhotoResp, "message_id\":\"", "\"");
 
                                     if (string.IsNullOrEmpty(errorSummary) && !string.IsNullOrEmpty(messageId))
                                     {
                                         GlobusLogHelper.log.Info("Message Successfully Sent With UserId " + UsreId + " To FriendId " + FriendId);
+                                        try
+                                        {
+                                            string CSVHeader = "UserName" + "," + "ProfileUrl" + "," + "Message";
+                                            string CSV_Content = fbUser.username + "," + FriendUrl + "," + MessageFriend;
+                                            Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, MessageSendingDetailsCSV);
+                                        }
+                                        catch (Exception ex)
+                                        {
+
+                                        }
+
                                     }
                                     else
                                     {
@@ -1947,8 +2059,8 @@ namespace Messages
                                     GlobusLogHelper.log.Error(ex.Message);
                                 }
                                 // ReplyMessageMessageSingle = "https://www.tumblr.com/";                                 
-                                
-                            
+
+
 
                                 try
                                 {
@@ -2052,8 +2164,9 @@ namespace Messages
                             {
                                 MessageFriend = LstReplyMessageMessageReply[Utils.GenerateRandom(0, LstReplyMessageMessageReply.Count)];
                             }
-
+                            ReplyMessageMessageSingle = MessageFriend;
                             MessageFriend = Uri.EscapeDataString(MessageFriend);
+                            //ReplyMessageMessageSingle = Uri.EscapeUriString(MessageFriend);
                             string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSource);
                             try
                             {
@@ -2160,23 +2273,40 @@ namespace Messages
                                     string message_id = Utils.getBetween(messgaePostResp, "message_id\":\"", "\"");
                                     //string 
 
+                                    try
+                                    {
+                                        string postFinalTumbnail1 = "message_ids[0]=" + message_id + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1e&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
+                                        string postFinalResult = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/attachments/fetch_shares.php"), postFinalTumbnail1);
+                                    }
+                                    catch (Exception ex)
+                                    {
 
-                                    string postFinalTumbnail1 = "message_ids[0]=" + message_id + "&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9v88DgDxyIGzGpUW9ACxO4pbGAt4BGeqrWo8pojByUWumu49UJ6K59poW8xHzoyfw&__req=1e&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711077653995245897990&__rev=1527549";
-                                    string postFinalResult = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/mercury/attachments/fetch_shares.php"), postFinalTumbnail1);
-
+                                    }
 
 
                                 }
 
                                 if (messgaePostResp.Contains("errorSummary"))
-                                {                                  
-                                  GlobusLogHelper.log.Debug((i+1) + " Unable To Send Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
-                                  GlobusLogHelper.log.Info((i+1) + " Unable To Send Message with " + Username+ "To Profiel" + MessageMessageLoadProfileUrl_item);
+                                {
+                                    GlobusLogHelper.log.Debug((i + 1) + " Unable To Send Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
+                                    GlobusLogHelper.log.Info((i + 1) + " Unable To Send Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
                                 }
                                 if (messgaePostResp.Contains("message_id"))
                                 {
-                                    GlobusLogHelper.log.Debug((i+1) + " Sending Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
-                                    GlobusLogHelper.log.Info((i+1) + " Sending Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
+                                    GlobusLogHelper.log.Debug((i + 1) + " Sending Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
+                                    GlobusLogHelper.log.Info((i + 1) + " Sending Message with " + Username + "To Profiel" + MessageMessageLoadProfileUrl_item);
+
+                                    try
+                                    {
+                                        string CSVHeader = "UserName" + "," + "ProfileUrl" + "," + "Message";
+                                        string CSV_Content = fbUser.username + "," + MessageMessageLoadProfileUrl_item + "," + MessageFriend;
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, MessageSendingDetailsCSV);
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+
                                 }
                             }
                             catch (Exception ex)
@@ -2288,7 +2418,7 @@ namespace Messages
                                 GlobusLogHelper.log.Error(ex.Message);
                             }
                         }
-                    
+
                     }
                 }
                 catch (Exception ex)
@@ -2301,6 +2431,7 @@ namespace Messages
 
         public string GetFriendUserId(ref FacebookUser fbUser, string profileUrl)
         {
+            string tempProfileurl = profileUrl;
             string FriendsId = string.Empty;
             try
             {
@@ -2326,7 +2457,11 @@ namespace Messages
                     FriendsId = getBetween(pageSource, "\"id\": \"", "\",\n");
 
                 }
-               
+                if (string.IsNullOrEmpty(FriendsId))
+                {
+                    pageSource = HttpHelper.getHtmlfromUrl(new Uri(tempProfileurl));
+                    FriendsId = Utils.getBetween(pageSource, "{\"profile_id\":", ",");
+                }
             }
             catch (Exception ex)
             {

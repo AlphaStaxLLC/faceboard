@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using Accounts;
 using System.Web;
+using Globussoft;
 
 
 
@@ -22,14 +23,18 @@ namespace WallPoster
         public static bool IsUniquePicPosting = false;
         readonly object lockrThreadControllerWallPoster = new object();
         public bool isStopWallPoster = false;
+        public bool useOriginalMessage = true;
         int countThreadControllerWallPoster = 0;
         public static int TotalNoOfWallPosterCounter = 0;
         public static int messageCountWallPoster = 0;
-        int countWallPoster = 1;
+        int countWallPoster = 1;  //
+        public int NoOFPicsOnOwnWall = 5;
         public static bool statusForGreetingMsgWallPoster = false;
 
         public List<Thread> lstThreadsWallPoster = new List<Thread>();
         public List<string> lstWallPostURLsWallPoster = new List<string>();
+        public List<string> lstWallPostURLsTitles = new List<string>();
+        public List<string> lstWallPostURLsSummaries = new List<string>();
         public List<string> lstMessagesWallPoster = new List<string>();
         public List<string> lstSpinnerWallMessageWallPoster = new List<string>();
         public List<string> lstGreetMsgWallPoster = new List<string>();
@@ -48,8 +53,8 @@ namespace WallPoster
         public static bool isPrivacyOnlyMe = false;
         //public bool chkCountinueProcessGroupCamapinScheduler = false;
         //public bool chkCountinueProcessGroupCamapinScheduler = false;
-       // public static bool chkCountinueProcessGroupCamapinScheduler = false;
-                                               
+        // public static bool chkCountinueProcessGroupCamapinScheduler = false;
+
         int countThreadControllerPostPicOnWall = 0;
 
         public List<Thread> lstThreadsPostPicOnWall = new List<Thread>();
@@ -135,6 +140,8 @@ namespace WallPoster
             set;
         }
 
+
+
         #endregion
 
         #region Property For Post Pic On Wall
@@ -166,18 +173,18 @@ namespace WallPoster
             get;
             set;
         }
-    
+
 
         #endregion
 
         #region Variables
-       // public static bool statusForGreetingMsgWallPoster = true;
+        // public static bool statusForGreetingMsgWallPoster = true;
         public static int TotalNoOfWallPoster_Counter = 0;
-       // public static List<string> lstGreetMsgWallPoster = new List<string>();
-       //  public static List<string> lstSpinnerWallMessageWallPoster = new List<string>();
+        // public static List<string> lstGreetMsgWallPoster = new List<string>();
+        //  public static List<string> lstSpinnerWallMessageWallPoster = new List<string>();
         //public static int countWallPoster = 0;
         // public List<string> lstMessageCollectionPostPicOnWall = new List<string>();
-         //public List<string> lstPicturecollectionPostPicOnWall = new List<string>();
+        //public List<string> lstPicturecollectionPostPicOnWall = new List<string>();
 
         #endregion
 
@@ -185,181 +192,139 @@ namespace WallPoster
         {
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
-                string postUrl = FBGlobals.Instance.fbProfileUrl + friendId + "&sk=wall";
-                string FirstName = string.Empty;
-                string Name = string.Empty;
-                string User = string.Empty;
+            string postUrl = FBGlobals.Instance.fbProfileUrl + friendId + "&sk=wall";
+            string FirstName = string.Empty;
+            string Name = string.Empty;
+            string User = string.Empty;
 
-                //if (HttpHelper.http.FinalRedirectUrl.Contains("https://"))
+            //if (HttpHelper.http.FinalRedirectUrl.Contains("https://"))
+            {
+                postUrl = FBGlobals.Instance.fbProfileUrl + friendId + "&sk=wall";
+
+                string pageSourceWallPost11 = HttpHelper.getHtmlfromUrl(new Uri(postUrl));
+
+                try
                 {
-                    postUrl = FBGlobals.Instance.fbProfileUrl + friendId + "&sk=wall";
-
-                    string pageSourceWallPost11 = HttpHelper.getHtmlfromUrl(new Uri(postUrl));
-
+                    string GraphPagesource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + friendId));
+                    string username = GraphPagesource.Substring(GraphPagesource.IndexOf("first_name\":")).Replace("first_name\":", string.Empty);
+                    string[] UsernameArr = Regex.Split(username, "\"");
+                    User = UsernameArr[1].Replace("\"", string.Empty).Replace(" ", string.Empty);
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+                if (!string.IsNullOrEmpty(User))
+                {
                     try
                     {
-                        string GraphPagesource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + friendId));
-                        string username = GraphPagesource.Substring(GraphPagesource.IndexOf("first_name\":")).Replace("first_name\":", string.Empty);
-                        string[] UsernameArr = Regex.Split(username, "\"");
-                        User = UsernameArr[1].Replace("\"", string.Empty).Replace(" ", string.Empty);
+                        Name = pageSourceWallPost11.Substring(pageSourceWallPost11.IndexOf("<title>"), pageSourceWallPost11.IndexOf("</title>", pageSourceWallPost11.IndexOf("<title>")) - pageSourceWallPost11.IndexOf("<title>")).Replace("id&quot;:", string.Empty).Replace("<title>", string.Empty).Trim();
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                    if (!string.IsNullOrEmpty(User))
+                }
+                else
+                {
+                    Name = User;
+                }
+                if (Name.Contains(" "))
+                {
+                    string[] flName = Regex.Split(Name, " ");
+                    FirstName = flName[0];
+                }
+                else
+                {
+                    FirstName = Name;
+
+                }
+                string smessage = string.Empty;
+                if (lstGreetMsgWallPoster.Count < 1)
+                {
+                    smessage = "Hello";
+                }
+                else
+                {
+                    smessage = lstSpinnerWallMessageWallPoster[Utils.GenerateRandom(0, lstSpinnerWallMessageWallPoster.Count - 1)];
+                }
+                wallmessage = smessage;
+
+                if (pageSourceWallPost11.Contains("fb_dtsg") && pageSourceWallPost11.Contains("xhpc_composerid") && pageSourceWallPost11.Contains("xhpc_targetid"))
+                {
+                    GlobusLogHelper.log.Info(countWallPoster.ToString() + " Posting on wall " + postUrl + " With Username : " + fbUser.username);
+                    GlobusLogHelper.log.Debug(countWallPoster.ToString() + " Posting on wall " + postUrl + " With Username : " + fbUser.username);
+
+                    string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSourceWallPost11);
+
+                    string xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_composerid");
+
+                    string xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_targetid");
+
+                    string postDataWalllpost111 = "fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=home&xhpc_fbx=1&xhpc_timeline=&xhpc_ismeta=1&xhpc_message_text=" + wallmessage + "&xhpc_message=" + wallmessage + "&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=&is_explicit_place=&audience[0][value]=80&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&phstamp=";
+                    string ResponseWallPost = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), postDataWalllpost111, "");
+                    int length = ResponseWallPost.Length;
+
+                    string postDataWalllpost1112 = string.Empty;
+                    string ResponseWallPost2 = string.Empty;
+                    if (!(length > 11000))
                     {
-                        try
+                        postDataWalllpost1112 = "fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=profile&xhpc_fbx=&xhpc_timeline=1&xhpc_ismeta=1&xhpc_message_text=" + wallmessage + "&xhpc_message=" + wallmessage + "&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=&is_explicit_place=&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&phstamp=";
+                        ResponseWallPost2 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), postDataWalllpost1112, "");
+
+                        int length2 = ResponseWallPost2.Length;
+                        if (length > 11000 && ResponseWallPost.Contains("jsmods") && ResponseWallPost.Contains("XHPTemplate"))
                         {
-                            Name = pageSourceWallPost11.Substring(pageSourceWallPost11.IndexOf("<title>"), pageSourceWallPost11.IndexOf("</title>", pageSourceWallPost11.IndexOf("<title>")) - pageSourceWallPost11.IndexOf("<title>")).Replace("id&quot;:", string.Empty).Replace("<title>", string.Empty).Trim();
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                    }
-                    else
-                    {
-                        Name = User;
-                    }
-                    if (Name.Contains(" "))
-                    {
-                        string[] flName = Regex.Split(Name, " ");
-                        FirstName = flName[0];
-                    }
-                    else
-                    {
-                        FirstName = Name;
+                            TotalNoOfWallPoster_Counter++;
 
-                    }
-                    string smessage = string.Empty;
-                    if (lstGreetMsgWallPoster.Count < 1)
-                    {
-                        smessage = "Hello";
-                    }
-                    else
-                    {
-                        smessage = lstSpinnerWallMessageWallPoster[Utils.GenerateRandom(0, lstSpinnerWallMessageWallPoster.Count - 1)];
-                    }
-                    wallmessage = smessage;
+                            GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
+                            GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
 
-                    if (pageSourceWallPost11.Contains("fb_dtsg") && pageSourceWallPost11.Contains("xhpc_composerid") && pageSourceWallPost11.Contains("xhpc_targetid"))
-                    {
-                        GlobusLogHelper.log.Info(countWallPoster.ToString() + " Posting on wall " + postUrl + " With Username : " + fbUser.username);
-                        GlobusLogHelper.log.Debug(countWallPoster.ToString() + " Posting on wall " + postUrl + " With Username : " + fbUser.username);
+                            countWallPoster++;
 
-                        string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSourceWallPost11);
-
-                        string xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_composerid");
-
-                        string xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_targetid");
-
-                        string postDataWalllpost111 = "fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=home&xhpc_fbx=1&xhpc_timeline=&xhpc_ismeta=1&xhpc_message_text=" + wallmessage + "&xhpc_message=" + wallmessage + "&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=&is_explicit_place=&audience[0][value]=80&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&phstamp=";
-                        string ResponseWallPost = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), postDataWalllpost111, "");
-                        int length = ResponseWallPost.Length;
-
-                        string postDataWalllpost1112 = string.Empty;
-                        string ResponseWallPost2 = string.Empty;
-                        if (!(length > 11000))
-                        {
-                            postDataWalllpost1112 = "fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=profile&xhpc_fbx=&xhpc_timeline=1&xhpc_ismeta=1&xhpc_message_text=" + wallmessage + "&xhpc_message=" + wallmessage + "&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=&is_explicit_place=&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&phstamp=";
-                            ResponseWallPost2 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), postDataWalllpost1112, "");
-
-                            int length2 = ResponseWallPost2.Length;
-                            if (length > 11000 && ResponseWallPost.Contains("jsmods") && ResponseWallPost.Contains("XHPTemplate"))
+                            try
                             {
-                                TotalNoOfWallPoster_Counter++;
-
-                                GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
-                                GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
-
-                                countWallPoster++;
-                               
-                                    try
-                                    {
-                                        int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                        Thread.Sleep(delayInSeconds);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                               
-                                try
-                                {
-                                    #region insertQuery
-                                    //string insertQuery = "insert into tb_ManageWallPoster (UserName,FriendId,DateTime) values('" + Username + "','" + friendId + "','" + DateTime.Now.ToString("MM/dd/yyyy") + "')";
-                                    //BaseLib.DataBaseHandler.InsertQuery(insertQuery, "tb_ManageWallPoster"); 
-                                    #endregion
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
+                                int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
                             }
-                            else if (length2 > 11000 && ResponseWallPost2.Contains("jsmods") && ResponseWallPost2.Contains("XHPTemplate"))
+                            catch (Exception ex)
                             {
-                                TotalNoOfWallPoster_Counter++;
-                                GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
-                                GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
-                                countWallPoster++;
-                              
-                                    try
-                                    {
-                                        int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                        Thread.Sleep(delayInSeconds);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                             
-                                try
-                                {
-                                    #region InsertQuery
-                                    //string insertQuery = "insert into tb_ManageWallPoster (UserName,FriendId,DateTime) values('" + Username + "','" + friendId + "','" + DateTime.Now.ToString("MM/dd/yyyy") + "')";
-                                    //BaseLib.DataBaseHandler.InsertQuery(insertQuery, "tb_ManageWallPoster"); 
-                                    #endregion
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
-                            else
+
+                            try
                             {
-                                GlobusLogHelper.log.Info("not Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
-                                GlobusLogHelper.log.Debug("not Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
+                                #region insertQuery
+                                //string insertQuery = "insert into tb_ManageWallPoster (UserName,FriendId,DateTime) values('" + Username + "','" + friendId + "','" + DateTime.Now.ToString("MM/dd/yyyy") + "')";
+                                //BaseLib.DataBaseHandler.InsertQuery(insertQuery, "tb_ManageWallPoster"); 
+                                #endregion
                             }
-                            if (ResponseWallPost2.Contains("Security Check Required") || ResponseWallPost2.Contains("A security check is required to proceed"))
+                            catch (Exception ex)
                             {
-                                GlobusLogHelper.log.Info("Security Check Required Account  :" + fbUser.username);
-                                GlobusLogHelper.log.Debug("Security Check Required Account  :" + fbUser.username);
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
-                        else
+                        else if (length2 > 11000 && ResponseWallPost2.Contains("jsmods") && ResponseWallPost2.Contains("XHPTemplate"))
                         {
                             TotalNoOfWallPoster_Counter++;
                             GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
                             GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
                             countWallPoster++;
-                           
-                                try
-                                {
-                                    int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
-                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                    Thread.Sleep(delayInSeconds);
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-                           
+
+                            try
+                            {
+                                int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
                             try
                             {
                                 #region InsertQuery
@@ -372,19 +337,61 @@ namespace WallPoster
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
-
-                        System.Threading.Thread.Sleep(4000);
+                        else
+                        {
+                            GlobusLogHelper.log.Info("not Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
+                            GlobusLogHelper.log.Debug("not Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
+                        }
+                        if (ResponseWallPost2.Contains("Security Check Required") || ResponseWallPost2.Contains("A security check is required to proceed"))
+                        {
+                            GlobusLogHelper.log.Info("Security Check Required Account  :" + fbUser.username);
+                            GlobusLogHelper.log.Debug("Security Check Required Account  :" + fbUser.username);
+                        }
                     }
                     else
                     {
-                        GlobusLogHelper.log.Info("Some problem posting on Friend wall :" + postUrl + " With Username : " + fbUser.username);
-                        GlobusLogHelper.log.Debug("Some problem posting on Friend wall :" + postUrl + " With Username : " + fbUser.username);
+                        TotalNoOfWallPoster_Counter++;
+                        GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
+                        GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
+                        countWallPoster++;
 
-                        System.Threading.Thread.Sleep(1000);
+                        try
+                        {
+                            int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
+                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                            Thread.Sleep(delayInSeconds);
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
 
+                        try
+                        {
+                            #region InsertQuery
+                            //string insertQuery = "insert into tb_ManageWallPoster (UserName,FriendId,DateTime) values('" + Username + "','" + friendId + "','" + DateTime.Now.ToString("MM/dd/yyyy") + "')";
+                            //BaseLib.DataBaseHandler.InsertQuery(insertQuery, "tb_ManageWallPoster"); 
+                            #endregion
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
                     }
+
+                    System.Threading.Thread.Sleep(4000);
+                }
+                else
+                {
+                    GlobusLogHelper.log.Info("Some problem posting on Friend wall :" + postUrl + " With Username : " + fbUser.username);
+                    GlobusLogHelper.log.Debug("Some problem posting on Friend wall :" + postUrl + " With Username : " + fbUser.username);
+
+                    System.Threading.Thread.Sleep(1000);
+
                 }
             }
+        }
 
         public void StartWallPoster()
         {
@@ -405,7 +412,7 @@ namespace WallPoster
                     list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
 
                     foreach (List<string> listAccounts in list_listAccounts)
-                    {                    
+                    {
 
                         foreach (string account in listAccounts)
                         {
@@ -456,9 +463,20 @@ namespace WallPoster
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
         }
-
+        Queue<string> MessagesQueue = new Queue<string>();
         public void StartMultiThreadsWallPoster(object parameters)
         {
+            try
+            {
+                foreach (string item in lstWallMessageWallPoster)
+                {
+                    MessagesQueue.Enqueue(item);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
             try
             {
                 if (!isStopWallPoster)
@@ -475,35 +493,35 @@ namespace WallPoster
                     }
                     try
                     {
-                            Array paramsArray = new object[1];
-                            paramsArray = (Array)parameters;
+                        Array paramsArray = new object[1];
+                        paramsArray = (Array)parameters;
 
-                            FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+                        FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
 
-                            if (!objFacebookUser.isloggedin)
-                            {
-                                GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();                           
+                        if (!objFacebookUser.isloggedin)
+                        {
+                            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
 
 
 
-                                objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+                            objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
 
-                                //Login Process
+                            //Login Process
 
-                                Accounts.AccountManager objAccountManager = new AccountManager();
-                                objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
-                            }
+                            Accounts.AccountManager objAccountManager = new AccountManager();
+                            objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                        }
 
-                            if (objFacebookUser.isloggedin)
-                            {
-                                // Call StartActionMessageReply
-                                StartActionWallPoster(ref objFacebookUser);
-                            }
-                            else
-                            {
-                                GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                                GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
-                            }
+                        if (objFacebookUser.isloggedin)
+                        {
+                            // Call StartActionMessageReply
+                            StartActionWallPoster(ref objFacebookUser);
+                        }
+                        else
+                        {
+                            GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                            GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -520,11 +538,11 @@ namespace WallPoster
             {
                 try
                 {
-                   // if (!isStopWallPoster)
+                    // if (!isStopWallPoster)
                     {
                         lock (lockrThreadControllerWallPoster)
                         {
-                            countThreadControllerWallPoster--;
+                            countThreadControllerWallPoster = countThreadControllerWallPoster--;
                             Monitor.Pulse(lockrThreadControllerWallPoster);
                         }
                     }
@@ -538,11 +556,15 @@ namespace WallPoster
 
         private void StartActionWallPoster(ref FacebookUser fbUser)
         {
+
+            // ScraperHasTage(ref fbUser);
+            // Scraper(ref fbUser); 
+
             try
             {
-                if (StartProcessUsingWallPoster .Contains("URLs Message"))
+                if (StartProcessUsingWallPoster.Contains("URLs Message"))
                 {
-                    WallPostingNew(ref fbUser); 
+                    WallPostingNew(ref fbUser);
                 }
                 if (StartProcessUsingWallPoster.Contains("Text Message"))
                 {
@@ -550,15 +572,416 @@ namespace WallPoster
                 }
                 if (StartProcessUsingWallPoster.Contains("Spinned Message"))
                 {
-                   // WallPosting(ref fbUser);
+                    // WallPosting(ref fbUser);
                     WallPostingWithTestMessage(ref fbUser);
                 }
-                
+
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
+        }
+        public Dictionary<string, string> ScrapHasTagPages(string Value)
+        {
+            string redirectionHref = string.Empty;
+            string title = string.Empty;
+            List<string[]> Likedata = new List<string[]>();
+            Dictionary<string, string> HasTagData = new Dictionary<string, string>();
+            //  foreach (var Value in Likepages)
+            {
+                try
+                {
+
+                    redirectionHref = Utils.getBetween(Value, "href=\"", "\"");
+                    string profileUrl = redirectionHref;//1
+                    if (redirectionHref.Contains("https://www.facebook.com"))
+                    {
+
+                        string[] Arr_Title = System.Text.RegularExpressions.Regex.Split(Value, "<span class=\"fwb fcg\"");
+                        foreach (var valuetitle in Arr_Title)
+                        {
+                            try
+                            {
+
+
+                                // title = Utils.getBetween(valuetitle, "<a", "/a>");
+                                title = Utils.getBetween(valuetitle, "\">", "/a>");
+                                if (!title.Equals(string.Empty))
+                                {
+                                    title = Utils.getBetween(title, "\">", "<");
+                                    if (!string.IsNullOrEmpty(title))
+                                    {
+                                        break;
+                                    }
+
+                                }
+                            }
+                            catch (Exception)
+                            {
+
+                            }
+                        }
+                        string profileName = title;//2
+                        string Message = Utils.getBetween(Value, "<p>", "<").Replace("&#064;", "@").Replace("&amp;", "&").Replace("u0025", "%");//7
+
+                        string[] timeDetails = Regex.Split(Value, "<abbr");
+                        string postedTime = string.Empty;
+                        try
+                        {
+                            postedTime = Utils.getBetween(timeDetails[1], "=\"", "\"");
+                        }
+                        catch { };
+
+
+                        string[] DetailedInfo = System.Text.RegularExpressions.Regex.Split(Value, "<div class=\"_6m7\">");
+                        string detail = string.Empty;
+                        try
+                        {
+                            detail = "-" + DetailedInfo[1];//8
+                            detail = Utils.getBetween(detail, "-", "</div>").Replace("&amp;", "&").Replace("u0025", "%");
+
+                            if (detail.Contains("<a "))
+                            {
+                                string GetVisitUrl = Utils.getBetween(detail, "\">", "</a>");
+
+                                detail = Utils.getBetween("$$$####" + detail, "$$$####", "<a href=") + "-" + GetVisitUrl;
+
+                            }
+
+                        }
+                        catch
+                        { };
+
+                        string[] ArrDetail = System.Text.RegularExpressions.Regex.Split(Value, "<div class=\"mbs _6m6\">");
+                        string Titles = string.Empty;
+                        // string Url = Utils.getBetween(ArrDetail[0], "", "");
+                        try
+                        {
+                            Titles = Utils.getBetween(ArrDetail[1], ">", "</a>").Replace("&#064;", "@").Replace("&amp;", "&").Replace("u0025", "%");//6
+                            if (Titles.Contains("Sachin Tendulkar"))
+                            {
+
+                            }
+                        }
+                        catch { };
+                        string SiteRedirectionUrl = string.Empty;
+                        try
+                        {
+                            SiteRedirectionUrl = Utils.getBetween(ArrDetail[1], "LinkshimAsyncLink.swap(this, &quot;", ");");
+                        }
+                        catch { };
+                        try
+                        {
+                            SiteRedirectionUrl = Uri.UnescapeDataString(SiteRedirectionUrl).Replace("\\u0025", "%").Replace("\\", "");//4
+                        }
+                        catch { };
+                        string websiteUrl = string.Empty;
+                        try
+                        {
+                            websiteUrl = Utils.getBetween(SiteRedirectionUrl, "//", "/");
+                        }
+                        catch { };
+
+                        string[] adImg = System.Text.RegularExpressions.Regex.Split(Value, "<img class=\"scaledImageFitWidth img\"");
+                        string redirectionImg = string.Empty;
+                        try
+                        {
+                            redirectionImg = Utils.getBetween(adImg[1], "src=\"", "\"").Replace("&amp;", "&");
+                        }
+                        catch { };
+
+                        string[] profImg = System.Text.RegularExpressions.Regex.Split(Value, "<img class=\"_s0 5xib 5sq7 _rw img\"");
+                        string profileImg = string.Empty;
+                        try
+                        {
+                            profileImg = Utils.getBetween(profImg[0], "src=\"", "\"").Replace("&amp;", "&");
+                        }
+                        catch { };
+
+                        string PostId = string.Empty;
+                        try
+                        {
+
+                            PostId = Utils.getBetween(Value, "story_id=", "data-ft=").Replace("\"", string.Empty);
+                        }
+                        catch { };
+
+                        HasTagData.Add("Title", title);
+                        HasTagData.Add("Time", postedTime);
+
+                        HasTagData.Add("Message", Message);
+
+                        HasTagData.Add("Image", profileImg);
+
+                        HasTagData.Add("PostImage", redirectionImg);
+                        HasTagData.Add("PostId", PostId);
+                        HasTagData.Add("redirectionHref", redirectionHref);
+
+
+
+
+                    }
+                }
+                catch { };
+            }
+
+            return HasTagData;
+        }
+        public void ScraperHasTage(ref FacebookUser fbUser)
+        {
+
+
+            //  GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+            GlobusHttpHelper HttpHelper = new GlobusHttpHelper(); ;
+            string KeyWord = "puja";
+            string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/hashtag/" + KeyWord));
+            List<string> pageSouceSplit = new List<string>();
+            string[] trendingArr = System.Text.RegularExpressions.Regex.Split(pageSource_Home, "li data-topicid=");
+            string[] PagesLink = System.Text.RegularExpressions.Regex.Split(pageSource_Home, "_4-u2 mbm _5jmm _5pat _5v3q _4-u8");
+            foreach (var item in PagesLink)
+            {
+                pageSouceSplit.Add(item);
+            }
+            PagesLink = PagesLink.Skip(1).ToArray();
+
+            foreach (var item_pageSouceSplit in pageSouceSplit)
+            {
+                try
+                {
+                    if (item_pageSouceSplit.Contains("<!DOCTYPE html>"))
+                    {
+                        continue;
+                    }
+                    Dictionary<string, string> listContent = ScrapHasTagPages(item_pageSouceSplit);
+
+                    // Please Write Code get Dictionary data 
+
+                    //
+
+
+                }
+                catch { };
+            }
+
+
+            string ajaxpipe_token = Utils.getBetween(pageSource_Home, "\"ajaxpipe_token\":\"", "\"");
+            string[] data_c = System.Text.RegularExpressions.Regex.Split(pageSource_Home, "data-cursor=");
+            string cursor = Utils.getBetween(data_c[4], "\"", "=");
+            if (cursor.Contains("data-dedupekey"))
+            {
+                cursor = "-" + cursor;
+                cursor = Utils.getBetween(cursor, "-", "\"");
+            }
+            string sectionid = Utils.getBetween(pageSource_Home, "section_id\\\":", ",");
+            string userid = Utils.getBetween(pageSource_Home, "USER_ID\":\"", "\"");
+            string feed_Id = "90842368";
+            string pager_id = "u_ps_0_0_1n";
+            for (int i = 2; i < 50; i++)
+            {
+                try
+                {
+                    Thread.Sleep(30 * 1000);
+
+                    List<string> pageSouceSplitPagination = new List<string>();
+                    if (string.IsNullOrEmpty(fbUser.username))
+                    {
+                        break;
+                    }
+                    GlobusLogHelper.log.Info("Please wait... Searching for data from Page :" + i + "   with User Name : " + fbUser.username);
+
+
+                    string req = "https://www.facebook.com/ajax/pagelet/generic.php/LitestandMoreStoriesPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22cursor%22%3A%22" + cursor + "%22%2C%22preload_next_cursor%22%3Anull%2C%22pager_config%22%3A%22%7B%5C%22edge%5C%22%3Anull%2C%5C%22source_id%5C%22%3Anull%2C%5C%22section_id%5C%22%3A" + sectionid + "%2C%5C%22pause_at%5C%22%3Anull%2C%5C%22stream_id%5C%22%3Anull%2C%5C%22section_type%5C%22%3A1%2C%5C%22sizes%5C%22%3Anull%2C%5C%22most_recent%5C%22%3Afalse%2C%5C%22unread_session%5C%22%3Afalse%2C%5C%22continue_top_news_feed%5C%22%3Afalse%2C%5C%22ranking_model%5C%22%3Anull%2C%5C%22unread_only%5C%22%3Afalse%7D%22%2C%22pager_id%22%3A%22" + pager_id + "%22%2C%22scroll_count%22%3A1%2C%22start_unread_session%22%3Afalse%2C%22start_continue_top_news_feed%22%3Afalse%2C%22feed_stream_id%22%3A" + feed_Id + "%2C%22snapshot_time%22%3Anull%7D&__user=" + userid + "&__a=1&__dyn=7nm8RW8BgCBynzpQ9UoHaEWCueyrhEK49oKiWFaaBGeqrYw8popyujhElx2ubhHximmey8szoyfwgo&__req=jsonp_2&__rev=1583304&__adt=" + i + "";      //
+                    string respReq = HttpHelper.getHtmlfromUrl(new Uri(req));
+
+                    respReq = respReq.Replace("\\", "").Replace("u003C", "<");
+                    string[] arrrespReq = System.Text.RegularExpressions.Regex.Split(respReq, "source_id");
+                    feed_Id = Utils.getBetween(respReq, "feed_stream_id", "snapshot_time");
+                    feed_Id = Utils.getBetween(feed_Id, "A", "u");
+
+                    string[] pager_id1 = System.Text.RegularExpressions.Regex.Split(respReq, "_4-u2 mbl ");
+                    pager_id = Utils.getBetween(pager_id1[2], "id=\"", "\"");
+                    data_c = System.Text.RegularExpressions.Regex.Split(respReq, "data-cursor=");
+                    if (data_c.Length < 8)
+                    {
+                        cursor = Utils.getBetween(data_c[data_c.Length - 1], "\"", "=");
+                    }
+                    cursor = Utils.getBetween(data_c[8], "\"", "=");
+                    if (cursor.Contains("data-dedupekey"))
+                    {
+                        cursor = "-" + cursor;
+                        cursor = Utils.getBetween(cursor, "-", "\"");
+                    }
+
+                    string[] PagesLinkPagination = System.Text.RegularExpressions.Regex.Split(respReq, "<span>Suggested Post</span>");
+
+                    foreach (var item in PagesLinkPagination)
+                    {
+                        pageSouceSplitPagination.Add(item);
+                    }
+
+                    PagesLink = System.Text.RegularExpressions.Regex.Split(respReq, "uiLikePageButton");
+                    foreach (var item in PagesLink)
+                    {
+                        pageSouceSplitPagination.Add(item);
+                    }
+
+
+                    foreach (var item_pageSouceSplit in pageSouceSplit)
+                    {
+                        try
+                        {
+                            if (item_pageSouceSplit.Contains("<!DOCTYPE html>"))
+                            {
+                                continue;
+                            }
+                            Dictionary<string, string> listContent = ScrapHasTagPages(item_pageSouceSplit);
+
+                            // Please Write Code get Dictionary data 
+
+                            //
+
+                        }
+                        catch { };
+
+
+
+                    }
+
+                }
+                catch (Exception ex) { GlobusLogHelper.log.Error(ex.StackTrace); }
+            }
+
+
+
+
+        }
+
+        public void Scraper(ref FacebookUser fbUser)
+        {
+
+
+            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+            string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+
+            string __user = string.Empty;
+            string fb_dtsg = string.Empty;
+            string KeyWord = string.Empty;
+
+            __user = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
+            if (string.IsNullOrEmpty(__user))
+            {
+                __user = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
+            }
+
+
+            fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSource_Home);
+
+
+
+            string PostData = "__user=" + __user + "&__a=1&__dyn=7nmanEyl2lm9o-t2u5bGya4Au74qbx2mbAKGiyEyut9LRwxBxem9V8CdwIhEyfyUnwPUS2O4K5e8GQ8GqcFoy8ACxtpm&__req=h&fb_dtsg=" + fb_dtsg + "&ttstamp=26581701181109510510483495368&__rev=1719057";
+            string PostUrl = "https://www.facebook.com/pubcontent/trending/see_more/?topic_ids[0]=105471716153186&topic_ids[1]=109659645720566&topic_ids[2]=108332329190557&position=3";
+            string Pageresponce = HttpHelper.postFormData(new Uri(PostUrl), PostData);
+            Pageresponce = Pageresponce.Replace("\\u003C", "<");
+
+
+            string[] trendingArr = System.Text.RegularExpressions.Regex.Split(Pageresponce, "li data-topicid=");
+            trendingArr = trendingArr.Skip(1).ToArray();
+            foreach (var item_trendingArr in trendingArr)
+            {
+                string trendingId = string.Empty;
+                string trendingName = string.Empty;
+                string trendingLinkUrl = string.Empty;
+                try
+                {
+                    try
+                    {
+                        trendingId = Utils.getBetween(item_trendingArr, "\\\"", "\\\"");
+                    }
+                    catch { };
+                    try
+                    {
+                        trendingName = Utils.getBetween(item_trendingArr, "_5v0s _5my8\\\">", "<");
+                    }
+                    catch { };
+
+                    string LinkUrl = Utils.getBetween(item_trendingArr, "_4qzh _5v0t _7ge\\\" href=\\\"", "\" id=").Replace("\\", string.Empty).Replace("amp;", string.Empty);
+                    if (!LinkUrl.Contains("www.facebook.com/"))
+                    {
+                        trendingLinkUrl = "https://www.facebook.com" + LinkUrl;
+                    }
+                    else
+                    {
+                        trendingLinkUrl = LinkUrl;
+                    }
+
+                    if (trendingName.Contains(KeyWord))
+                    {
+                        string FindPageSource = string.Empty;
+
+
+                        FindPageSource = HttpHelper.getHtmlfromUrl(new Uri(trendingLinkUrl));
+
+                        string postID = string.Empty;
+                        string postName = string.Empty;
+                        string postImage = string.Empty;
+                        string postDescriptions = string.Empty;
+                        string posttitle = string.Empty;
+
+                        string[] ContentArr = System.Text.RegularExpressions.Regex.Split(FindPageSource, "userContentWrapper _5pcr _3ccb");
+                        ContentArr = ContentArr.Skip(1).ToArray();
+                        foreach (var ContentArr_item in ContentArr)
+                        {
+                            try
+                            {
+                                postName = trendingName;
+                                postID = trendingId;
+                                // class="_4-eo _2t9n"
+                                postImage = Utils.getBetween(ContentArr_item, "scaledImageFitWidth img\" src=\"", "alt=").Replace("amp;", string.Empty).Replace("\"", string.Empty);
+
+                            }
+                            catch (Exception)
+                            {
+
+                            }
+                            string profileName = posttitle;//2
+                            string Message = Utils.getBetween(ContentArr_item, "<p>", "<").Replace("&#064;", "@").Replace("&amp;", "&").Replace("u0025", "%").Replace("&#039;", "'"); ;//7
+                            string[] DetailedInfo = System.Text.RegularExpressions.Regex.Split(ContentArr_item, "<div class=\"_6m7\">");
+                            string detail = "-" + DetailedInfo[1];//8
+                            detail = Utils.getBetween(detail, "-", "</div>").Replace("&amp;", "&").Replace("u0025", "%").Replace("&#039;", "'");
+
+                            if (detail.Contains("<a "))
+                            {
+                                string GetVisitUrl = Utils.getBetween(detail, "\">", "</a>");
+
+                                detail = Utils.getBetween("$$$####" + detail, "$$$####", "<a href=") + "-" + GetVisitUrl;
+
+                            }
+
+                            string[] ArrDetail = System.Text.RegularExpressions.Regex.Split(ContentArr_item, "<div class=\"mbs _6m6\">");
+
+                            string Titles = Utils.getBetween(ArrDetail[1], ">", "</a>").Replace("&#064;", "@").Replace("&amp;", "&").Replace("u0025", "%").Replace("&#039;", "'");
+                            string SiteRedirectionUrl = Utils.getBetween(ArrDetail[1], "LinkshimAsyncLink.swap(this, &quot;", ");");
+                            SiteRedirectionUrl = Uri.UnescapeDataString(SiteRedirectionUrl).Replace("\\u0025", "%").Replace("\\", "");//4
+                            string websiteUrl = Utils.getBetween(SiteRedirectionUrl, "//", "/");
+
+                            string[] adImg = System.Text.RegularExpressions.Regex.Split(ContentArr_item, "<img class=\"scaledImageFitWidth img\"");
+                            string redirectionImg = Utils.getBetween(adImg[1], "src=\"", "\"").Replace("&amp;", "&");
+
+                            string[] profImg = System.Text.RegularExpressions.Regex.Split(ContentArr_item, "<img class=\"_s0 5xib 5sq7 _rw img\"");
+                            string profileImg = Utils.getBetween(profImg[0], "src=\"", "\"").Replace("&amp;", "&");
+
+                        }
+
+                    }
+
+                }
+                catch { };
+
+            }
+
+
         }
 
         public void WallPosting(ref FacebookUser fbUser)
@@ -567,14 +990,14 @@ namespace WallPoster
             {
                 string UsreId = string.Empty;
                 string attachmentParamsUrlInfoUser = string.Empty;
-                string attachmentParamsUrlInfoCanonical=string.Empty;
+                string attachmentParamsUrlInfoCanonical = string.Empty;
                 string attachmentParamsUrlInfoFinal = string.Empty;
                 string attachmentParamsUrlInfoTitle = string.Empty;
                 string attachmentParamsSummary = string.Empty;
                 string attachmentParamsMedium = string.Empty;
                 string attachmentParamsUrl = string.Empty;
                 string attachmentType = string.Empty;
-                string linkMetricsSource=string.Empty;
+                string linkMetricsSource = string.Empty;
                 string linkMetricsDomain = string.Empty;
                 string linkMetricsBaseDomain = string.Empty;
                 string linkMetricsTitleLen = string.Empty;
@@ -584,7 +1007,7 @@ namespace WallPoster
                 GlobusLogHelper.log.Debug("Start Wall Posting With Username : " + fbUser.username);
 
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-                string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));             
+                string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
 
 
                 string ProFilePost = FBGlobals.Instance.fbProfileUrl;
@@ -605,7 +1028,7 @@ namespace WallPoster
                     return;
                 }
 
-                
+
 
                 lstMessagesWallPoster = lstWallMessageWallPoster.Distinct().ToList();
 
@@ -635,7 +1058,10 @@ namespace WallPoster
                     lstMessagesWallPoster = lstSpinnerWallMessageWallPoster;
                 }
 
-           
+                if (Globals.CheckLicenseManager == "fdfreetrial")
+                {
+                    MsgWallPoster = MsgWallPoster + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                }
 
                 if (lstWallPostURLsWallPoster.Count > 0)
                 {
@@ -652,7 +1078,7 @@ namespace WallPoster
                     }
                 }
                 string profileUrl = ProFilePost + UsreId + "&sk=wall";
-                string pageSourceWallPostUser = HttpHelper.getHtmlfromUrl(new Uri(profileUrl));                
+                string pageSourceWallPostUser = HttpHelper.getHtmlfromUrl(new Uri(profileUrl));
 
                 string wallmessage = MsgWallPoster;
                 wallmessage = wallmessage.Replace("<friend first name>", string.Empty);
@@ -721,19 +1147,19 @@ namespace WallPoster
                     string link_metrics_images_cap = Utils.getBetween(FirstResponse, "link_metrics[images_cap]\\\" value=\\\"", "\\\"").Replace("\\", "");
                     string link_metrics_images_type = Utils.getBetween(FirstResponse, "link_metrics[images_type]\\\" value=\\\"", "\\\"").Replace("\\", "");
                     string FinalResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UsreId), "composer_session_id=fee06a9d-c617-4071-8ed3-e308f966370a&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + wallmessage + "&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DAtbJaKNmbJs&xhpc_message=" + Uri.EscapeDataString(wallmessage) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409651262&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UsreId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897");
-                             
+
 
                     string url = FBGlobals.Instance.WallPosterPostAjaxBzUrl;      //"https://www.facebook.com/ajax/bz";
-                    string postdata1 = "__a=1&__dyn=7n8ahyj2JpGu5k9UmAAuUVCxO9w&__req=8&__user=" + UsreId + "&fb_dtsg="+fb_dtsg+"&ph=V3&q=%5B%7B%22user%22%3A%22100004496770422%22%2C%22page_id%22%3A%22d21m66%22%2C%22trigger%22%3A%22censorlogger%22%2C%22time%22%3A1378218459737%2C%22posts%22%3A%5B%5B%22censorlogger%22%2C%7B%22cl_impid%22%3A%2299c32d24%22%2C%22clearcounter%22%3A0%2C%22instrument%22%3A%22composer%22%2C%22elementid%22%3A%22u_0_s%22%2C%22parent_fbid%22%3A100004496770422%2C%22version%22%3A%22x%22%7D%2C28669%5D%5D%7D%5D&ts=1378218489409";
+                    string postdata1 = "__a=1&__dyn=7n8ahyj2JpGu5k9UmAAuUVCxO9w&__req=8&__user=" + UsreId + "&fb_dtsg=" + fb_dtsg + "&ph=V3&q=%5B%7B%22user%22%3A%22100004496770422%22%2C%22page_id%22%3A%22d21m66%22%2C%22trigger%22%3A%22censorlogger%22%2C%22time%22%3A1378218459737%2C%22posts%22%3A%5B%5B%22censorlogger%22%2C%7B%22cl_impid%22%3A%2299c32d24%22%2C%22clearcounter%22%3A0%2C%22instrument%22%3A%22composer%22%2C%22elementid%22%3A%22u_0_s%22%2C%22parent_fbid%22%3A100004496770422%2C%22version%22%3A%22x%22%7D%2C28669%5D%5D%7D%5D&ts=1378218489409";
                     string PostRequestThumbNullstr1 = HttpHelper.postFormData(new Uri(url), postdata1, FBGlobals.Instance.fbhomeurl);          //"https://www.facebook.com/"
                     //string FirstResponse = HttpHelper.postFormData(new Uri(""), "");
 
 
-                   string MessageUrl = Uri.EscapeUriString(wallmessage);
-                    string kkk =string.Empty; 
-                    string VUrl=string.Empty;
-                    string jhj=string.Empty;     
-                    string ss=string.Empty;
+                    string MessageUrl = Uri.EscapeUriString(wallmessage);
+                    string kkk = string.Empty;
+                    string VUrl = string.Empty;
+                    string jhj = string.Empty;
+                    string ss = string.Empty;
                     string PostRequestThumbNullstr = string.Empty;
 
                     if (wallmessage.Contains("http:"))
@@ -766,7 +1192,7 @@ namespace WallPoster
                                 jhj = Uri.EscapeUriString(VUrl);
                                 kkk = Uri.EscapeDataString(VUrl);
 
-                               
+
 
                                 string URlThamb = FBGlobals.Instance.WallPosterGetAjaxComposerScraperUrl + kkk + "&composerurihash=4";     //"https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url="
                                 string PostUrlTanb = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=cameraicon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=cameraicon&loaded_components[8]=mainprivacywidget&loaded_components[9]=maininput&loaded_components[10]=explicitplaceinput&loaded_components[11]=hiddenplaceinput&loaded_components[12]=placenameinput&loaded_components[13]=hiddensessionid&loaded_components[14]=withtagger&loaded_components[15]=placetagger&loaded_components[16]=citysharericon&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1&__dyn=7n8ahyj2JpGudDgDxrHFXyG8qeyryo&__req=e&ttstamp=265816554111718986";
@@ -774,8 +1200,8 @@ namespace WallPoster
                             }
                             else
                             {
-                               
-                                VUrl = wallmessage;                               
+
+                                VUrl = wallmessage;
                                 jhj = Uri.EscapeUriString(VUrl);
                                 kkk = Uri.EscapeDataString(VUrl);
 
@@ -851,11 +1277,11 @@ namespace WallPoster
                     #endregion
 
 
-                   
 
-                   // if (MessageUrl.Contains("www"))
+
+                    // if (MessageUrl.Contains("www"))
                     {
-                       
+
 
                         Dictionary<string, string> dicNameValue = new Dictionary<string, string>();
                         if (PostRequestThumbNullstr.Contains("name=") && PostRequestThumbNullstr.Contains("value="))
@@ -943,22 +1369,28 @@ namespace WallPoster
                         string FinalPostData = string.Empty;
                         try
                         {
-                
+                            if (Globals.CheckLicenseManager == "fdfreetrial")
+                            {
+                                wallmessage = wallmessage + "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                            }
 
-                            string  xhpc_message_text = wallmessage;
+                            string xhpc_message_text = wallmessage;
 
                             if (chkWallWallPosterRemoveURLsMessages == true)
                             {
                                 xhpc_message_text = "";
 
-                      
+                                if (Globals.CheckLicenseManager == "fdfreetrial")
+                                {
+                                    xhpc_message_text = "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                                }
                             }
                             else
                             {
                                 xhpc_message_text = Uri.EscapeDataString(xhpc_message_text);
                             }
 
-                            string messages = "&aktion=post&xhpc_message_text=" + xhpc_message_text +"&xhpc_message=" + xhpc_message_text;
+                            string messages = "&aktion=post&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text;
                             partPostData = partPostData.Replace("autocomplete=off", string.Empty).Replace(" ", string.Empty).Trim();
                             string[] valuesArr = Regex.Split(partPostData, "&xhpc_composerid=");
                             string PostDataa = valuesArr[1].Replace("&aktion=post", messages);
@@ -968,13 +1400,13 @@ namespace WallPoster
 
                             //FinalPostData = "fb_dtsg=" + fb_dtsg + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_fbx=1&xhpc_timeline=&xhpc_composerid=" + PostDataa + "&composer_link_best_image_w=320&composer_link_best_image_h=180&composer_link_image_selected=0&composer_link_images_provided=1&composer_link_images_loaded=1&composer_link_images_shown=1&composer_link_load_duration=10&composer_link_sort_order=0&composer_link_selector_type=UIThumbPager_2&is_explicit_place=&composertags_place=&composertags_place_name=&composer_session_id=1358139593&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + UsreId + "&__a=1&__req=16&phstamp=165816853711121159712192"; 
                             #endregion
-                            ResponseWallPost = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupsGroupCampaignManagerPostUpdateStatusUrl), FinalPostData);  
+                            ResponseWallPost = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupsGroupCampaignManagerPostUpdateStatusUrl), FinalPostData);
                         }
                         catch (Exception ex)
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
-                        
+
                     }
 
                     if (ResponseWallPost.Length >= 300)
@@ -994,12 +1426,12 @@ namespace WallPoster
 
                 var itemId = lstFriend.Distinct();
 
-               // GlobusLogHelper.log.Info("Found Id Of Friend Is : " + lstFriend.Count());
-               //GlobusLogHelper.log.Debug("Found Id Of Friend Is : " + lstFriend.Count());
+                // GlobusLogHelper.log.Info("Found Id Of Friend Is : " + lstFriend.Count());
+                //GlobusLogHelper.log.Debug("Found Id Of Friend Is : " + lstFriend.Count());
 
                 int CountPostWall = 1;
 
-               // messageCountWallPoster = 5;
+                // messageCountWallPoster = 5;
                 messageCountWallPoster = NoOfFriendsWallPoster;
 
                 int friendval = messageCountWallPoster;
@@ -1066,13 +1498,14 @@ namespace WallPoster
                                                 try
                                                 {
                                                     msgIndex = (int)randomNoList[msgIndex];
-                                                    message = lstWallPostURLsWallPoster[msgIndex];                                                   
+                                                    message = lstWallPostURLsWallPoster[msgIndex];
                                                     msgIndex++;
-                                                }catch(Exception ex)
+                                                }
+                                                catch (Exception ex)
                                                 {
                                                     message = lstWallPostURLsWallPoster[Utils.GenerateRandom(0, lstWallPostURLsWallPoster.Count)];
-                                                   // message = MsgWallPoster;
-                                                    GlobusLogHelper.log.Error("Error : "+ex.StackTrace);
+                                                    // message = MsgWallPoster;
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                 }
                                             }
                                             else if (lstWallPostURLsWallPoster.Count > msgIndex)
@@ -1104,7 +1537,7 @@ namespace WallPoster
                                         {
                                             if (lstMessagesWallPoster.Count > countWallPoster - 1)
                                             {
-                                              
+
                                                 message = lstMessagesWallPoster[countWallPoster - 1];
                                             }
                                             else
@@ -1112,9 +1545,9 @@ namespace WallPoster
                                                 try
                                                 {
                                                     message = lstWallPostURLsWallPoster[Utils.GenerateRandom(0, lstMessagesWallPoster.Count - 1)];
-                                                   //message = lstMessagesWallPoster[Utils.GenerateRandom(0, lstMessagesWallPoster.Count - 1)];
+                                                    //message = lstMessagesWallPoster[Utils.GenerateRandom(0, lstMessagesWallPoster.Count - 1)];
                                                 }
-                                                catch(Exception ex)
+                                                catch (Exception ex)
                                                 {
                                                     message = lstMessagesWallPoster[Utils.GenerateRandom(0, lstMessagesWallPoster.Count - 1)];
                                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
@@ -1163,7 +1596,7 @@ namespace WallPoster
                 catch (Exception ex)
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                }              
+                }
 
                 GlobusLogHelper.log.Info("Wall Posting Completed With Username : " + fbUser.username);
                 GlobusLogHelper.log.Debug("Wall Posting Completed With Username : " + fbUser.username);
@@ -1209,7 +1642,7 @@ namespace WallPoster
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
                 string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
 
-               
+
 
                 string ProFilePost = FBGlobals.Instance.fbProfileUrl;
                 string tempUserID = string.Empty;
@@ -1244,17 +1677,34 @@ namespace WallPoster
                     lstMessagesWallPoster = lstSpinnerWallMessageWallPoster;
                 }
 
-             
+                if (Globals.CheckLicenseManager == "fdfreetrial")
+                {
+                    MsgWallPoster = MsgWallPoster + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                }
                 string profileUrl = ProFilePost + UserId + "&sk=wall";
                 string pageSourceWallPostUser = HttpHelper.getHtmlfromUrl(new Uri(profileUrl));
-                string wallmessage = string.Empty;                                
+
+                string wallmessage = string.Empty;
+                wallmessage = MsgWallPoster;
+                string title = string.Empty;
+                string summary = string.Empty;
                 wallmessage = wallmessage.Replace("<friend first name>", string.Empty);
 
                 if (pageSourceWallPostUser.Contains("fb_dtsg") && pageSourceWallPostUser.Contains("xhpc_composerid") && pageSourceWallPostUser.Contains("xhpc_targetid"))
                 {
                     if (lstWallPostURLsWallPoster.Count > 0)
                     {
-                        wallmessage = lstWallPostURLsWallPoster[Utils.GenerateRandom(0, lstWallPostURLsWallPoster.Count - 1)];
+                        int index = Utils.GenerateRandom(0, lstWallPostURLsWallPoster.Count - 1);
+                        try
+                        {
+                            wallmessage = lstWallPostURLsWallPoster[index];
+                            summary = lstWallPostURLsSummaries[index];
+                            title = lstWallPostURLsTitles[index];
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
 
                         GlobusLogHelper.log.Info("Posting message on own wall: " + wallmessage);
                         GlobusLogHelper.log.Debug("Posting message on own wall: " + wallmessage);
@@ -1280,16 +1730,16 @@ namespace WallPoster
                     }
                     string appid = Utils.getBetween(pageSourceWallPostUser, "appid=", "&");
                     string ResponseWallPost = string.Empty;
-                    string sessionId = Utils.GenerateTimeStamp();                    
+                    string sessionId = Utils.GenerateTimeStamp();
                     //First Postdata
-                    string FirstResponse=string.Empty;
+                    string FirstResponse = string.Empty;
                     string SecondResponse = string.Empty;
                     string xhpc_message_text = string.Empty;
 
                     if (chkWallWallPosterRemoveURLsMessages)
                     {
 
-                        if (wallmessage.Contains("https:")||(wallmessage.Contains("http:")))
+                        if (wallmessage.Contains("https:") || (wallmessage.Contains("http:")))
                         {
                             string[] arr = wallmessage.Split(':');
                             if (arr.Count() == 3)
@@ -1300,7 +1750,7 @@ namespace WallPoster
                             {
                                 xhpc_message_text = string.Empty;
                             }
-                        }                       
+                        }
 
                     }
 
@@ -1308,17 +1758,17 @@ namespace WallPoster
                     try
                     {
                         string[] arr = wallmessage.Split(':');
-                        if (arr.Count() > 1 && arr.Count()==2)
+                        if (arr.Count() > 1 && arr.Count() == 2)
                         {
-                            xhpc_message_text = wallmessage.Split(':')[0] +":"+ wallmessage.Split(':')[1];
+                            xhpc_message_text = wallmessage.Split(':')[0] + ":" + wallmessage.Split(':')[1];
                         }
-                       
+
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error(ex.StackTrace);
                     }
-                    if (!wallmessage.Contains("https://") && !wallmessage.Contains("http://"))
+                    if (!wallmessage.Contains("http"))
                     {
                         wallmessage = "https://" + wallmessage;
                     }
@@ -1334,7 +1784,7 @@ namespace WallPoster
 
                     try
                     {
-                        string PostDataFirst="fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + UserId + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=maininput&loaded_components[7]=prompt&loaded_components[8]=withtaggericon&loaded_components[9]=placetaggericon&loaded_components[10]=ogtaggericon&loaded_components[11]=mainprivacywidget&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoHFaeFDzECQqbx2mbACFaaGGzCC_826m6oDAyoSnx2ubhHAG8Kl1e&__req=e&ttstamp=265817274821019054566657120&__rev=1400559";
+                        string PostDataFirst = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + UserId + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=maininput&loaded_components[7]=prompt&loaded_components[8]=withtaggericon&loaded_components[9]=placetaggericon&loaded_components[10]=ogtaggericon&loaded_components[11]=mainprivacywidget&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoHFaeFDzECQqbx2mbACFaaGGzCC_826m6oDAyoSnx2ubhHAG8Kl1e&__req=e&ttstamp=265817274821019054566657120&__rev=1400559";
                         FirstResponse = HttpHelper.postFormDataUpdated(new Uri("https://www.facebook.com/ajax/composerx/attachment/status/bootload/?__av=" + UserId + "&composerurihash=1"), PostDataFirst);
                     }
                     catch (Exception ex)
@@ -1354,7 +1804,7 @@ namespace WallPoster
                     }
                     try
                     {
-                        string PostDataSeccond= "fb_dtsg=" + fb_dtsg + "&composerid=" + UserId + "&targetid=" + UserId + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=maininput&loaded_components[7]=prompt&loaded_components[8]=withtaggericon&loaded_components[9]=placetaggericon&loaded_components[10]=ogtaggericon&loaded_components[11]=mainprivacywidget&loaded_components[12]=withtagger&loaded_components[13]=placetagger&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=ogtagger&loaded_components[19]=citysharericon&loaded_components[20]=cameraicon&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBgjw&__req=f&ttstamp=265817274821019054566657120&__rev=1400559";
+                        string PostDataSeccond = "fb_dtsg=" + fb_dtsg + "&composerid=" + UserId + "&targetid=" + UserId + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=maininput&loaded_components[7]=prompt&loaded_components[8]=withtaggericon&loaded_components[9]=placetaggericon&loaded_components[10]=ogtaggericon&loaded_components[11]=mainprivacywidget&loaded_components[12]=withtagger&loaded_components[13]=placetagger&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=ogtagger&loaded_components[19]=citysharericon&loaded_components[20]=cameraicon&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBgjw&__req=f&ttstamp=265817274821019054566657120&__rev=1400559";
                         SecondResponse = HttpHelper.postFormDataUpdated(new Uri("https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url=" + Uri.EscapeDataString(wallmessage) + "&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&__av=" + UserId + "&composerurihash=2"), PostDataSeccond);
                     }
                     catch (Exception ex)
@@ -1366,7 +1816,7 @@ namespace WallPoster
 
 
                     string tagger_session_id = Utils.getBetween(FirstResponse, "tagger_session_id\\\" value=\\\"", "\\\"");
-                    string composer_predicted_city = Utils.getBetween(FirstResponse, "composer_predicted_city\\\" value=\\\"","\\\"");
+                    string composer_predicted_city = Utils.getBetween(FirstResponse, "composer_predicted_city\\\" value=\\\"", "\\\"");
                     string attachment_params = Utils.getBetween(SecondResponse, "attachment[params][0]\\\" value=\\\"", "\\\"");
                     string attachment_params_urlInfo_canonical = Utils.getBetween(SecondResponse, "[params][urlInfo][canonical]\\\" value=\\\"", "\\\"").Replace("\\", "");
                     string attachment_params_urlInfo_final = Utils.getBetween(SecondResponse, "attachment[params][urlInfo][final]\\\" value=\\\"", "\\\"").Replace("\\", "");
@@ -1376,10 +1826,13 @@ namespace WallPoster
 
                     attachment_params_title = HttpUtility.HtmlDecode(attachment_params_title);
 
-                    string attachment_params_summary = Utils.getBetween(SecondResponse, "attachment[params][summary]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#xea;", "").Replace("&#x1eb1;", "ằ").Replace("&#xe1;", "ằ").Replace("&#xfa;", "ú");
+                    string attachment_params_summary = Utils.getBetween(SecondResponse, "attachment[params][summary]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#xea;", "").Replace("&#x1eb1;", "?").Replace("&#xe1;", "?").Replace("&#xfa;", "ú");
                     attachment_params_summary = HttpUtility.HtmlDecode(attachment_params_summary);
 
                     string attachment_params_images0 = Utils.getBetween(SecondResponse, "attachment[params][images][0]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
+                    string attachment_params_ranked_images_images_1 = Utils.getBetween(SecondResponse, "attachment[params][ranked_images][images][1]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
+                    string attachment_params_ranked_images_images_2 = Utils.getBetween(SecondResponse, "attachment[params][ranked_images][images][2]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
+                    string attachment_params_ranked_images_images_3 = Utils.getBetween(SecondResponse, "attachment[params][ranked_images][images][3]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
                     string attachment_params_medium = Utils.getBetween(SecondResponse, "attachment[params][medium]\\\" value=\\\"", "\\\"").Replace("\\", "");
                     string attachment_params_url = Utils.getBetween(SecondResponse, "attachment[params][url]\\\" value=\\\"", "\\\"").Replace("\\", "");
                     string attachment_params_video0_type = Utils.getBetween(SecondResponse, "attachment[params][video][0][type]\\\" value=\\\"", "\\\"").Replace("\\", "");
@@ -1404,10 +1857,15 @@ namespace WallPoster
                     string link_metrics_images_selected = Utils.getBetween(SecondResponse, "link_metrics[images_selected]\\\" value=\\\"", "\\\"").Replace("\\", "");
                     string link_metrics_images_cap = Utils.getBetween(SecondResponse, "link_metrics[images_cap]\\\" value=\\\"", "\\\"").Replace("\\", "");
                     string link_metrics_images_type = Utils.getBetween(SecondResponse, "link_metrics[images_type]\\\" value=\\\"", "\\\"").Replace("\\", "");
-                  //  string xhpc_message_text = wallmessage;
+                    //  string xhpc_message_text = wallmessage;
                     if (chkWallWallPosterRemoveURLsMessages == true)
                     {
-                     
+                        // xhpc_message_text = wallmessage;
+
+                        if (Globals.CheckLicenseManager == "fdfreetrial")
+                        {
+                            xhpc_message_text = "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                        }
                     }
                     else
                     {
@@ -1433,16 +1891,63 @@ namespace WallPoster
                                 else
                                 {
                                     xhpc_message_text = string.Empty;
-                                }     
+                                }
                             }
                             else
                             {
 
                             }
-                                                  
+
                         }
 
-                        ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message=" + xhpc_message_text + "&xhpc_message_text=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897");
+                        if (xhpc_message_text.Contains("http"))
+                        {
+                            string[] arr = xhpc_message_text.Split(':');
+                            if (arr.Count() == 3)
+                            {
+                                xhpc_message_text = arr[0];
+                            }
+                            else if (arr.Count() == 2)
+                            {
+                                xhpc_message_text = arr[0];
+                                xhpc_message_text = xhpc_message_text.Replace("http", string.Empty);
+                                xhpc_message_text = xhpc_message_text.Replace("https", string.Empty);
+
+                            }
+                            else
+                            {
+                                xhpc_message_text = string.Empty;
+                            }
+
+                        }
+                        string postDataFinal = string.Empty;
+                        if (useOriginalMessage)
+                        {
+                            string finalImageUrl = string.Empty;
+                            if (string.IsNullOrEmpty(attachment_params_ranked_images_images_1))
+                            {
+                                finalImageUrl = attachment_params_images0;
+                            }
+                            else
+                            {
+                                finalImageUrl = attachment_params_ranked_images_images_1;
+                            }
+                            postDataFinal = "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message=" + xhpc_message_text + "&xhpc_message_text=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(finalImageUrl) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897";
+                        }
+                        else
+                        {
+                            string finalImageUrl = string.Empty;
+                            if (string.IsNullOrEmpty(attachment_params_ranked_images_images_2))
+                            {
+                                finalImageUrl = attachment_params_ranked_images_images_1;
+                            }
+                            else
+                            {
+                                finalImageUrl = attachment_params_ranked_images_images_2;
+                            }
+                            postDataFinal = "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message=" + xhpc_message_text + "&xhpc_message_text=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(title) + "&attachment[params][summary]=" + Uri.EscapeDataString(summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(finalImageUrl) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897";
+                        }
+                        ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), postDataFinal);
                     }
                     if (ResponseWallPost.Contains("The message could not be posted to this Wall.") || ResponseWallPost.Contains("You have been temporarily blocked from performing this action."))
                     {
@@ -1455,8 +1960,8 @@ namespace WallPoster
                     if (ResponseWallPost.Contains("There was a problem updating your status. Please try again in a few minutes."))
                     {
 
-                        string WallPostData = "composer_session_id=7a1d3f8c-ec77-4167-8ef6-5df4b1bc33aa&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%229d966a62%22%2C%22clearcounter%22%3A1%2C%22elementid%22%3A%22u_0_w%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + UserId + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[params][1]=1073742507&attachment[type]=" + attachment_type + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&privacyx=300645083384735&nctr[_mod]=pagelet_composer&__user="+UserId+"&__a=1&__dyn=7n8anEyl2lm9udDgDxyKAEWCueyrhEK49oKiWFaaBGeqrYw8pojLyui9zpUgDyQqUkBBzEy6Kdy8-&__req=29&ttstamp=2658172568911171657910267120&__rev=1503785";
-                      ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), WallPostData);
+                        string WallPostData = "composer_session_id=7a1d3f8c-ec77-4167-8ef6-5df4b1bc33aa&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%229d966a62%22%2C%22clearcounter%22%3A1%2C%22elementid%22%3A%22u_0_w%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + UserId + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[params][1]=1073742507&attachment[type]=" + attachment_type + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&privacyx=300645083384735&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEyl2lm9udDgDxyKAEWCueyrhEK49oKiWFaaBGeqrYw8pojLyui9zpUgDyQqUkBBzEy6Kdy8-&__req=29&ttstamp=2658172568911171657910267120&__rev=1503785";
+                        ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), WallPostData);
                     }
                     if (ResponseWallPost.Length >= 300)
                     {
@@ -1663,15 +2168,15 @@ namespace WallPoster
                 {
 
                     GlobusLogHelper.log.Info("Wall Posting Completed With Username : " + fbUser.username);
-                    GlobusLogHelper.log.Debug("Wall Posting Completed With Username : " + fbUser.username); 
+                    GlobusLogHelper.log.Debug("Wall Posting Completed With Username : " + fbUser.username);
                 }
                 // HttpHelper.http.Dispose(); 
             }
-        }      
+        }
 
 
         private void PostOnFriendsWall(string friendId, string wallmessage, ref FacebookUser fbUser, ref string UserId)
-        {           
+        {
 
             try
             {
@@ -1683,6 +2188,8 @@ namespace WallPoster
 
                 string friendid = friendId;
                 string wallMessage = wallmessage;
+                string title = string.Empty;
+                string summary = string.Empty;
                 DateTime datetiemvalue = DateTime.Now;
                 TimeSpan xcx = DateTime.Now - datetiemvalue;
                 string xhpc_message_text = string.Empty;
@@ -1713,7 +2220,12 @@ namespace WallPoster
 
                     }
 
+                    //  xhpc_message_text = wallmessage;
 
+                    if (Globals.CheckLicenseManager == "fdfreetrial")
+                    {
+                        xhpc_message_text = "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                    }
                 }
                 else
                 {
@@ -1726,6 +2238,11 @@ namespace WallPoster
                             {
                                 xhpc_message_text = arr[0];
                                 wallmessage = arr[1] + ":" + arr[2];
+                            }
+                            else if (arr.Count() == 2)
+                            {
+                                xhpc_message_text = arr[0].Replace("http", string.Empty).Replace("https:", string.Empty);
+                                wallmessage = "http:" + arr[1];
                             }
                             else
                             {
@@ -1740,6 +2257,10 @@ namespace WallPoster
                     }
 
 
+                    if (Globals.CheckLicenseManager == "fdfreetrial")
+                    {
+                        xhpc_message_text = "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                    }
                 }
 
 
@@ -1752,7 +2273,7 @@ namespace WallPoster
                     string appid = Utils.getBetween(pageSourceWallPost11, "appid=", "&");
                     string fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSourceWallPost11);
                     string xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_composerid");
-                    string xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_targetid");                  
+                    string xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_targetid");
 
                     if (postUrl.Contains("https://"))
                     {
@@ -1764,8 +2285,171 @@ namespace WallPoster
                             GlobusLogHelper.log.Info(countWallPoster.ToString() + " Posting on wall " + postUrl);
                             GlobusLogHelper.log.Debug(countWallPoster.ToString() + " Posting on wall " + postUrl);
                             string ResponseWallPost1 = string.Empty;
-                
-                        
+                            #region OllPostData
+                            //fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSourceWallPost11);//pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
+
+                            //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_composerid");
+                            //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSourceWallPost11, "xhpc_targetid");
+                            //string PostRequestThumbNullstr = string.Empty;                          
+
+                            //if (wallmessage.Contains("http:"))
+                            //{
+                            //    string[] FirstArr = Regex.Split(wallmessage, "http:");
+                            //    VUrl = "http:" + FirstArr[1];
+                            //    jhj = Uri.EscapeUriString(VUrl);
+                            //    kkk = Uri.EscapeDataString(VUrl);
+
+                            //    string URlThamb = FBGlobals.Instance.WallPosterGetAjaxComposerScraperUrl + kkk + "&composerurihash=4";
+                            //    string PostUrlTanb = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=cameraicon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=cameraicon&loaded_components[8]=mainprivacywidget&loaded_components[9]=maininput&loaded_components[10]=explicitplaceinput&loaded_components[11]=hiddenplaceinput&loaded_components[12]=placenameinput&loaded_components[13]=hiddensessionid&loaded_components[14]=withtagger&loaded_components[15]=placetagger&loaded_components[16]=citysharericon&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1&__dyn=7n8ahyj2JpGudDgDxrHFXyG8qeyryo&__req=e&ttstamp=265816554111718986";
+                            //    PostRequestThumbNullstr = HttpHelper.postFormData(new Uri(URlThamb), PostUrlTanb, FBGlobals.Instance.fbhomeurl);
+                            //}
+                            //else
+                            //{
+                            //    string[] FirstArr = Regex.Split(wallmessage, "https:");
+                            //    if (FirstArr.Count() > 1)
+                            //    {
+                            //        VUrl = "https:" + FirstArr[1];
+                            //    }
+                            //    else
+                            //    {
+                            //        VUrl = FirstArr[0];
+                            //    }
+                            //    jhj = Uri.EscapeUriString(VUrl);
+                            //    kkk = Uri.EscapeDataString(VUrl);
+
+                            //    string URlThamb = FBGlobals.Instance.WallPosterGetAjaxComposerScraperUrl + kkk + "&composerurihash=4";
+                            //    string PostUrlTanb = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=cameraicon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=cameraicon&loaded_components[8]=mainprivacywidget&loaded_components[9]=maininput&loaded_components[10]=explicitplaceinput&loaded_components[11]=hiddenplaceinput&loaded_components[12]=placenameinput&loaded_components[13]=hiddensessionid&loaded_components[14]=withtagger&loaded_components[15]=placetagger&loaded_components[16]=citysharericon&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1&__dyn=7n8ahyj2JpGudDgDxrHFXyG8qeyryo&__req=e&ttstamp=265816554111718986";
+                            //    PostRequestThumbNullstr = HttpHelper.postFormData(new Uri(URlThamb), PostUrlTanb, FBGlobals.Instance.fbhomeurl);
+                            //}
+
+                            //#region oldCode
+                            ////string URlThamb = "https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url="+wallMessage+"&composerurihash=4";
+                            ////string posturltanb = "fb_dtsg=" + fb_dtsg + "&composerid="+xhpc_composerid+"&targetid=" + xhpc_targetid + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=cameraicon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=cameraicon&loaded_components[8]=mainprivacywidget&loaded_components[9]=maininput&loaded_components[10]=explicitplaceinput&loaded_components[11]=hiddenplaceinput&loaded_components[12]=placenameinput&loaded_components[13]=hiddensessionid&loaded_components[14]=withtagger&loaded_components[15]=placetagger&loaded_components[16]=citysharericon&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1&__dyn=7n8ahyj2JpGudDgDxrHFXyG8qeyryo&__req=e&ttstamp=265816554111718986";
+                            //////string posturltanb="fb_dtsg="+fb_dtsg+"&composerid="++"u_jsonp_4_j&targetid=100005730274210&istimeline=1&composercontext=composer&onecolumn=1&loaded_components[0]=maininput&loaded_components[1]=backdateicon&loaded_components[2]=withtaggericon&loaded_components[3]=cameraicon&loaded_components[4]=ogtaggericon&loaded_components[5]=placetaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=withtaggericon&loaded_components[8]=backdateicon&loaded_components[9]=mainprivacywidget&loaded_components[10]=maininput&loaded_components[11]=ogtaggericon&loaded_components[12]=cameraicon&loaded_components[13]=placetaggericon&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=withtagger&loaded_components[19]=backdatepicker&loaded_components[20]=ogtagger&loaded_components[21]=placetagger&loaded_components[22]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=100006552637295&__a=1&__dyn=7n8ahyj2lmpnzpQ9UmWWaUGyBzECUC&__req=h&ttstamp=2658168771121175481";
+                            ////string PostRequestThumbNullstr = HttpHelper.postFormData(new Uri(URlThamb), posturltanb, "https://www.facebook.com/"); 
+                            //#endregion
+
+                            //Dictionary<string, string> dicNameValue = new Dictionary<string, string>();
+                            //if (PostRequestThumbNullstr.Contains("name=") && PostRequestThumbNullstr.Contains("value="))
+                            //{
+                            //    try
+                            //    {
+                            //        string[] strNameValue = Regex.Split(PostRequestThumbNullstr, "name=");
+                            //        foreach (var strNameValueitem in strNameValue)
+                            //        {
+                            //            try
+                            //            {
+                            //                if (strNameValueitem.Contains("value="))
+                            //                {
+                            //                    string strSplit = strNameValueitem.Substring(0, strNameValueitem.IndexOf("/>"));
+                            //                    if (strSplit.Contains("value="))
+                            //                    {
+                            //                        try
+                            //                        {
+                            //                            string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("value=") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+                            //                            string strValue = (strNameValueitem.Substring(strNameValueitem.IndexOf("value="), strNameValueitem.IndexOf("/>", strNameValueitem.IndexOf("value=")) - strNameValueitem.IndexOf("value=")).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+                            //                            dicNameValue.Add(strName, strValue);
+                            //                        }
+                            //                        catch (Exception ex)
+                            //                        {
+                            //                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            //                        }
+                            //                    }
+                            //                    else
+                            //                    {
+                            //                        try
+                            //                        {
+                            //                            string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("/>") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+                            //                            string strValue = "0";
+
+                            //                            dicNameValue.Add(strName, strValue);
+                            //                        }
+                            //                        catch (Exception ex)
+                            //                        {
+                            //                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            //                        }
+                            //                    }
+                            //                }
+                            //            }
+                            //            catch (Exception ex)
+                            //            {
+                            //                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            //            }
+                            //        }
+                            //    }
+                            //    catch (Exception ex) { Console.WriteLine(ex.StackTrace); }
+                            //}
+                            //string partPostData = string.Empty;
+                            //foreach (var dicNameValueitem in dicNameValue)
+                            //{
+                            //    try
+                            //    {
+
+                            //        if (dicNameValueitem.Key == "attachment[params][title]")
+                            //        {
+                            //            string value = dicNameValueitem.Value;
+
+                            //            #region CodeCommented
+                            //            //string HTmlDEcode = Uri.EscapeDataString(value);
+                            //            //string UrlDEcode = Uri.EscapeDataString(HTmlDEcode);
+                            //            //partPostData = partPostData + dicNameValueitem.Key + "=" + UrlDEcode + "&"; 
+                            //            #endregion
+
+                            //            partPostData = partPostData + dicNameValueitem.Key + "=" + value + "&";
+                            //        }
+                            //        else
+                            //        {
+                            //            partPostData = partPostData + dicNameValueitem.Key + "=" + dicNameValueitem.Value + "&";
+                            //        }
+                            //    }
+                            //    catch (Exception ex)
+                            //    {
+                            //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            //    }
+                            //}
+
+                            //int length = 0;
+                            //string resp = string.Empty;
+                            //string FinalPostData = string.Empty;
+
+                            //string ResponseWallPost1 = string.Empty;
+                            //try
+                            //{
+                            //    if (Globals.CheckLicenseManager == "fdfreetrial")
+                            //    {
+                            //        wallmessage = wallmessage + "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                            //    }
+
+                            //    xhpc_message_text =  wallmessage;
+
+
+                            //    if (chkWallWallPosterRemoveURLsMessages == true)
+                            //    {
+                            //        xhpc_message_text = "";
+                            //        if (Globals.CheckLicenseManager == "fdfreetrial")
+                            //        {
+                            //            xhpc_message_text = "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                            //        }
+
+                            //    }
+                            //    else
+                            //    {
+                            //        xhpc_message_text = Uri.EscapeDataString(xhpc_message_text);
+                            //    }
+
+                            //    string messages = "&aktion=post&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text;
+                            //    partPostData = partPostData.Replace("autocomplete=off", string.Empty).Replace(" ", string.Empty).Trim();
+                            //    string[] valuesArr = Regex.Split(partPostData, "&xhpc_composerid=");
+                            //    string PostDataa = valuesArr[1].Replace("&aktion=post", messages);
+
+                            //    #region OldPostData Change by  ajay k yadav 28-02-2014
+                            //   //  FinalPostData = "fb_dtsg=" + fb_dtsg + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_fbx=1&xhpc_timeline=&xhpc_composerid=" + PostDataa + "&composer_link_best_image_w=320&composer_link_best_image_h=180&composer_link_image_selected=0&composer_link_images_provided=1&composer_link_images_loaded=1&composer_link_images_shown=1&composer_link_load_duration=10&composer_link_sort_order=0&composer_link_selector_type=UIThumbPager_2&is_explicit_place=&composertags_place=&composertags_place_name=&composer_session_id=1358139593&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + UsreId + "&__a=1&__req=16&phstamp=165816853711121159712192"; 
+                            //    #endregion
+
+                            //    FinalPostData = "composer_session_id=9e791245-11ba-48d6-85fd-114afd7a5061&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid="+PostDataa+"&link_metrics[title_len]=6&link_metrics[summary_len]=159&link_metrics[min_dimensions][0]=70&link_metrics[min_dimensions][1]=70&link_metrics[images_with_dimensions]=2&link_metrics[images_pending]=0&link_metrics[images_fetched]=0&link_metrics[image_dimensions][0]=269&link_metrics[image_dimensions][1]=95&link_metrics[images_selected]=2&link_metrics[images_considered]=2&link_metrics[images_cap]=3&link_metrics[images_type]=ranked&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=2&composer_metrics[images_loaded]=2&composer_metrics[images_shown]=2&composer_metrics[load_duration]=113&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1393564470&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_timeline_recent&__user=" + UserId + "&__a=1&__dyn=7n8aqEAMCBCFUSt2u6aOGUGy6zECiq78hAKGgyiGGeqheCu&__req=b&ttstamp=265816655451197277&__rev=1140660";
+                            //    ResponseWallPost1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), FinalPostData);   //BaseLibFB.FBGlobals.Instance.GroupsGroupCampaignManagerPostAjaxProfileComposerUrl
+                            #endregion
+
                             try
                             {
                                 string FirstResponse = string.Empty;
@@ -1777,13 +2461,13 @@ namespace WallPoster
                                 try
                                 {
                                     string PostDataUrl = "https://www.facebook.com/ajax/composerx/attachment/status/bootload/?__av=" + UserId + "&composerurihash=1";
-                                    string PostData="fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=prompt&loaded_components[7]=mainprivacywidget&loaded_components[8]=ogtaggericon&loaded_components[9]=withtaggericon&loaded_components[10]=placetaggericon&loaded_components[11]=maininput&loaded_components[12]=withtagger&loaded_components[13]=placetagger&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=ogtagger&loaded_components[19]=citysharericon&loaded_components[20]=cameraicon&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgSGGeqrWo8popyUWdBUgDyQqV8KVo&__req=b&ttstamp=265817197118828082100727676&__rev=1392897";
+                                    string PostData = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=prompt&loaded_components[7]=mainprivacywidget&loaded_components[8]=ogtaggericon&loaded_components[9]=withtaggericon&loaded_components[10]=placetaggericon&loaded_components[11]=maininput&loaded_components[12]=withtagger&loaded_components[13]=placetagger&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=ogtagger&loaded_components[19]=citysharericon&loaded_components[20]=cameraicon&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgSGGeqrWo8popyUWdBUgDyQqV8KVo&__req=b&ttstamp=265817197118828082100727676&__rev=1392897";
                                     FirstResponse = HttpHelper.postFormData(new Uri(PostDataUrl), PostData);
 
                                     if (FirstResponse.Contains("Who are you with?"))
                                     {
-                                        string Post_Url = "https://www.facebook.com/ajax/composerx/attachment/status/bootload/?av="+UserId+"&composerurihash=1";
-                                        string PostData_Url = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid="+xhpc_targetid+"&istimeline=1&composercontext=composer&onecolumn=1&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=backdateicon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=backdateicon&loaded_components[7]=mainprivacywidget&loaded_components[8]=ogtaggericon&loaded_components[9]=withtaggericon&loaded_components[10]=placetaggericon&loaded_components[11]=maininput&nctr[_mod]=pagelet_timeline_recent&__user="+UserId+"&__a=1&__dyn=7n8ajEyl2qm9udDgDxyKAEWCueyp9Esx6iqA8ABGeqrWo8pojByUWdDx2ubhHximmey8qUS8zU&__req=e&ttstamp=26581729512056122661171216683&__rev=1503785";
+                                        string Post_Url = "https://www.facebook.com/ajax/composerx/attachment/status/bootload/?av=" + UserId + "&composerurihash=1";
+                                        string PostData_Url = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&istimeline=1&composercontext=composer&onecolumn=1&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=backdateicon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=backdateicon&loaded_components[7]=mainprivacywidget&loaded_components[8]=ogtaggericon&loaded_components[9]=withtaggericon&loaded_components[10]=placetaggericon&loaded_components[11]=maininput&nctr[_mod]=pagelet_timeline_recent&__user=" + UserId + "&__a=1&__dyn=7n8ajEyl2qm9udDgDxyKAEWCueyp9Esx6iqA8ABGeqrWo8pojByUWdDx2ubhHximmey8qUS8zU&__req=e&ttstamp=26581729512056122661171216683&__rev=1503785";
                                         FirstResponse = HttpHelper.postFormData(new Uri(Post_Url), PostData_Url);
                                         if (!FirstResponse.Contains("Who are you with?"))
                                         {
@@ -1823,7 +2507,7 @@ namespace WallPoster
                                 string attachment_params_urlInfo_final = Utils.getBetween(SecondResponse, "attachment[params][urlInfo][final]\\\" value=\\\"", "\\\"").Replace("\\", "");
                                 string attachment_params_urlInfo_user = Utils.getBetween(SecondResponse, "attachment[params][urlInfo][user]\\\" value=\\\"", "\\\"").Replace("\\", "");
                                 string attachment_params_favicon = Utils.getBetween(SecondResponse, "attachment[params][favicon]\\\" value=\\\"", "\\\"").Replace("\\", "");
-                                
+
                                 string attachment_params_title = Utils.getBetween(SecondResponse, "attachment[params][title]\\\" value=\\\"", "\\\"").Replace("\\", "");
                                 attachment_params_title = HttpUtility.HtmlDecode(attachment_params_title);
 
@@ -1832,6 +2516,9 @@ namespace WallPoster
                                 attachment_params_summary = HttpUtility.HtmlDecode(attachment_params_summary);
 
                                 string attachment_params_images0 = Utils.getBetween(SecondResponse, "attachment[params][images][0]\\\" value=\\\"", "\\\"").Replace("\\", "");
+                                string attachment_params_ranked_images_images_1 = Utils.getBetween(SecondResponse, "attachment[params][ranked_images][images][1]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
+                                string attachment_params_ranked_images_images_2 = Utils.getBetween(SecondResponse, "attachment[params][ranked_images][images][2]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
+                                string attachment_params_ranked_images_images_3 = Utils.getBetween(SecondResponse, "attachment[params][ranked_images][images][3]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
                                 string attachment_params_medium = Utils.getBetween(SecondResponse, "attachment[params][medium]\\\" value=\\\"", "\\\"").Replace("\\", "");
                                 string attachment_params_url = Utils.getBetween(SecondResponse, "attachment[params][url]\\\" value=\\\"", "\\\"").Replace("\\", "");
                                 string attachment_params_video0_type = Utils.getBetween(SecondResponse, "attachment[params][video][0][type]\\\" value=\\\"", "\\\"").Replace("\\", "");
@@ -1856,63 +2543,93 @@ namespace WallPoster
                                 string link_metrics_images_selected = Utils.getBetween(SecondResponse, "link_metrics[images_selected]\\\" value=\\\"", "\\\"").Replace("\\", "");
                                 string link_metrics_images_cap = Utils.getBetween(SecondResponse, "link_metrics[images_cap]\\\" value=\\\"", "\\\"").Replace("\\", "");
                                 string link_metrics_images_type = Utils.getBetween(SecondResponse, "link_metrics[images_type]\\\" value=\\\"", "\\\"").Replace("\\", "");
-                               
+
                                 if (chkWallWallPosterRemoveURLsMessages == true)
                                 {
-                                   
-
-                                        if (xhpc_message_text.Contains("https:"))
+                                    if (xhpc_message_text.Contains("https:"))
+                                    {
+                                        string[] arr = xhpc_message_text.Split(':');
+                                        if (arr.Count() == 3)
                                         {
-                                            string[] arr = xhpc_message_text.Split(':');
-                                            if (arr.Count() == 3)
-                                            {
-                                                xhpc_message_text = arr[0];
-                                                wallmessage = arr[1] +":"+ arr[2];
-                                            }
-                                            else
-                                            {
-                                                xhpc_message_text = string.Empty;
-                                            }
+                                            xhpc_message_text = arr[0];
+                                            wallmessage = arr[1] + ":" + arr[2];
                                         }
                                         else
                                         {
-
+                                            xhpc_message_text = string.Empty;
                                         }
+                                    }
+                                    else
+                                    {
 
-                                   
-                                  //  xhpc_message_text = wallmessage;
-
-
+                                    }
+                                    //  xhpc_message_text = wallmessage;
+                                    if (Globals.CheckLicenseManager == "fdfreetrial")
+                                    {
+                                        xhpc_message_text = "\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                                    }
                                 }
                                 else
                                 {
-                                  //  xhpc_message_text = Uri.EscapeDataString(wallmessage + "    :    " + xhpc_message_text);
+                                    //  xhpc_message_text = Uri.EscapeDataString(wallmessage + "    :    " + xhpc_message_text);
                                 }
                                 //Final PostData
-                                xhpc_message_text=Uri.EscapeDataString(xhpc_message_text);
+                                xhpc_message_text = Uri.EscapeDataString(xhpc_message_text);
                                 string ResponseWallPost = string.Empty;
+                                if (!useOriginalMessage)
+                                {
+                                    int index = 0;
+                                    foreach (string item in lstWallPostURLsWallPoster)
+                                    {
+                                        if (wallmessage.Equals(item))
+                                        {
+                                            break;
+                                        }
+                                        index++;
+                                    }
+                                    attachment_params_title = lstWallPostURLsTitles[index];
+                                    attachment_params_summary = lstWallPostURLsSummaries[index];
+                                    if (!string.IsNullOrEmpty(attachment_params_ranked_images_images_3))
+                                    {
+                                        attachment_params_images0 = attachment_params_ranked_images_images_3;
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrEmpty(attachment_params_ranked_images_images_2))
+                                        {
+                                            attachment_params_images0 = attachment_params_ranked_images_images_2;
+                                        }
+                                        else
+                                        {
+                                            if (!string.IsNullOrEmpty(attachment_params_ranked_images_images_1))
+                                            {
+                                                attachment_params_images0 = attachment_params_ranked_images_images_1;
+                                            }
+                                        }
+                                    }
+                                }
                                 if (string.IsNullOrEmpty(FirstResponse))
                                 {
-                                    string PostData="composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%227a49f95e%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1n%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgSGGeqrWo8popyUW4-49UJ6KibKm58&__req=h&ttstamp=265817268571174879549949120&__rev=1400559";
+                                    string PostData = "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%227a49f95e%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1n%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgSGGeqrWo8popyUW4-49UJ6KibKm58&__req=h&ttstamp=265817268571174879549949120&__rev=1400559";
                                     ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), PostData);
                                 }
                                 else
                                 {
                                     if (chkWallWallPosterRemoveURLsMessages == true)
                                     {
-                                        string PostData1 = "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message=" +(xhpc_message_text) + "&xhpc_message_text=" +(xhpc_message_text) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897";
+                                        string PostData1 = "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message=" + (xhpc_message_text) + "&xhpc_message_text=" + (xhpc_message_text) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897";
                                         ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), PostData1);
                                     }
                                     else
                                     {
 
-                                        string PostData = "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message=" +(xhpc_message_text + " " + wallmessage) + "&xhpc_message_text=" + (xhpc_message_text + " " + wallmessage) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897";
+                                        string PostData = "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message=" + (xhpc_message_text + " " + wallmessage) + "&xhpc_message_text=" + (xhpc_message_text + " " + wallmessage) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897";
                                         ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), PostData);
                                     }
                                 }
-                                if (ResponseWallPost.Contains("The message could not be posted to this Wall.") ||ResponseWallPost.Contains ("Message Failed\",\"errorDescription\"") || ResponseWallPost.Contains("You have been temporarily blocked from performing this action"))
+                                if (ResponseWallPost.Contains("The message could not be posted to this Wall.") || ResponseWallPost.Contains("Message Failed\",\"errorDescription\"") || ResponseWallPost.Contains("You have been temporarily blocked from performing this action"))
                                 {
-                                   // chkWallWallPosterRemoveURLsMessages Url
+                                    // chkWallWallPosterRemoveURLsMessages Url
 
                                     ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22e2d79f89%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_3_y%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[type]=" + attachment_type + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409910176&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgyiGGeqrWo8popyUWumnx2ubhHAyXBxi&__req=1g&ttstamp=2658171748611875701028211799&__rev=1400559");
                                 }
@@ -1920,13 +2637,13 @@ namespace WallPoster
                                 {
                                     ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%225a336254%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1k%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[type]=" + attachment_type + "&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&privacyx=300645083384735&nctr[_mod]=pagelet_timeline_recent&__user=" + UserId + "&__a=1&__dyn=7n8ajEAMBlynzpQ9UoHFaeFDzECiq78hAKGgyiGGeqrWo8popyUWumu49UJ6K4bBxi&__req=f&ttstamp=265817269541189012265988656&__rev=1404598");
                                 }
-                                if (ResponseWallPost.Contains("Sorry, the privacy setting on this post means that you can't share it")&&ResponseWallPost.Contains("Could Not Post to Timeline"))
+                                if (ResponseWallPost.Contains("Sorry, the privacy setting on this post means that you can't share it") && ResponseWallPost.Contains("Could Not Post to Timeline"))
                                 {
-                                     ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId), "composer_session_id=c9e72d37-ce06-40d8-a3f3-b35c8316bcbd&fb_dtsg="+fb_dtsg+"&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid="+xhpc_composerid+"&xhpc_targetid="+xhpc_targetid+"&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%229dbcb61a%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1e%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A"+xhpc_targetid+"%7D&xhpc_message_text="+xhpc_message_text+"&xhpc_message="+xhpc_message_text+"&aktion=post&app_id="+appid+"&attachment[params][0]="+attachment_params+"&attachment[params][1]=1073742507&attachment[type]=2&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id="+tagger_session_id+"&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city="+composer_predicted_city+"&nctr[_mod]=pagelet_timeline_recent&__user="+UserId+"&__a=1&__dyn=7n8ajEyl2lm9udDgDxyKAEWCueyp9Esx6iWF299qzCC-C26m4VoKezpUgDyQqUkBBzEy6Kdy8-&__req=h&ttstamp=26581729512056122661171216683&__rev=1503785");
+                                    ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId), "composer_session_id=c9e72d37-ce06-40d8-a3f3-b35c8316bcbd&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%229dbcb61a%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1e%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[params][1]=1073742507&attachment[type]=2&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_timeline_recent&__user=" + UserId + "&__a=1&__dyn=7n8ajEyl2lm9udDgDxyKAEWCueyp9Esx6iWF299qzCC-C26m4VoKezpUgDyQqUkBBzEy6Kdy8-&__req=h&ttstamp=26581729512056122661171216683&__rev=1503785");
                                 }
                                 if (ResponseWallPost.Contains("The message could not be posted to this Wall.") && ResponseWallPost.Contains("The message could not be posted to this Wall"))
                                 {
-                                    ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId), "composer_session_id=2f37c190-d9b1-4d18-aa9d-f4d3d85e687d&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%2227babdd5%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_4_w%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[type]=7&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_timeline_recent&__user=" + UserId + "&__a=1&__dyn=aJioznEyl2lm9adDgDDzbHbh8x9VoW9J6yUgByVblkGGhbHBCqrYyy8lBxdbWAVbGFQiuaBKAqhBUFJdALhVpqCGuaCV8yfCU9UgAAz8yE&__req=1k&ttstamp=2658170679789798165112110106695577&__rev=1612042"); 
+                                    ResponseWallPost = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId), "composer_session_id=2f37c190-d9b1-4d18-aa9d-f4d3d85e687d&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%2227babdd5%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_4_w%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[type]=7&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=" + tagger_session_id + "&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_timeline_recent&__user=" + UserId + "&__a=1&__dyn=aJioznEyl2lm9adDgDDzbHbh8x9VoW9J6yUgByVblkGGhbHBCqrYyy8lBxdbWAVbGFQiuaBKAqhBUFJdALhVpqCGuaCV8yfCU9UgAAz8yE&__req=1k&ttstamp=2658170679789798165112110106695577&__rev=1612042");
                                 }
                                 ResponseWallPost1 = ResponseWallPost;
                             }
@@ -1937,12 +2654,12 @@ namespace WallPoster
 
                             #region OldPostData
                             //  string postDataWalllpost111 = "fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=home&xhpc_fbx=1&xhpc_timeline=&xhpc_ismeta=1&xhpc_message_text=" + wallmessage + "&xhpc_message=" + wallmessage + "&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=&is_explicit_place=&audience[0][value]=80&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&phstamp=";
-                           // string ResponseWallPost = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), "composer_session_id=9e791245-11ba-48d6-85fd-114afd7a5061&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&clp=%7B%22cl_impid%22%3A%2276be45eb%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_29%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A100000311523101%7D&xhpc_message_text=" + xhpc_message_text + "%20&xhpc_message=www.google.com%20&aktion=post&app_id=2309869772&attachment[params][urlInfo][canonical]=http%3A%2F%2Fwww.google.com%2F&attachment[params][urlInfo][final]=http%3A%2F%2Fwww.google.com%2F&attachment[params][urlInfo][user]=http%3A%2F%2Fwww.google.com%2F&attachment[params][favicon]=http%3A%2F%2Fwww.google.com%2Ffavicon.ico&attachment[params][title]=Google&attachment[params][summary]=Search%20the%20world's%20information%2C%20including%20webpages%2C%20images%2C%20videos%20and%20more.%20Google%20has%20many%20special%20features%20to%20help%20you%20find%20exactly%20what%20you're%20looking%20for.&attachment[params][images][0]=https%3A%2F%2Ffbexternal-a.akamaihd.net%2Fsafe_image.php%3Fd%3DAQB9wubxdXiYJSSe%26w%3D100%26h%3D100%26url%3Dhttp%253A%252F%252Fwww.google.com%252Fimages%252Fsrpr%252Flogo9w.png%26cfs%3D1%26upscale&attachment[params][medium]=106&attachment[params][url]=http%3A%2F%2Fwww.google.com%2F&attachment[type]=100&link_metrics[source]=ShareStageExternal&link_metrics[domain]=www.google.com&link_metrics[base_domain]=google.com&link_metrics[title_len]=6&link_metrics[summary_len]=159&link_metrics[min_dimensions][0]=70&link_metrics[min_dimensions][1]=70&link_metrics[images_with_dimensions]=2&link_metrics[images_pending]=0&link_metrics[images_fetched]=0&link_metrics[image_dimensions][0]=269&link_metrics[image_dimensions][1]=95&link_metrics[images_selected]=2&link_metrics[images_considered]=2&link_metrics[images_cap]=3&link_metrics[images_type]=ranked&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=2&composer_metrics[images_loaded]=2&composer_metrics[images_shown]=2&composer_metrics[load_duration]=113&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1393564470&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n8aqEAMCBCFUSt2u6aOGUGy6zECiq78hAKGgyiGGeqheCu&__req=b&ttstamp=265816655451197277&__rev=1140660", "");
+                            // string ResponseWallPost = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), "composer_session_id=9e791245-11ba-48d6-85fd-114afd7a5061&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&clp=%7B%22cl_impid%22%3A%2276be45eb%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_29%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A100000311523101%7D&xhpc_message_text=" + xhpc_message_text + "%20&xhpc_message=www.google.com%20&aktion=post&app_id=2309869772&attachment[params][urlInfo][canonical]=http%3A%2F%2Fwww.google.com%2F&attachment[params][urlInfo][final]=http%3A%2F%2Fwww.google.com%2F&attachment[params][urlInfo][user]=http%3A%2F%2Fwww.google.com%2F&attachment[params][favicon]=http%3A%2F%2Fwww.google.com%2Ffavicon.ico&attachment[params][title]=Google&attachment[params][summary]=Search%20the%20world's%20information%2C%20including%20webpages%2C%20images%2C%20videos%20and%20more.%20Google%20has%20many%20special%20features%20to%20help%20you%20find%20exactly%20what%20you're%20looking%20for.&attachment[params][images][0]=https%3A%2F%2Ffbexternal-a.akamaihd.net%2Fsafe_image.php%3Fd%3DAQB9wubxdXiYJSSe%26w%3D100%26h%3D100%26url%3Dhttp%253A%252F%252Fwww.google.com%252Fimages%252Fsrpr%252Flogo9w.png%26cfs%3D1%26upscale&attachment[params][medium]=106&attachment[params][url]=http%3A%2F%2Fwww.google.com%2F&attachment[type]=100&link_metrics[source]=ShareStageExternal&link_metrics[domain]=www.google.com&link_metrics[base_domain]=google.com&link_metrics[title_len]=6&link_metrics[summary_len]=159&link_metrics[min_dimensions][0]=70&link_metrics[min_dimensions][1]=70&link_metrics[images_with_dimensions]=2&link_metrics[images_pending]=0&link_metrics[images_fetched]=0&link_metrics[image_dimensions][0]=269&link_metrics[image_dimensions][1]=95&link_metrics[images_selected]=2&link_metrics[images_considered]=2&link_metrics[images_cap]=3&link_metrics[images_type]=ranked&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=2&composer_metrics[images_loaded]=2&composer_metrics[images_shown]=2&composer_metrics[load_duration]=113&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&backdated_date[hour]=&backdated_date[minute]=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1393564470&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n8aqEAMCBCFUSt2u6aOGUGy6zECiq78hAKGgyiGGeqheCu&__req=b&ttstamp=265816655451197277&__rev=1140660", "");
                             // int length = ResponseWallPost.Length; 
 
                             #endregion
 
-                            string postDataWalllpost1112 = string.Empty;                            
+                            string postDataWalllpost1112 = string.Empty;
                             if (!(ResponseWallPost1.Length > 11000))
                             {
                                 #region OldPostData
@@ -1958,20 +2675,20 @@ namespace WallPoster
                                     GlobusLogHelper.log.Info("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
 
-                                    countWallPoster++;                                   
-                                   
-                                        try
-                                        {
-                                            int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
-                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            Thread.Sleep(delayInSeconds);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                
+                                    countWallPoster++;
+
+                                    try
+                                    {
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
                                     try
                                     {
                                         if (IsUniqueMessagePosting)
@@ -1995,18 +2712,18 @@ namespace WallPoster
                                     GlobusLogHelper.log.Debug("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
                                     countWallPoster++;
 
-                                      try
-                                        {
-                                            int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
-                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            Thread.Sleep(delayInSeconds);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                   
+                                    try
+                                    {
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
                                     try
                                     {
                                         if (IsUniqueMessagePosting)
@@ -2039,18 +2756,18 @@ namespace WallPoster
 
                                 countWallPoster++;
 
-                                  try
-                                    {                                        
-                                        int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        Thread.Sleep(delayInSeconds);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                
+                                try
+                                {
+                                    int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
                                 try
                                 {
                                     if (IsUniqueMessagePosting)
@@ -2061,7 +2778,7 @@ namespace WallPoster
                                     //string insertQuery = "insert into tb_ManageWallPoster (UserName,FriendId,DateTime) values('" + Username + "','" + friendid + "','" + DateTime.Now.ToString("MM/dd/yyyy") + "')";
                                     //BaseLib.DataBaseHandler.InsertQuery(insertQuery, "tb_ManageWallPoster");
                                     #endregion
-                                   
+
                                 }
                                 catch (Exception ex)
                                 {
@@ -2073,7 +2790,7 @@ namespace WallPoster
                         }
                         else
                         {
-                           // GlobusLogHelper.log.Info("Some problem posting on Friend wall :" + postUrl + " With Username : " + fbUser.username);
+                            // GlobusLogHelper.log.Info("Some problem posting on Friend wall :" + postUrl + " With Username : " + fbUser.username);
                             //GlobusLogHelper.log.Debug("Some problem posting on Friend wall :" + postUrl + " With Username : " + fbUser.username);
 
                             System.Threading.Thread.Sleep(1000);
@@ -2198,21 +2915,21 @@ namespace WallPoster
 
                                 countWallPoster++;
 
-                              
-                                    try
-                                    {                                     
 
-                                        int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        Thread.Sleep(delayInSeconds);
+                                try
+                                {
 
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                
+                                    int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
                                 try
                                 {
                                     #region insertQuery
@@ -2230,19 +2947,19 @@ namespace WallPoster
                                 TotalNoOfWallPoster_Counter++;
                                 GlobusLogHelper.log.Info("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
                                 GlobusLogHelper.log.Debug("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
-                                countWallPoster++;                                
-                                    try
-                                    {
-                                        int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        Thread.Sleep(delayInSeconds);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                               
+                                countWallPoster++;
+                                try
+                                {
+                                    int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
                                 try
                                 {
                                     #region insertQuery
@@ -2277,18 +2994,18 @@ namespace WallPoster
                             {
                                 Utils.InsertIntoDB(fbUser.username, friendId, "Text");
                             }
-                                try
-                                {
-                                    int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
-                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                    Thread.Sleep(delayInSeconds);
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-                        
+                            try
+                            {
+                                int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
                             try
                             {
                                 #region insertQuery
@@ -2332,7 +3049,7 @@ namespace WallPoster
 
                 lstGreetMsgWallPoster.Add(wallmessage);
 
-               //if (HttpHelper.http.FinalRedirectUrl.Contains("https://"))
+                //if (HttpHelper.http.FinalRedirectUrl.Contains("https://"))
                 {
                     postUrl = FBGlobals.Instance.fbProfileUrl + friendId + "&sk=wall";
 
@@ -2387,7 +3104,7 @@ namespace WallPoster
                         smessage = lstGreetMsgWallPoster[Utils.GenerateRandom(0, lstGreetMsgWallPoster.Count - 1)];
                     }
 
-                  
+
 
 
                     string wallsmessage = lstWallMessageWallPoster[Utils.GenerateRandom(0, lstWallMessageWallPoster.Count - 1)];
@@ -2396,7 +3113,10 @@ namespace WallPoster
                         wallmessage = wallsmessage.Replace("<friend first name>", FirstName);
                         wallmessage = smessage + " " + wallmessage;
 
-                     
+                        if (Globals.CheckLicenseManager == "fdfreetrial")
+                        {
+                            wallmessage = wallmessage + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                        }
                     }
                     else
                     {
@@ -2436,21 +3156,21 @@ namespace WallPoster
                                 GlobusLogHelper.log.Debug("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
 
                                 countWallPoster++;
-                              
-                                    try
-                                    {
-                                        int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
 
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                try
+                                {
+                                    int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
 
-                                        Thread.Sleep(delayInSeconds);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+
+                                    Thread.Sleep(delayInSeconds);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
                                 try
                                 {
                                     if (IsUniqueMessagePosting)
@@ -2473,20 +3193,20 @@ namespace WallPoster
                                 GlobusLogHelper.log.Info("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
                                 GlobusLogHelper.log.Debug("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
                                 countWallPoster++;
-                                
-                                    try
-                                    {
-                                        int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
 
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                        Thread.Sleep(delayInSeconds);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                
+                                try
+                                {
+                                    int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
+
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
                                 try
                                 {
                                     if (IsUniqueMessagePosting)
@@ -2522,20 +3242,20 @@ namespace WallPoster
                             GlobusLogHelper.log.Info("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
                             GlobusLogHelper.log.Debug("Posted on Friends wall :" + postUrl + " With Username : " + fbUser.username);
 
-                            countWallPoster++;                            
-                                try
-                                {
-                                    int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
+                            countWallPoster++;
+                            try
+                            {
+                                int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
 
-                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
-                                    Thread.Sleep(delayInSeconds);
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-                            
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With Username : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
                             try
                             {
                                 #region insertQuery
@@ -2573,7 +3293,7 @@ namespace WallPoster
         public bool PostOnWallWithURLAndItsImage(ref FacebookUser fbUser, List<string> lstWallPostURLs, List<string> lstfriends)
         {
             try
-            {                
+            {
                 int CountPostWall = 1;
                 int friendval = messageCountWallPoster;
                 int friendCount = 0;
@@ -2607,7 +3327,7 @@ namespace WallPoster
                             if (Utils.CheckIfMessagePosted(fbUser.username, lstfriendsitem, "PicWithURL"))
                             {
                                 continue;
-                            } 
+                            }
                         }
                         try
                         {
@@ -2660,7 +3380,7 @@ namespace WallPoster
                                         strWallPostedURL = lstWallPostURLs[msgIndex];
                                         msgIndex++;
                                     }
-                                }                               
+                                }
                                 else if (UseUniqueMsgToAllFriendsWallPoster)
                                 {
                                     if (lstWallPostURLs.Count > CountPostWall - 1)
@@ -2681,8 +3401,8 @@ namespace WallPoster
                                 string xhpc_timeline = "";
                                 string xhpc_ismeta = "";
                                 string xhpc_message_text = string.Empty;
-                                string xhpc_message = string.Empty;                             
-                                string UsreId = "";                                
+                                string xhpc_message = string.Empty;
+                                string UsreId = "";
                                 string friendURL = "";
                                 if (CountPostWall == 1)
                                 {
@@ -2694,7 +3414,7 @@ namespace WallPoster
                                 }
                                 string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(friendURL));
                                 if (strPageSource.Contains("xhpc_composerid") && strPageSource.Contains("xhpc_targetid") && strPageSource.Contains("xhpc_context") && strPageSource.Contains("xhpc_fbx"))
-                                {                                    
+                                {
                                     UsreId = GlobusHttpHelper.Get_UserID(strPageSource);
 
                                     fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
@@ -2705,7 +3425,7 @@ namespace WallPoster
                                     xhpc_fbx = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_fbx");
                                     xhpc_timeline = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_timeline");
                                     xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
-                                    
+
 
                                     if (string.IsNullOrEmpty(UsreId))
                                     {
@@ -2797,30 +3517,30 @@ namespace WallPoster
                                                     TotalNoOfWallPoster_Counter++;
                                                     if (IsUniqueMessagePosting)
                                                     {
-                                                        Utils.InsertIntoDB(fbUser.username, lstfriendsitem, "PicWithURL"); 
+                                                        Utils.InsertIntoDB(fbUser.username, lstfriendsitem, "PicWithURL");
                                                     }
-                                                    
+
                                                     GlobusLogHelper.log.Info(CountPostWall + " Wall Posted With Image URL : " + strWallPostedURL + "on the friend URL : " + friendURL + " With User Name : " + fbUser.username);
                                                     GlobusLogHelper.log.Debug(CountPostWall + " Wall Posted With Image URL : " + strWallPostedURL + "on the friend URL : " + friendURL + " With User Name : " + fbUser.username);
 
                                                     CountPostWall++;
 
-                                                 
-                                                        try
-                                                        {
-                                                            int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
 
-                                                            GlobusLogHelper.log.Info("Delaying " + delayInSeconds / 1000 + " In Seconds With Username : " + fbUser.username);
-                                                            GlobusLogHelper.log.Debug("Delaying " + delayInSeconds / 1000 + " In Seconds With Username : " + fbUser.username);
+                                                    try
+                                                    {
+                                                        int delayInSeconds = Utils.GenerateRandom(2 * 1000, 5 * 1000);
 
-                                                            Thread.Sleep(delayInSeconds);
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
+                                                        GlobusLogHelper.log.Info("Delaying " + delayInSeconds / 1000 + " In Seconds With Username : " + fbUser.username);
+                                                        GlobusLogHelper.log.Debug("Delaying " + delayInSeconds / 1000 + " In Seconds With Username : " + fbUser.username);
 
-                                                    #region commented 
+                                                        Thread.Sleep(delayInSeconds);
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
+
+                                                    #region commented
                                                     //if (!string.IsNullOrEmpty(_ExprotFilePath))
                                                     //{
                                                     //    string CSVHeader = "User_Name" + "," + "Friend URL" + ", " + "Message";
@@ -2876,9 +3596,9 @@ namespace WallPoster
                 {
                     try
                     {
-                      
+
                         int CountPostWall = 1;
-                        int friendval = messageCountWallPoster;                      
+                        int friendval = messageCountWallPoster;
                         string strWallPostedURL = string.Empty;
                         string composer_session_id = "";
                         string fb_dtsg = "";
@@ -2889,8 +3609,8 @@ namespace WallPoster
                         string xhpc_timeline = "";
                         string xhpc_ismeta = "";
                         string xhpc_message_text = string.Empty;
-                        string xhpc_message = string.Empty;                            
-                        string UsreId = "";                        
+                        string xhpc_message = string.Empty;
+                        string UsreId = "";
                         string friendURL = "";
                         string Friend = string.Empty;
                         if (CountPostWall == 1)
@@ -2904,7 +3624,7 @@ namespace WallPoster
                                     {
                                         break;
                                     }
-                                } 
+                                }
                             }
                             friendURL = FBGlobals.Instance.fbProfileUrl + Friend + "&sk=wall";
                         }
@@ -2967,14 +3687,14 @@ namespace WallPoster
                                                 {
                                                     string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("value=") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
                                                     string strValue = (strNameValueitem.Substring(strNameValueitem.IndexOf("value="), strNameValueitem.IndexOf("/>", strNameValueitem.IndexOf("value=")) - strNameValueitem.IndexOf("value=")).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
-                                                   
+
                                                     dicNameValue.Add(strName, strValue);
                                                 }
                                                 else
                                                 {
                                                     string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("/>") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
                                                     string strValue = "0";
-                                                   
+
                                                     dicNameValue.Add(strName, strValue);
                                                 }
                                             }
@@ -3012,10 +3732,10 @@ namespace WallPoster
                                             TotalNoOfWallPoster_Counter++;
                                             if (IsUniqueMessagePosting)
                                             {
-                                                Utils.InsertIntoDB(fbUser.username, Friend, "PicWithURL"); 
+                                                Utils.InsertIntoDB(fbUser.username, Friend, "PicWithURL");
                                             }
                                             GlobusLogHelper.log.Info(CountPostWall + " Wall Posted With Image URL : " + wallitem + "on the Own URL : " + friendURL + " With User Name : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug (CountPostWall + " Wall Posted With Image URL : " + wallitem + "on the Own URL : " + friendURL + " With User Name : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug(CountPostWall + " Wall Posted With Image URL : " + wallitem + "on the Own URL : " + friendURL + " With User Name : " + fbUser.username);
 
                                             try
                                             {
@@ -3055,8 +3775,21 @@ namespace WallPoster
             }
         }
 
+
+        Queue<string> queueImgPathToPostOnOwnWall = new Queue<string>();
         public void StarPostPicOnWall()
-        {           
+        {
+            try
+            {
+                foreach (var item in lstPicturecollectionPostPicOnWall)
+                {
+                    queueImgPathToPostOnOwnWall.Enqueue(item);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
 
             try
             {
@@ -3070,8 +3803,8 @@ namespace WallPoster
 
                 List<List<string>> list_listAccounts = new List<List<string>>();
 
-            
-            
+
+
                 if (FBGlobals.listAccounts.Count >= 1)
                 {
 
@@ -3089,7 +3822,7 @@ namespace WallPoster
                                 {
                                     try
                                     {
-                                        if (countThreadControllerWallPoster >= listAccounts.Count)
+                                        if (countThreadControllerWallPoster >= 1)//listAccounts.Count)
                                         {
                                             Monitor.Wait(lockrThreadControllerPostPicOnWall);
                                         }
@@ -3132,8 +3865,9 @@ namespace WallPoster
             }
         }
 
+        Queue<string> queueAllPicPath = new Queue<string>();
         public void StartMultiThreadsPostPicOnWall(object parameters)
-         {
+        {
             try
             {
                 if (!isStopPostPicOnWall)
@@ -3148,6 +3882,7 @@ namespace WallPoster
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
+
                     try
                     {
 
@@ -3168,8 +3903,8 @@ namespace WallPoster
                                 Accounts.AccountManager objAccountManager = new AccountManager();
                                 objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
                             }
-                           
-                            
+
+
                             if (objFacebookUser.isloggedin)
                             {
                                 // Call StartActionMessageReply
@@ -3197,7 +3932,7 @@ namespace WallPoster
             {
                 try
                 {
-                   // if (!isStopPostPicOnWall)
+                    // if (!isStopPostPicOnWall)
                     {
                         lock (lockrThreadControllerPostPicOnWall)
                         {
@@ -3217,11 +3952,11 @@ namespace WallPoster
         {
             try
             {
-                if (StartProcessUsingPostPicOnWall=="Post Pic On Wall")
+                if (StartProcessUsingPostPicOnWall == "Post Pic On Wall")
                 {
                     PostPictureOnWall(ref fbUser);
                 }
-                else if (StartProcessUsingPostPicOnWall=="Share Video ")
+                else if (StartProcessUsingPostPicOnWall == "Share Video ")
                 {
                     ShareVideoOnWall(ref fbUser);
                 }
@@ -3240,7 +3975,7 @@ namespace WallPoster
                     GlobusLogHelper.log.Debug("Process Completed With : " + fbUser.username);
                     GlobusLogHelper.log.Info("Process Completed With : " + fbUser.username);
                 }
-              
+
             }
             catch (Exception ex)
             {
@@ -3268,120 +4003,162 @@ namespace WallPoster
 
                     ///
                     GetFirstShareLink(FanPagePageSource, ref fbUser, item);
-                    
+
                 }
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
-             
+
         }
 
-        private void GetFirstShareLink(string pageSource, ref FacebookUser fbUser,string fanPageUrl)
+        private void GetFirstShareLink(string pageSource, ref FacebookUser fbUser, string fanPageUrl)
         {
             try
             {
-               
+
                 string strFanPageURL = string.Empty;
                 string shareLink = string.Empty;
 
-               GlobusLogHelper.log.Debug("Starting To Find Share Link With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageUrl );
-               GlobusLogHelper.log.Info("Starting To Find Share Link With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                GlobusLogHelper.log.Debug("Starting To Find Share Link With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                GlobusLogHelper.log.Info("Starting To Find Share Link With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageUrl);
 
                 if (pageSource.Contains("Share"))
                 {
+                    string appId = string.Empty;
+                    string fanpagepostId = string.Empty;
+                    string ftentidentifier = string.Empty;
+                    string ownerid = string.Empty;
+                    string entityid = string.Empty;
+                    string pid = string.Empty;
+
+                    appId = Utils.getBetween(pageSource, "app_id=", "&");
+                    if (string.IsNullOrEmpty(appId))
+                    {
+                        appId = Utils.getBetween(pageSource, "appid=", "&");
+                    }
+                    ftentidentifier = Utils.getBetween(pageSource, "ftentidentifier\":\"", "\"");
+                    ownerid = Utils.getBetween(pageSource, "ownerid\":\"", "\"");
+                    pid = Utils.getBetween(pageSource, "\"pid\":", ",");
+
+                    fanpagepostId = Utils.getBetween(pageSource, "shareable_id=", "&");
+                    entityid = Utils.getBetween(pageSource, "\"entity_id\":\"", "\"");
+                    string __user = GlobusHttpHelper.GetParamValue(pageSource, "user");
+                    if (string.IsNullOrEmpty(__user))
+                    {
+                        __user = GlobusHttpHelper.ParseJson(pageSource, "user");
+                    }
+                    string fb_dtsg = string.Empty;
                     try
                     {
-                        string timelineUnitContainer = Utils.GetDataWithTagValueByTagAndAttributeName(pageSource, "div", "timelineUnitContainer");
-
-                        string[] arrTimelineUnitContainer = System.Text.RegularExpressions.Regex.Split(pageSource, "timelineUnitContainer");
-
-                        foreach (string item in arrTimelineUnitContainer)
-                        {
-                            try
-                            {
-
-                                if (item.Contains("share_action_link"))
-                                {
-                                    try
-                                    {
-                                        string share_action_link = Utils.GetDataWithTagValueByTagAndAttributeName(pageSource, "a", "share_action_link");
-
-                                        string[] arrshare_action_link = System.Text.RegularExpressions.Regex.Split(item, "share_action_link");
-
-                                        foreach (string item1 in arrshare_action_link)
-                                        {
-                                            try
-                                            {
-
-                                                if (item1.Contains("href=\"/ajax/sharer/"))
-                                                {
-                                                    try
-                                                    {
-                                                        shareLink = item1.Substring(item1.IndexOf("href="), (item1.IndexOf(" ", item1.IndexOf("href=")) - item1.IndexOf("href="))).Replace("href=", string.Empty).Replace("\"", string.Empty).Trim();
-
-                                                        if (!shareLink.Contains(FBGlobals.Instance.fbhomeurl))
-                                                        {
-                                                            shareLink = "https://www.facebook.com" + shareLink;
-                                                        }
-
-
-                                                        GlobusLogHelper.log.Debug("Found Share Link :" + shareLink + " With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageUrl);
-                                                        GlobusLogHelper.log.Info("Found Share Link :" + shareLink + " With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageUrl);
-                                                        try
-                                                        {
-                                                            SetPostData(ref fbUser, shareLink, fanPageUrl);
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
-
-                                                        break;
-                                                    }
-                                                    catch (Exception ex)
-                                                    {
-                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                    }
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-
-                                        break;
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }
-                        }
-                        if (string.IsNullOrEmpty(shareLink))
-                        {
-                         
-                            GlobusLogHelper.log.Debug("Couldn't Find Share Link With Fan Page URL : " + fanPageUrl + " With User Name : " + fbUser.username);
-                            GlobusLogHelper.log.Info("Couldn't Find Share Link With Fan Page URL : " + fanPageUrl + " With User Name : " + fbUser.username);
-                        }
+                        fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pageSource);
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
+
+                    GlobusHttpHelper htthelper = fbUser.globusHttpHelper;
+                    if (fanPageUrl.Contains("photos"))
+                    {
+                        string SharerResp = htthelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/sharer/?s=2&appid=" + appId + "&id=" + ftentidentifier + "&p[0]=" + ownerid + "&p[1]=" + pid + "&sharer_type=all_modes&__asyncDialog=1&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bGya4Au7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24oSy28yiq5UB1abK8KuEOq&__req=h&__rev=1813502"));
+                        string PrivacyX = Utils.getBetween(SharerResp, "\"postParam\":", ",");
+                        string PostData1 = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&composer_session_id=9c0ecfcc-bd32-4fb8-8a8b-0bbdc4fa842b&mode=self&friendTarget=&groupTarget=&message_text=&message=&attachment[params][0]=" + ownerid + "&attachment[params][1]=" + pid + "&attachment[type]=2&share_source_type=unknown&src=i&appid=" + appId + "&parent_fbid=&shared_ad_id=&ogid=&logshareevent=1&is_throwback_post=&privacyx=" + PrivacyX + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2lm9o-t2u5bGya4Au7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24oSy28yiq5UB1abK8KuEOq&__req=m&ttstamp=265816911211445120575175116110&__rev=1813502";
+                        string ShareResp1 = htthelper.postFormData(new Uri("https://www.facebook.com/ajax/sharer/submit/?av=" + __user), PostData1);
+
+                        if (ShareResp1.Contains("\"payload\":null"))
+                        {
+                            try
+                            {
+                                string _ExprotFilePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\FaceDominatorFbAccount\\PostShareDetails.csv";
+
+                                GlobusLogHelper.log.Debug("Post Shared Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                                GlobusLogHelper.log.Info("Post Shared Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+
+                                string CSVHeader = "UserName" + ", " + "Fan Page URL";
+                                string CSV_Content = fbUser.username + "," + fanPageUrl;
+
+                                //   Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
+
+                                // Delay 
+
+                                // int delay = new Random().Next(MinDelay * 60, MaxDelay * 60);
+                                int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Debug("Post Not Shared With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                                GlobusLogHelper.log.Info("Post Not Shared With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                            }
+                        }
+                        else
+                        {
+
+                        }
+
+
+                    }
+                    else if (!string.IsNullOrEmpty(fanpagepostId) && !string.IsNullOrEmpty(entityid))
+                    {
+                        string PostData1 = "pmid=2&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bGya4Au7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx27W88y99Enyk4EKUyVWz8&__req=e&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711005211950114118104105116&__rev=1811393";
+                        string fanPageResp1 = htthelper.postFormData(new Uri("https://www.facebook.com/share/share_now_menu/?app_id=" + appId + "&dialog_uri=%2Fajax%2Fsharer%2F%3Fs%3D99%26appid%3D" + appId + "%26id%3D" + fanpagepostId + "%26p%255B0%255D%3D" + entityid + "%26p%255B1%255D%3D" + fanpagepostId + "%26share_source_type%3Dunknown%26feedback_source%3D2&share_rel=dialog&shareable_id=" + fanpagepostId + "&share_type=99&feedback_source=2"), PostData1);
+
+                        string privacy = string.Empty;
+                        privacy = Utils.getBetween(fanPageResp1, "&privacy=", "&");
+                        string PostData2 = "post_id=" + fanpagepostId + "&share_type=99&audience_type=self&app_id=" + appId + "&privacy=" + privacy + "&share_now=1&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bGya4Au7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx27W88y99Enyk4EKUyVWz8&__req=h&fb_dtsg=" + fb_dtsg + "&ttstamp=26581711005211950114118104105116&__rev=1811393&ft[tn]=J]&ft[type]=25&ft[fbfeed_location]=5";
+                        string fanPageResp2 = htthelper.postFormData(new Uri("https://www.facebook.com/share/dialog/submit/"), PostData2);
+                        if (fanPageResp2.Contains("share_now_succeeded"))
+                        {
+                            try
+                            {
+                                string _ExprotFilePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\FaceDominatorFbAccount\\PostShareDetails.csv";
+
+                                GlobusLogHelper.log.Debug("Post Shared Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                                GlobusLogHelper.log.Info("Post Shared Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+
+                                string CSVHeader = "UserName" + ", " + "Fan Page URL";
+                                string CSV_Content = fbUser.username + "," + fanPageUrl;
+
+                                //   Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
+
+                                // Delay 
+
+                                // int delay = new Random().Next(MinDelay * 60, MaxDelay * 60);
+                                int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Debug("Post Not Shared With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                                GlobusLogHelper.log.Info("Post Not Shared With User Name : " + fbUser.username + " Fan Page URL : " + fanPageUrl);
+                            }
+                        }
+                        else
+                        {
+
+                        }
+                    }
+                    else
+                    {
+                        GlobusLogHelper.log.Debug("There Is No Option For Share !");
+                        GlobusLogHelper.log.Info("There Is No Option For Share !");
+                    }
+
+
                 }
                 else
                 {
-                     GlobusLogHelper.log.Debug("There Is No Option For Share !");
-                     GlobusLogHelper.log.Info("There Is No Option For Share !");
-                } 
+                    GlobusLogHelper.log.Debug("There Is No Option For Share !");
+                    GlobusLogHelper.log.Info("There Is No Option For Share !");
+                }
             }
             catch (Exception ex)
             {
@@ -3392,7 +4169,7 @@ namespace WallPoster
         private void SetPostData(ref FacebookUser fbUser, string shareLinkURL, string fanPageURL)
         {
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-           
+
             try
             {
                 string strShareLinkURL = string.Empty;
@@ -3426,7 +4203,7 @@ namespace WallPoster
 
                 if (!string.IsNullOrEmpty(pageSource))
                 {
-                   // 
+                    // 
                     GlobusLogHelper.log.Debug("Starting Post Share With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageURL);
                     GlobusLogHelper.log.Info("Starting Post Share With User Name :  " + fbUser.username + " Fan Page URL : " + fanPageURL);
                     __user = GlobusHttpHelper.GetParamValue(pageSource, "user");//pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
@@ -3581,8 +4358,8 @@ namespace WallPoster
                     //fb_dtsg=AQCGeTrr&ad_params=&friendTarget=&groupTarget=&mode=self&message_text=Heyyyyyyyyyyy&message=Heyyyyyyyyyyy&attachment[params][0]=23314931016&attachment[params][1]=10151146920226017&attachment[type]=22&src=i&appid=25554907596&parent_fbid=&ogid=&audience[0][value]=80&__user=100001530948154&__a=1&phstamp=16581677110184114114301
 
                     string postData = "fb_dtsg=" + fb_dtsg + "&ad_params=&friendTarget=&groupTarget=&mode=self&message_text=" + message_text + "&message=" + message_text + "&attachment[params][0]=" + attachment0 + "&attachment[params][1]=" + attachment1 + "&attachment[type]=" + attachmentType + "&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&__user=" + __user + "&__a=1&phstamp=16581677110184114114301";
-                    string PostUrl = "https://www.facebook.com/ajax/sharer/submit/?__av="+__user;
-                //    String response = HttpHelper.postFormData(new Uri("http://www.facebook.com/ajax/sharer/submit/"), postData);
+                    string PostUrl = "https://www.facebook.com/ajax/sharer/submit/?__av=" + __user;
+                    //    String response = HttpHelper.postFormData(new Uri("http://www.facebook.com/ajax/sharer/submit/"), postData);
                     String response = HttpHelper.postFormData(new Uri(PostUrl), postData);
 
                     if (!response.Contains("error") || response.Contains("DialogHideOnSuccess"))
@@ -3590,28 +4367,28 @@ namespace WallPoster
                         try
                         {
                             string _ExprotFilePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\FaceDominatorFbAccount\\PostShareDetails.csv";
-                          
+
                             GlobusLogHelper.log.Debug("Post Shared Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageURL);
                             GlobusLogHelper.log.Info("Post Shared Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageURL);
 
                             string CSVHeader = "UserName" + ", " + "Fan Page URL";
-                            string CSV_Content =fbUser.username + "," + fanPageURL;
+                            string CSV_Content = fbUser.username + "," + fanPageURL;
 
-                        //    FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
+                            //    FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
 
                             // Delay 
 
-                         // int delay = new Random().Next(MinDelay * 60, MaxDelay * 60);
-                          int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
-                          GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                          GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                          Thread.Sleep(delayInSeconds);
+                            // int delay = new Random().Next(MinDelay * 60, MaxDelay * 60);
+                            int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                            Thread.Sleep(delayInSeconds);
 
-                       
-                          //  GlobusLogHelper.log.Debug("Delay : " + (delay / (60 * 1000)).ToString() + " Minutes With User Name : " + fbUser.username);
 
-                         //   Thread.Sleep(delay);      
-                  
+                            //  GlobusLogHelper.log.Debug("Delay : " + (delay / (60 * 1000)).ToString() + " Minutes With User Name : " + fbUser.username);
+
+                            //   Thread.Sleep(delay);      
+
                         }
                         catch (Exception ex)
                         {
@@ -3620,14 +4397,14 @@ namespace WallPoster
                     }
                     else
                     {
-                       GlobusLogHelper.log.Debug("Post Couldn't Share Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageURL);
-                       GlobusLogHelper.log.Info("Post Couldn't Share Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageURL);
+                        GlobusLogHelper.log.Debug("Post Couldn't Share Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageURL);
+                        GlobusLogHelper.log.Info("Post Couldn't Share Successfully With User Name : " + fbUser.username + " Fan Page URL : " + fanPageURL);
                     }
                 }
                 else
                 {
-                   GlobusLogHelper.log.Debug("Home Page Source Is Null !");
-                   GlobusLogHelper.log.Info("Home Page Source Is Null !");
+                    GlobusLogHelper.log.Debug("Home Page Source Is Null !");
+                    GlobusLogHelper.log.Info("Home Page Source Is Null !");
                 }
             }
             catch (Exception ex)
@@ -3645,356 +4422,28 @@ namespace WallPoster
                 GlobusLogHelper.log.Info("Start Spam Video On  Wall With Username : " + fbUser.username);
                 GlobusLogHelper.log.Debug("Start Spam Video On  Wall With Username : " + fbUser.username);
 
-                    if (!IsPostAllPicPostPicOnWall)
-                    {
-                        bool ReturnPicstatus = false;
-                        int intProxyPort = 80;
-                        string xhpc_composerid = string.Empty;
-                        string xhpc_targetid = string.Empty;
-                        string message_text = string.Empty;
-                        string message = string.Empty;
-                        string imagePath = string.Empty;
-                        Regex IdCheck = new Regex("^[0-9]*$");
-
-
-                        try
-                        {
-                            string PageSrcHome = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
-
-                            foreach (var LoadTargedUrls_item in lstWallPostShareLoadTargedUrls)
-                            {
-                                try
-                                {
-                                    if (!LoadTargedUrls_item.Contains("photo.php?"))
-                                    {
-                                        if (!string.IsNullOrEmpty(fbUser.proxyport) && IdCheck.IsMatch(fbUser.proxyport))
-                                        {
-                                            intProxyPort = int.Parse(fbUser.proxyport);
-                                        }
-
-
-                                        string __user = "";
-                                        string fb_dtsg = "";
-
-                                        string pgSrc_FanPageSearch = PageSrcHome;
-
-                                        __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
-                                        if (string.IsNullOrEmpty(__user))
-                                        {
-                                            __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
-                                        }
-
-                                        if (string.IsNullOrEmpty(__user) || __user == "0" || __user.Length < 3)
-                                        {
-                                            GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
-
-                                            return;
-                                        }
-
-                                        fb_dtsg = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "fb_dtsg");
-                                        if (string.IsNullOrEmpty(fb_dtsg))
-                                        {
-                                            fb_dtsg = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "fb_dtsg");
-                                        }
-                                        try
-                                        {
-                                            xhpc_composerid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "composerid");
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                        try
-                                        {
-                                            xhpc_targetid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "xhpc_targetid");
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-
-                                        string PageSrcTageted = HttpHelper.getHtmlfromUrl(new Uri(LoadTargedUrls_item));
-                                        string hovercardPhpId = string.Empty;
-                                        string media_info = string.Empty;
-                                        string appid = string.Empty;
-                                        string attachment = string.Empty;
-                                        string pubcontent_params = string.Empty;
-                                        string pageTarget = string.Empty;
-
-                                        string hideable_token = string.Empty;
-                                        string story_permalink_token = string.Empty;
-                                        string initial_action_name = string.Empty;
-                                        string options_button_id = string.Empty;
-                                        string ft_tn = string.Empty;
-                                        string ft_qid = string.Empty;
-                                        string ft_mf_story_key = string.Empty;
-
-
-                                        hideable_token = Utils.getBetween(PageSrcTageted, "hideable_token=", "&");
-                                        story_permalink_token = Utils.getBetween(PageSrcTageted, "story_permalink_token=", "&").Replace("\\u00253A", "%3A");
-                                        options_button_id = Utils.getBetween(PageSrcTageted, "options_button_id=", "&");
-
-                                        //open start_dialog
-                                        try
-                                        {
-                                            string PostUrl = "https://www.facebook.com/ajax/afro/start_dialog";
-                                            string SharePostData = "rel=dialog-post&story_location=feed&answer=spam&hideable_token=" + hideable_token + "&story_permalink_token=" + story_permalink_token + "&initial_action_name=MARK_SPAM&options_button_id=" + options_button_id + "&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzElw&__req=e&fb_dtsg=" + fb_dtsg + "&ttstamp=2658171112708153105865052118&__rev=1288570&ft[tn]=WWV&ft[fbfeed_location]=5";
-
-                                            string res = string.Empty;
-                                            string res1 = string.Empty;
-                                            string res2 = string.Empty;
-                                            try
-                                            {
-                                                res = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-
-                                            //Continue 
-                                            string time_flow_started = Utils.getBetween(res, "time_flow_started&quot", "&quot").Replace(":", "").Replace(";", "").Replace(",", "").Trim();
-                                            string PostUrl1 = "https://www.facebook.com/ajax/afro/continue_dialog";
-                                            string SharePostData1 = "fb_dtsg=" + fb_dtsg + "_&answer=spammy&context=%7B%22initial_action_name%22%3A%22MARK_SPAM%22%2C%22time_flow_started%22%3A" + time_flow_started + "%2C%22breadcrumbs%22%3A[%22spam%22]%2C%22story_location%22%3A%22feed%22%2C%22tracking%22%3Anull%2C%22hideable_token%22%3A%22" + hideable_token + "%22%2C%22story_permalink_token%22%3A%22S%3A_I250826161666390%3A659455004136835%22%2C%22story_graphql_token%22%3Anull%7D&__user=" + __user + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoGya4Cq74qbx2mbAKGiyGGEZ9LO7xCm4Vp_AyoSnw&__req=y&ttstamp=265817072811196965981047095&__rev=1288570";
-                                            try
-                                            {
-                                                res1 = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-
-                                            //third time submitButton post data 
-
-
-                                            string PostUrl2 = "https://www.facebook.com/ajax/afro/hide_story?rel=dialog-post&story_location=feed&initial_action_name=MARK_SPAM&story_permalink_token=" + story_permalink_token + "&hideable_token=" + hideable_token + "&options_button_id=" + options_button_id;
-
-                                            string SharePostData2 = "__user=" + __user + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoGya4Cq74qbx2mbAKGiyGGEZ9LO7xCm4Vp_AyoSnw&__req=z&fb_dtsg=" + fb_dtsg + "_&ttstamp=265817072811196965981047095&__rev=1288570&ft[tn]=WWV&ft[qid]=6024308654013791799&ft[mf_story_key]=5518012120748252564&ft[fbfeed_location]=1&ft[insertion_position]=5";
-                                            try
-                                            {
-                                                res2 = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-
-
-
-                                            if (res.Contains("DialogHideOnSuccess"))
-                                            {
-                                                GlobusLogHelper.log.Info("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
-                                                GlobusLogHelper.log.Debug("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
-
-                                            }
-                                            else
-                                            {
-                                                GlobusLogHelper.log.Info("Spam Video Not Share WIth UserName : " + fbUser.username);
-                                                GlobusLogHelper.log.Debug("Spam Video Not Share WIth UserName : " + fbUser.username);
-                                            }
-
-                                            try
-                                            {
-                                                int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
-                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                                Thread.Sleep(delayInSeconds);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                    }
-                                    else
-                                    {
-
-                                        if (!string.IsNullOrEmpty(fbUser.proxyport) && IdCheck.IsMatch(fbUser.proxyport))
-                                        {
-                                            intProxyPort = int.Parse(fbUser.proxyport);
-                                        }
-
-
-                                        string __user = "";
-                                        string fb_dtsg = "";
-
-                                        string pgSrc_FanPageSearch = PageSrcHome;
-
-                                        __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
-                                        if (string.IsNullOrEmpty(__user))
-                                        {
-                                            __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
-                                        }
-
-                                        if (string.IsNullOrEmpty(__user) || __user == "0" || __user.Length < 3)
-                                        {
-                                            GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
-
-                                            return;
-                                        }
-
-                                        fb_dtsg = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "fb_dtsg");
-                                        if (string.IsNullOrEmpty(fb_dtsg))
-                                        {
-                                            fb_dtsg = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "fb_dtsg");
-                                        }
-                                        try
-                                        {
-                                            xhpc_composerid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "composerid");
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                        try
-                                        {
-                                            xhpc_targetid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "xhpc_targetid");
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-
-                                        string PageSrcTageted = HttpHelper.getHtmlfromUrl(new Uri(LoadTargedUrls_item));
-
-                                        string hovercardPhpId = string.Empty;
-                                        string media_info = string.Empty;
-                                        string appid = string.Empty;
-                                        string attachment = string.Empty;
-                                        string pubcontent_params = string.Empty;
-                                        string pageTarget = string.Empty;
-                                        string res=string.Empty;
-                                        string cid=string.Empty;
-                                        string rid=string.Empty;
-                                        string media_pos=string.Empty;
-                                        string time_flow_started = string.Empty;
-                                        string pp = string.Empty;                                 
-
-
-
-                                        //open start_dialog
-                                        try
-                                        {
-                                          
-                                            cid=Utils.getBetween(PageSrcTageted,"cid=","&");
-                                            rid=Utils.getBetween(PageSrcTageted,"rid=","&");
-                                            media_pos=Utils.getBetween(PageSrcTageted,"media_pos=","&");
-                                         
-                                            string PageSource =HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/report/social.php?content_type=13&cid="+cid+"&rid="+rid+"&media_pos="+media_pos+"&cs_ver=0&__asyncDialog=1&__user="+__user+"&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=c&__rev=1288570"));
-                                            pp = Utils.getBetween(PageSource, "pp\\\" value=\\\"", ">").Replace("&quot;", "\"");
-                                            pp = Utils.getBetween(pp, "&#123;", "&");
-                                           //===
-                                            pp = Uri.EscapeDataString(pp);
-
-                                            time_flow_started = Utils.getBetween(PageSource, "time_flow_started&quot", "&quot").Replace(":", "").Replace(";", "").Replace(",", "").Trim();
-                                            string PostUrl = "https://www.facebook.com/ajax/report/social.php";
-                                            string PostData = "fb_dtsg=" + fb_dtsg + "&report_type=9&pp=%7B%22" + pp + "%7D&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=d&ttstamp=265816981107101102451027311070&__rev=1288570";
-
-                                            res = HttpHelper.postFormData(new Uri(PostUrl), PostData);
-
-                                            string tooltrip = Utils.getBetween(PageSrcTageted, "data-tooltip-uri=\"", "\" class=");
-                                            string PostUrl1 = "https://www.facebook.com" + tooltrip;
-
-                                          string FinalPostData="__user="+__user+"&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=e&fb_dtsg="+fb_dtsg+"&ttstamp=265816981107101102451027311070&__rev=1288570";
-                                          res = HttpHelper.postFormData(new Uri(PostUrl1), FinalPostData);
-                                            if (res.Contains("bootloadable"))
-                                            {
-                                                GlobusLogHelper.log.Info("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
-                                                GlobusLogHelper.log.Debug("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
-
-                                            }
-                                            else
-                                            {
-                                                GlobusLogHelper.log.Info("Spam Video Not Share WIth UserName : " + fbUser.username);
-                                                GlobusLogHelper.log.Debug("Spam Video Not Share WIth UserName : " + fbUser.username);
-                                            }
-
-                                            try
-                                            {
-                                                int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
-                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                                Thread.Sleep(delayInSeconds);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                    }
-                                   
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                    }                  
-              
-            }
-            catch (Exception ex)
-            {
-                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }
-
-            GlobusLogHelper.log.Info("Process Completed Of Spam Video With Username : " + fbUser.username);
-            GlobusLogHelper.log.Debug("Process Completed Of Spam Video With Username : " + fbUser.username);
-        }
-
-        public void ShareVideoOnWall(ref FacebookUser fbUser)
-        {
-            try
-            {
-                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-
-                GlobusLogHelper.log.Info("Start Share Video On  Wall With Username : " + fbUser.username);
-                GlobusLogHelper.log.Debug("Start Share Video On  Wall With Username : " + fbUser.username);
-
-                int CheckContinue = 0;
-                if (chkCountinueProcessContinueShareProcess)
+                if (!IsPostAllPicPostPicOnWall)
                 {
-                    CheckContinue = 1;
-                }
+                    bool ReturnPicstatus = false;
+                    int intProxyPort = 80;
+                    string xhpc_composerid = string.Empty;
+                    string xhpc_targetid = string.Empty;
+                    string message_text = string.Empty;
+                    string message = string.Empty;
+                    string imagePath = string.Empty;
+                    Regex IdCheck = new Regex("^[0-9]*$");
 
-                while (true)
-                {                  
 
-                    if (!IsPostAllPicPostPicOnWall)
+                    try
                     {
-                        bool ReturnPicstatus = false;
-                        int intProxyPort = 80;
-                        string xhpc_composerid = string.Empty;
-                        string xhpc_targetid = string.Empty;
-                        string message_text = string.Empty;
-                        string message = string.Empty;
-                        string imagePath = string.Empty;
-                        Regex IdCheck = new Regex("^[0-9]*$");
+                        string PageSrcHome = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
 
-                        try
+                        foreach (var LoadTargedUrls_item in lstWallPostShareLoadTargedUrls)
                         {
-                            string PageSrcHome = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
-
-                            foreach (var LoadTargedUrls_item in lstWallPostShareLoadTargedUrls)
-                            {                                
-                                try
+                            try
+                            {
+                                if (!LoadTargedUrls_item.Contains("photo.php?"))
                                 {
-
                                     if (!string.IsNullOrEmpty(fbUser.proxyport) && IdCheck.IsMatch(fbUser.proxyport))
                                     {
                                         intProxyPort = int.Parse(fbUser.proxyport);
@@ -4050,6 +4499,337 @@ namespace WallPoster
                                     string pubcontent_params = string.Empty;
                                     string pageTarget = string.Empty;
 
+                                    string hideable_token = string.Empty;
+                                    string story_permalink_token = string.Empty;
+                                    string initial_action_name = string.Empty;
+                                    string options_button_id = string.Empty;
+                                    string ft_tn = string.Empty;
+                                    string ft_qid = string.Empty;
+                                    string ft_mf_story_key = string.Empty;
+
+
+                                    hideable_token = Utils.getBetween(PageSrcTageted, "hideable_token=", "&");
+                                    story_permalink_token = Utils.getBetween(PageSrcTageted, "story_permalink_token=", "&").Replace("\\u00253A", "%3A");
+                                    options_button_id = Utils.getBetween(PageSrcTageted, "options_button_id=", "&");
+
+                                    //open start_dialog
+                                    try
+                                    {
+                                        string PostUrl = "https://www.facebook.com/ajax/afro/start_dialog";
+                                        string SharePostData = "rel=dialog-post&story_location=feed&answer=spam&hideable_token=" + hideable_token + "&story_permalink_token=" + story_permalink_token + "&initial_action_name=MARK_SPAM&options_button_id=" + options_button_id + "&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzElw&__req=e&fb_dtsg=" + fb_dtsg + "&ttstamp=2658171112708153105865052118&__rev=1288570&ft[tn]=WWV&ft[fbfeed_location]=5";
+
+                                        string res = string.Empty;
+                                        string res1 = string.Empty;
+                                        string res2 = string.Empty;
+                                        try
+                                        {
+                                            res = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+
+                                        //Continue 
+                                        string time_flow_started = Utils.getBetween(res, "time_flow_started&quot", "&quot").Replace(":", "").Replace(";", "").Replace(",", "").Trim();
+                                        string PostUrl1 = "https://www.facebook.com/ajax/afro/continue_dialog";
+                                        string SharePostData1 = "fb_dtsg=" + fb_dtsg + "_&answer=spammy&context=%7B%22initial_action_name%22%3A%22MARK_SPAM%22%2C%22time_flow_started%22%3A" + time_flow_started + "%2C%22breadcrumbs%22%3A[%22spam%22]%2C%22story_location%22%3A%22feed%22%2C%22tracking%22%3Anull%2C%22hideable_token%22%3A%22" + hideable_token + "%22%2C%22story_permalink_token%22%3A%22S%3A_I250826161666390%3A659455004136835%22%2C%22story_graphql_token%22%3Anull%7D&__user=" + __user + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoGya4Cq74qbx2mbAKGiyGGEZ9LO7xCm4Vp_AyoSnw&__req=y&ttstamp=265817072811196965981047095&__rev=1288570";
+                                        try
+                                        {
+                                            res1 = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+
+                                        //third time submitButton post data 
+
+
+                                        string PostUrl2 = "https://www.facebook.com/ajax/afro/hide_story?rel=dialog-post&story_location=feed&initial_action_name=MARK_SPAM&story_permalink_token=" + story_permalink_token + "&hideable_token=" + hideable_token + "&options_button_id=" + options_button_id;
+
+                                        string SharePostData2 = "__user=" + __user + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoGya4Cq74qbx2mbAKGiyGGEZ9LO7xCm4Vp_AyoSnw&__req=z&fb_dtsg=" + fb_dtsg + "_&ttstamp=265817072811196965981047095&__rev=1288570&ft[tn]=WWV&ft[qid]=6024308654013791799&ft[mf_story_key]=5518012120748252564&ft[fbfeed_location]=1&ft[insertion_position]=5";
+                                        try
+                                        {
+                                            res2 = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+
+
+
+                                        if (res.Contains("DialogHideOnSuccess"))
+                                        {
+                                            GlobusLogHelper.log.Info("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+
+                                        }
+                                        else
+                                        {
+                                            GlobusLogHelper.log.Info("Spam Video Not Share WIth UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Spam Video Not Share WIth UserName : " + fbUser.username);
+                                        }
+
+                                        try
+                                        {
+                                            int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                            Thread.Sleep(delayInSeconds);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                                else
+                                {
+
+                                    if (!string.IsNullOrEmpty(fbUser.proxyport) && IdCheck.IsMatch(fbUser.proxyport))
+                                    {
+                                        intProxyPort = int.Parse(fbUser.proxyport);
+                                    }
+
+
+                                    string __user = "";
+                                    string fb_dtsg = "";
+
+                                    string pgSrc_FanPageSearch = PageSrcHome;
+
+                                    __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
+                                    if (string.IsNullOrEmpty(__user))
+                                    {
+                                        __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
+                                    }
+
+                                    if (string.IsNullOrEmpty(__user) || __user == "0" || __user.Length < 3)
+                                    {
+                                        GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
+
+                                        return;
+                                    }
+
+                                    fb_dtsg = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "fb_dtsg");
+                                    if (string.IsNullOrEmpty(fb_dtsg))
+                                    {
+                                        fb_dtsg = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "fb_dtsg");
+                                    }
+                                    try
+                                    {
+                                        xhpc_composerid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "composerid");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                    try
+                                    {
+                                        xhpc_targetid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "xhpc_targetid");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                    string PageSrcTageted = HttpHelper.getHtmlfromUrl(new Uri(LoadTargedUrls_item));
+
+                                    string hovercardPhpId = string.Empty;
+                                    string media_info = string.Empty;
+                                    string appid = string.Empty;
+                                    string attachment = string.Empty;
+                                    string pubcontent_params = string.Empty;
+                                    string pageTarget = string.Empty;
+                                    string res = string.Empty;
+                                    string cid = string.Empty;
+                                    string rid = string.Empty;
+                                    string media_pos = string.Empty;
+                                    string time_flow_started = string.Empty;
+                                    string pp = string.Empty;
+
+
+
+                                    //open start_dialog
+                                    try
+                                    {
+
+                                        cid = Utils.getBetween(PageSrcTageted, "cid=", "&");
+                                        rid = Utils.getBetween(PageSrcTageted, "rid=", "&");
+                                        media_pos = Utils.getBetween(PageSrcTageted, "media_pos=", "&");
+
+                                        string PageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/report/social.php?content_type=13&cid=" + cid + "&rid=" + rid + "&media_pos=" + media_pos + "&cs_ver=0&__asyncDialog=1&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=c&__rev=1288570"));
+                                        pp = Utils.getBetween(PageSource, "pp\\\" value=\\\"", ">").Replace("&quot;", "\"");
+                                        pp = Utils.getBetween(pp, "&#123;", "&");
+                                        //===
+                                        pp = Uri.EscapeDataString(pp);
+
+                                        time_flow_started = Utils.getBetween(PageSource, "time_flow_started&quot", "&quot").Replace(":", "").Replace(";", "").Replace(",", "").Trim();
+                                        string PostUrl = "https://www.facebook.com/ajax/report/social.php";
+                                        string PostData = "fb_dtsg=" + fb_dtsg + "&report_type=9&pp=%7B%22" + pp + "%7D&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=d&ttstamp=265816981107101102451027311070&__rev=1288570";
+
+                                        res = HttpHelper.postFormData(new Uri(PostUrl), PostData);
+
+                                        string tooltrip = Utils.getBetween(PageSrcTageted, "data-tooltip-uri=\"", "\" class=");
+                                        string PostUrl1 = "https://www.facebook.com" + tooltrip;
+
+                                        string FinalPostData = "__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=e&fb_dtsg=" + fb_dtsg + "&ttstamp=265816981107101102451027311070&__rev=1288570";
+                                        res = HttpHelper.postFormData(new Uri(PostUrl1), FinalPostData);
+                                        if (res.Contains("bootloadable"))
+                                        {
+                                            GlobusLogHelper.log.Info("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Spam Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+
+                                        }
+                                        else
+                                        {
+                                            GlobusLogHelper.log.Info("Spam Video Not Share WIth UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Spam Video Not Share WIth UserName : " + fbUser.username);
+                                        }
+
+                                        try
+                                        {
+                                            int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                            Thread.Sleep(delayInSeconds);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+            GlobusLogHelper.log.Info("Process Completed Of Spam Video With Username : " + fbUser.username);
+            GlobusLogHelper.log.Debug("Process Completed Of Spam Video With Username : " + fbUser.username);
+        }
+
+        public void ShareVideoOnWall(ref FacebookUser fbUser)
+        {
+            try
+            {
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+
+                GlobusLogHelper.log.Info("Start Share Video On  Wall With Username : " + fbUser.username);
+                GlobusLogHelper.log.Debug("Start Share Video On  Wall With Username : " + fbUser.username);
+
+                int CheckContinue = 0;
+                if (chkCountinueProcessContinueShareProcess)
+                {
+                    CheckContinue = 1;
+                }
+
+                while (true)
+                {
+
+                    if (!IsPostAllPicPostPicOnWall)
+                    {
+                        bool ReturnPicstatus = false;
+                        int intProxyPort = 80;
+                        string xhpc_composerid = string.Empty;
+                        string xhpc_targetid = string.Empty;
+                        string message_text = string.Empty;
+                        string message = string.Empty;
+                        string imagePath = string.Empty;
+                        Regex IdCheck = new Regex("^[0-9]*$");
+
+                        try
+                        {
+                            string PageSrcHome = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                            foreach (var LoadTargedUrls_item in lstWallPostShareLoadTargedUrls)
+                            {
+                                try
+                                {
+
+                                    if (!string.IsNullOrEmpty(fbUser.proxyport) && IdCheck.IsMatch(fbUser.proxyport))
+                                    {
+                                        intProxyPort = int.Parse(fbUser.proxyport);
+                                    }
+
+
+                                    string __user = "";
+                                    string fb_dtsg = "";
+
+                                    string pgSrc_FanPageSearch = PageSrcHome;
+
+                                    __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
+                                    if (string.IsNullOrEmpty(__user))
+                                    {
+                                        __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
+                                    }
+
+                                    if (string.IsNullOrEmpty(__user) || __user == "0" || __user.Length < 3)
+                                    {
+                                        GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
+
+                                        return;
+                                    }
+
+                                    fb_dtsg = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "fb_dtsg");
+                                    if (string.IsNullOrEmpty(fb_dtsg))
+                                    {
+                                        fb_dtsg = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "fb_dtsg");
+                                    }
+                                    try
+                                    {
+                                        xhpc_composerid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "composerid");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                    try
+                                    {
+                                        xhpc_targetid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "xhpc_targetid");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                    string PageSrcTageted = HttpHelper.getHtmlfromUrl(new Uri(LoadTargedUrls_item));
+
+
+                                    string appid = string.Empty;
+
+
+                                    string shareId = string.Empty;
+                                    string PostID = string.Empty;
+                                    string instanceId = string.Empty;
+
+
                                     try
                                     {
                                         appid = Utils.getBetween(PageSrcTageted, "appid=", "&");
@@ -4058,223 +4838,215 @@ namespace WallPoster
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-
                                     try
                                     {
-                                        hovercardPhpId = Utils.getBetween(LoadTargedUrls_item, "photo.php?v=", "&set=");
-
-                                        if (string.IsNullOrEmpty(hovercardPhpId))
-                                        {
-                                            hovercardPhpId = Utils.getBetween(PageSrcTageted, "page.php?id=", "\">");
-                                        }
+                                        shareId = Utils.getBetween(PageSrcTageted, "shareable_id=", "&");
                                     }
                                     catch (Exception ex)
                                     {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
                                     }
+
                                     try
                                     {
-                                        if (string.IsNullOrEmpty(hovercardPhpId))
-                                        {
-                                            hovercardPhpId = Utils.getBetween(LoadTargedUrls_item, "photos/a.", "."); ;
-                                        }
-                                        media_info = Utils.getBetween(PageSrcTageted, "media_info=", ">").Replace("\"", "");
+                                        instanceId = Utils.getBetween(PageSrcTageted, "", "");
                                     }
                                     catch (Exception ex)
                                     {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
 
-                                    if (string.IsNullOrEmpty(media_info))
+
+
+
+                                    string res = string.Empty;
+
+                                    if (!chkWall_PostPicOnWall_ShareVideoOnlyMe)
                                     {
-                                        media_info = Utils.getBetween(PageSrcTageted, "target_fbid", "target_profile_id").Replace("\"", "").Replace("&quot;", "").Replace("&", "").Replace(":", "").Replace(",", "");
+                                        try
+                                        {
+                                            //1 request
+                                            string ShareRequestUrl = "https://www.facebook.com/ajax/sharer/?parent_fbid=" + xhpc_targetid + "&s=11&appid=" + appid + "&id=" + shareId + "&p[0]=" + shareId + "&share_source_type=unknown&feedback_source=2&ufi_id=u_0_u&__asyncDialog=1&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC-K26m6oKezob4q68K5Uc-dwIxi5e48vEwydCxu9xefybDGcCK5o-&__req=k&__rev=1863904&ft[tn]=J]&ft[type]=25&ft[fbfeed_location]=5";
+                                            string shareresp1 = HttpHelper.getHtmlfromUrl(new Uri(ShareRequestUrl));
+                                            //string GetHtml = HttpHelper.getHtmlfromUrl(new Uri(getRequestUrl));
+                                            string privacy = string.Empty;
+                                            privacy = Utils.getBetween(shareresp1, "privacy=", "&");
+                                            if (lstMessageCollectionPostPicOnWall != null && lstMessageCollectionPostPicOnWall.Count > 0)
+                                            {
+                                                message = lstMessageCollectionPostPicOnWall[new Random().Next(0, lstMessageCollectionPostPicOnWall.Count - 1)];
+                                            }
+                                            //2nd request 
+                                            string ShareRequestUrl2 = "https://www.facebook.com/ajax/sharer/submit/?av=" + __user;
+                                            string PostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&composer_session_id=887ce18f-3ca9-4327-a094-7b199169acaf&mode=self&friendTarget=&groupTarget=&xhpc_context=home&xhpc_ismeta=1&xhpc_timeline=&xhpc_targetid=" + __user + "&xhpc_publish_type=1&xhpc_message_text=" + Uri.EscapeDataString(message) + "&xhpc_message=" + Uri.EscapeDataString(message) + "&attachment[params][0]=" + shareId + "&attachment[type]=11&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=" + xhpc_targetid + "&shared_ad_id=&ogid=&logshareevent=1&is_throwback_post=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1438437740&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&privacyx=" + privacy + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2lm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC-K26m6oKezob4q68K5Uc-dwIxi5e48vEwydCxu9xefybDGcCK5o-&__req=q&ttstamp=26581716690107100831124972107&__rev=1863904";
+                                            res = HttpHelper.postFormData(new Uri(ShareRequestUrl2), PostData);
+
+                                        }
+                                        catch (Exception ex)
+                                        {
+
+                                        }
+                                        if (res.Contains("DialogHideOnSuccess"))
+                                        {
+                                            GlobusLogHelper.log.Info("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+
+                                        }
+                                        else
+                                        {
+                                            GlobusLogHelper.log.Info("Video Url Not Share WIth UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Video Url Not Share WIth UserName : " + fbUser.username);
+                                        }
+
+
+                                        try
+                                        {
+                                            int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                            Thread.Sleep(delayInSeconds);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
                                     }
-                                    string Fid = Utils.getBetween(PageSrcTageted, "php%3Fid", "&").Replace("%3D", "");
+                                    else
+                                    {
+                                        //  try
+                                        //{
+                                        //    string ss = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/hovercard/hovercard.php?id=" + hovercardPhpId + "&type=mediatag&media_info=" + media_info + "&endpoint=%2Fajax%2Fhovercard%2Fhovercard.php%3Fid%3D" + Fid + "%26type%3Dmediatag%26media_info%3D" + media_info + "&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCuGz8&__req=b&__rev=1252742"));
+                                        //    if (string.IsNullOrEmpty(ss))
+                                        //    {
+                                        //        ss = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/sharer/?s=11&appid=" + appid + "&p[0]=" + media_info + "&sharer_type=all_modes&__asyncDialog=3&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDxCm4VpWGcw&__req=17&__rev=1255522"));
+                                        //    }
 
-                                  string res=string.Empty;
-
-                                  if (chkWall_PostPicOnWall_ShareVideoOnlyMe)
-                                  {
-
-                                      //1 request
-                                      string getRequestUrl = "https://www.facebook.com/ajax/sharer/?s=11&appid=" + appid + "&p[0]=" + media_info + "&sharer_type=all_modes&__asyncDialog=5&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzElx2&__req=1z&__rev=1296882";
-                                      string GetHtml = HttpHelper.getHtmlfromUrl(new Uri(getRequestUrl));
-
-
-                                      //2nd request 
-                                      string getrequestUrl2 = "https://www.facebook.com/ajax/typeahead/first_degree.php?viewer=" + __user + "&filter[0]=user&filter[1]=page&filter[2]=app&filter[3]=group&filter[4]=event&options[0]=friends_only&options[1]=nm&token=v7&context=mentions&rsp=mentions&request_id=0.39445215719752014&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzElx2&__req=20&__rev=1296882";
-
-                                      string GetHtml2 = HttpHelper.getHtmlfromUrl(new Uri(getrequestUrl2));
-
-                                      // 3rd final post data 
-                                      string attachment_parms = Utils.getBetween(GetHtml, "attachment[params][0]", "/>").Replace("\\\"", "").Replace("value=", "").Replace("\\", "").Trim();
-                                      try
-                                      {
-
-                                        //  string PostUrl = "https://www.facebook.com/ajax/sharer/submit/?__av=" + __user;
-                                          string PostUrl = "https://www.facebook.com/ajax/sharer/submit/?av=" + __user;
-                                          string PostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]=" + attachment_parms + "&attachment[type]=11&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=10&UITargetedPrivacyWidget=80&__user=" + __user + "&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzElx2&__req=21&ttstamp=2658170113715254847510311480&__rev=1296882";
-
-                                          res = HttpHelper.postFormData(new Uri(PostUrl), PostData);
-                                      }
-                                      catch { };
-
-                                          if (res.Contains("DialogHideOnSuccess"))
-                                          {
-                                              GlobusLogHelper.log.Info("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
-                                              GlobusLogHelper.log.Debug("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
-
-                                          }
-                                          else
-                                          {
-                                              GlobusLogHelper.log.Info("Video Url Not Share WIth UserName : " + fbUser.username);
-                                              GlobusLogHelper.log.Debug("Video Url Not Share WIth UserName : " + fbUser.username);
-                                          }
-
-                                     
-                                      try
-                                      {
-                                          int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
-                                          GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                          GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                          Thread.Sleep(delayInSeconds);
-                                      }
-                                      catch (Exception ex)
-                                      {
-                                          GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                      }
-                                  }
-                                  else
-                                  {
-                                      try
-                                      {
-                                          string ss = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/hovercard/hovercard.php?id=" + hovercardPhpId + "&type=mediatag&media_info=" + media_info + "&endpoint=%2Fajax%2Fhovercard%2Fhovercard.php%3Fid%3D" + Fid + "%26type%3Dmediatag%26media_info%3D" + media_info + "&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCuGz8&__req=b&__rev=1252742"));
-                                          if (string.IsNullOrEmpty(ss))
-                                          {
-                                              ss = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/sharer/?s=11&appid=" + appid + "&p[0]=" + media_info + "&sharer_type=all_modes&__asyncDialog=3&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDxCm4VpWGcw&__req=17&__rev=1255522"));
-                                          }
-
-                                          //  string DialogPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/sharer/?s=2&appid=" + appid + "&p[0]=354853111241863&p[1]=1073741918&sharer_type=all_modes&__asyncDialog=1&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCuGz8&__req=c&__rev=1252742"));
-                                          string DialogPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/sharer/?s=2&appid=" + appid + "&p[0]=" + media_info + "&p[1]=1073741918&sharer_type=all_modes&__asyncDialog=1&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCuGz8&__req=c&__rev=1252742"));
+                                        //    //  string DialogPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/sharer/?s=2&appid=" + appid + "&p[0]=354853111241863&p[1]=1073741918&sharer_type=all_modes&__asyncDialog=1&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCuGz8&__req=c&__rev=1252742"));
+                                        //    string DialogPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/sharer/?s=2&appid=" + appid + "&p[0]=" + media_info + "&p[1]=1073741918&sharer_type=all_modes&__asyncDialog=1&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCuGz8&__req=c&__rev=1252742"));
 
 
-                                          try
-                                          {
-                                              attachment = Utils.getBetween(DialogPageSource, "attachment[params][0]", "/>").Replace(" value=", string.Empty).Replace("\\\"", "").Replace("\\", "");
-                                          }
-                                          catch (Exception ex)
-                                          {
-                                              GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                          }
+                                        //    try
+                                        //    {
+                                        //        attachment = Utils.getBetween(DialogPageSource, "attachment[params][0]", "/>").Replace(" value=", string.Empty).Replace("\\\"", "").Replace("\\", "");
+                                        //    }
+                                        //    catch (Exception ex)
+                                        //    {
+                                        //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        //    }
 
-                                          try
-                                          {
-                                              pubcontent_params = Utils.getBetween(DialogPageSource, "pubcontent_params", ">").Replace("\"", "");
-                                          }
-                                          catch (Exception ex)
-                                          {
-                                              GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                          }
+                                        //    try
+                                        //    {
+                                        //        pubcontent_params = Utils.getBetween(DialogPageSource, "pubcontent_params", ">").Replace("\"", "");
+                                        //    }
+                                        //    catch (Exception ex)
+                                        //    {
+                                        //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        //    }
 
-                                          string PostUrl = "https://www.facebook.com/ajax/sharer/submit/";
-                                          // string[] Arr = System.Text.RegularExpressions.Regex.Split(DialogPageSource,"autocomplete=");
-                                          //string ModeValue = Utils.getBetween(DialogPageSource, "name=\\\"mode\\\" value=", "id=").Replace("\\\"",string.Empty);
+                                        //    string PostUrl = "https://www.facebook.com/ajax/sharer/submit/";
+                                        //    // string[] Arr = System.Text.RegularExpressions.Regex.Split(DialogPageSource,"autocomplete=");
+                                        //    //string ModeValue = Utils.getBetween(DialogPageSource, "name=\\\"mode\\\" value=", "id=").Replace("\\\"",string.Empty);
 
-                                          string SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&message_text=&message=&attachment[params][0]=" + hovercardPhpId + "&attachment[type]=11&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCdz8&__req=k&ttstamp=265817195997498547153112106&__rev=1252742";
-                                          try
-                                          {
-                                              string ModeValue1 = Utils.getBetween(PageSrcHome, "uiSelectorButton uiButton uiButtonSuppressed", "</a>");
-                                              string ModeValue = Utils.getBetween(ModeValue1, "uiButtonText", "</span>").Replace("\">", string.Empty);
-                                              if (string.IsNullOrEmpty(ModeValue))
-                                              {
-                                                  ModeValue = Utils.getBetween(PageSrcHome, "u_0_1z", "</span>").Replace("\">", string.Empty);
-                                                  if (!ModeValue.Contains("Only Me"))
-                                                  {
-                                                      ModeValue = Utils.getBetween(PageSrcHome, "_55pe", "</span>").Replace("\">", string.Empty);
-                                                  }
-                                              }
+                                        //    string SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&message_text=&message=&attachment[params][0]=" + hovercardPhpId + "&attachment[type]=11&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyIGzG8qeyp9Esx6iWF3qGEVF4WpUpBxCdz8&__req=k&ttstamp=265817195997498547153112106&__rev=1252742";
+                                        //    try
+                                        //    {
+                                        //        string ModeValue1 = Utils.getBetween(PageSrcHome, "uiSelectorButton uiButton uiButtonSuppressed", "</a>");
+                                        //        string ModeValue = Utils.getBetween(ModeValue1, "uiButtonText", "</span>").Replace("\">", string.Empty);
+                                        //        if (string.IsNullOrEmpty(ModeValue))
+                                        //        {
+                                        //            ModeValue = Utils.getBetween(PageSrcHome, "u_0_1z", "</span>").Replace("\">", string.Empty);
+                                        //            if (!ModeValue.Contains("Only Me"))
+                                        //            {
+                                        //                ModeValue = Utils.getBetween(PageSrcHome, "_55pe", "</span>").Replace("\">", string.Empty);
+                                        //            }
+                                        //        }
 
-                                              #region MyRegion
-                                              //if (ModeValue == "Only Me" || ModeValue.Contains("Only Me") ||chkWall_PostPicOnWall_ShareVideoOnlyMe)
-                                              //{
-                                              //    pageTarget = Utils.getBetween(DialogPageSource, "pageTarget", "id").Replace(" value=", string.Empty).Replace("\\\"", "").Replace("\\", "");
+                                        //        #region MyRegion
+                                        //        //if (ModeValue == "Only Me" || ModeValue.Contains("Only Me") ||chkWall_PostPicOnWall_ShareVideoOnlyMe)
+                                        //        //{
+                                        //        //    pageTarget = Utils.getBetween(DialogPageSource, "pageTarget", "id").Replace(" value=", string.Empty).Replace("\\\"", "").Replace("\\", "");
 
-                                              //  //  Eduart
-                                              //    if (string.IsNullOrEmpty(pageTarget))
-                                              //    {
-                                              //        pageTarget = Utils.getBetween(PageSrcTageted, "Eduart", "?ref").Replace("/","");
-                                              //    }
-                                              //   // SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]="+hovercardPhpId+"&attachment[type]=11&share_source_type=unknown&src=i&appid="+appid+"&parent_fbid=&ogid=&audience[0][value]=10&UITargetedPrivacyWidget=80&__user="+__user+"&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtV8sx6iWF3qGEZ94WpUpBxemdz8S&__req=f&ttstamp=2658172996953801061194511982&__rev=1260602";
-                                              //    SharePostData = "fb_dtsg="+fb_dtsg+"&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget="+pageTarget+"&post_as_page=1&message_text=&message=&attachment[params][0]="+hovercardPhpId+"&attachment[type]=11&share_source_type=unknown&src=i&appid="+appid+"&parent_fbid=&ogid=&audience[0][value]=10&UITargetedPrivacyWidget=80&__user="+__user+"&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=w&ttstamp=26581721011021016870114718781&__rev=1293281";
-                                              //} 
-                                              #endregion
-                                          }
-                                          catch (Exception ex)
-                                          {
-                                              GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                          }
+                                        //        //  //  Eduart
+                                        //        //    if (string.IsNullOrEmpty(pageTarget))
+                                        //        //    {
+                                        //        //        pageTarget = Utils.getBetween(PageSrcTageted, "Eduart", "?ref").Replace("/","");
+                                        //        //    }
+                                        //        //   // SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]="+hovercardPhpId+"&attachment[type]=11&share_source_type=unknown&src=i&appid="+appid+"&parent_fbid=&ogid=&audience[0][value]=10&UITargetedPrivacyWidget=80&__user="+__user+"&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtV8sx6iWF3qGEZ94WpUpBxemdz8S&__req=f&ttstamp=2658172996953801061194511982&__rev=1260602";
+                                        //        //    SharePostData = "fb_dtsg="+fb_dtsg+"&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget="+pageTarget+"&post_as_page=1&message_text=&message=&attachment[params][0]="+hovercardPhpId+"&attachment[type]=11&share_source_type=unknown&src=i&appid="+appid+"&parent_fbid=&ogid=&audience[0][value]=10&UITargetedPrivacyWidget=80&__user="+__user+"&__a=1&__dyn=7n8ajEAMCBynzpQ9UoGya4Cq7pEsx6iWF3qGEZ9LFDxCm4VpXzESu&__req=w&ttstamp=26581721011021016870114718781&__rev=1293281";
+                                        //        //} 
+                                        //        #endregion
+                                        //    }
+                                        //    catch (Exception ex)
+                                        //    {
+                                        //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        //    }
 
-                                          try
-                                          {
-                                              res = HttpHelper.postFormData(new Uri(PostUrl + "?__av=" + __user), SharePostData);
-                                          }
-                                          catch (Exception ex)
-                                          {
-                                              GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                          }
+                                        //    try
+                                        //    {
+                                        //        res = HttpHelper.postFormData(new Uri(PostUrl + "?__av=" + __user), SharePostData);
+                                        //    }
+                                        //    catch (Exception ex)
+                                        //    {
+                                        //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        //    }
 
-                                          if (res.Contains("errorSummary") || res.Contains("Could not post to Wall"))
-                                          {
+                                        //    if (res.Contains("errorSummary") || res.Contains("Could not post to Wall"))
+                                        //    {
 
-                                              pageTarget = Utils.getBetween(DialogPageSource, "pageTarget", "id").Replace(" value=", string.Empty).Replace("\\\"", "").Replace("\\", ""); ;
+                                        //        pageTarget = Utils.getBetween(DialogPageSource, "pageTarget", "id").Replace(" value=", string.Empty).Replace("\\\"", "").Replace("\\", ""); ;
 
-                                              string LoadTargedUrls = LoadTargedUrls_item + "@@";
-                                              pageTarget = Utils.getBetween(LoadTargedUrls, "php?v=", "@@");
-                                              SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]=" + pageTarget + "&attachment[type]=11&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&UITargetedPrivacyWidget=80&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDxCm4VpWGcw&__req=19&ttstamp=2658172120651191138012111676122&__rev=1255522";
-                                              res = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/sharer/submit/"), SharePostData);
-                                          }
+                                        //        string LoadTargedUrls = LoadTargedUrls_item + "@@";
+                                        //        pageTarget = Utils.getBetween(LoadTargedUrls, "php?v=", "@@");
+                                        //        //SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]=" + pageTarget + "&attachment[type]=11&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&UITargetedPrivacyWidget=80&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDxCm4VpWGcw&__req=19&ttstamp=2658172120651191138012111676122&__rev=1255522";
+                                        //        SharePostData = "__user="+__user+"&__a=1&__dyn=&__req=1a&fb_dtsg="+fb_dtsg+"&ttstamp=&__rev=1778627";
+                                        //        SharePostData = "__user="+__user+"&__a=1&__dyn=7AmajEyl2qm9o-t2u5bGya4Au7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24kcEwy8ACxu9giyXybDG&__req=o&fb_dtsg="+fb_dtsg+"&ttstamp=2658170691201047175651098867&__rev=1790613";
+                                        //        SharePostData = "";
+                                        //        if (lstMessageCollectionPostPicOnWall != null && lstMessageCollectionPostPicOnWall.Count > 0)
+                                        //        {
+                                        //            message = lstMessageCollectionPostPicOnWall[new Random().Next(0, lstMessageCollectionPostPicOnWall.Count - 1)];
+                                        //        }
+                                        //        res = HttpHelper.postFormData(new Uri("https://www.facebook.com/share/dialog/submit/?app_id=" + appid + "&owner_id=" + ownerId + "&post_id=" + media_info + "&share_type=11&shared_ad_id=&privacy=300645083384735&message=" + message + "&audience_type=self&&source=osric&av=" + __user), SharePostData);
+                                        //    }
 
-                                          if (string.IsNullOrEmpty(res))
-                                          {
-                                              try
-                                              {
-                                                  res = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
-                                              }
-                                              catch (Exception ex)
-                                              {
-                                                  GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                              }
-                                          }
+                                        //    if (string.IsNullOrEmpty(res))
+                                        //    {
+                                        //        try
+                                        //        {
+                                        //            res = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
+                                        //        }
+                                        //        catch (Exception ex)
+                                        //        {
+                                        //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        //        }
+                                        //    }
 
-                                          if (res.Contains("DialogHideOnSuccess"))
-                                          {
-                                              GlobusLogHelper.log.Info("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
-                                              GlobusLogHelper.log.Debug("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+                                        //    if (res.Contains("share_now_succeeded\":true"))
+                                        //    {
+                                        //        GlobusLogHelper.log.Info("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
+                                        //        GlobusLogHelper.log.Debug("Share Video Url : " + LoadTargedUrls_item + " with UserName : " + fbUser.username);
 
-                                          }
-                                          else
-                                          {
-                                              GlobusLogHelper.log.Info("Video Url Not Share WIth UserName : " + fbUser.username);
-                                              GlobusLogHelper.log.Debug("Video Url Not Share WIth UserName : " + fbUser.username);
-                                          }
+                                        //    }
+                                        //    else
+                                        //    {
+                                        //        GlobusLogHelper.log.Info("Video Url Not Share WIth UserName : " + fbUser.username);
+                                        //        GlobusLogHelper.log.Debug("Video Url Not Share WIth UserName : " + fbUser.username);
+                                        //    }
 
-                                          try
-                                          {
-                                              int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
-                                              GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                              GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                              Thread.Sleep(delayInSeconds);
-                                          }
-                                          catch (Exception ex)
-                                          {
-                                              GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                          }
-                                      }
-                                      catch (Exception ex)
-                                      {
-                                          GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                      }
-                                  }
+                                        //    try
+                                        //    {
+                                        //        int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                        //        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        //        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        //        Thread.Sleep(delayInSeconds);
+                                        //    }
+                                        //    catch (Exception ex)
+                                        //    {
+                                        //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        //    }
+                                        //}
+                                        //catch (Exception ex)
+                                        //{
+                                        //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        //}
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -4283,7 +5055,6 @@ namespace WallPoster
                             }
                         }
                         catch (Exception ex)
-
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
@@ -4305,7 +5076,7 @@ namespace WallPoster
 
         public void ShareImageOnWall(ref FacebookUser fbUser)
         {
-              
+
             try
             {
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
@@ -4351,7 +5122,7 @@ namespace WallPoster
                                             intProxyPort = int.Parse(fbUser.proxyport);
                                         }
 
-                                       
+
                                         string __user = "";
 
                                         string fb_dtsg = "";
@@ -4397,7 +5168,7 @@ namespace WallPoster
                                         string PageSrcTageted = HttpHelper.getHtmlfromUrl(new Uri(LoadTargedUrls_item));
                                         string hovercardPhpId = string.Empty;
                                         string media_info = string.Empty;
-                             
+
                                         string appid = string.Empty;
                                         string attachment = string.Empty;
                                         string pubcontent_params = string.Empty;
@@ -4491,14 +5262,14 @@ namespace WallPoster
                                             string res = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
                                             if (res.Contains("errorSummary"))
                                             {
-                                                string pageTarget = Utils.getBetween(PageSrcTageted, "user_id", "/>").Replace("value=",string.Empty).Replace("\"","");
+                                                string pageTarget = Utils.getBetween(PageSrcTageted, "user_id", "/>").Replace("value=", string.Empty).Replace("\"", "");
 
-                                                SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]=" + P + "&attachment[params][1]="+p1+"&attachment[type]=2&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&UITargetedPrivacyWidget=80&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDxCm4VoScw&__req=i&ttstamp=265817111585119117508810812098&__rev=1259482";
-                                               
+                                                SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3Anull%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]=" + P + "&attachment[params][1]=" + p1 + "&attachment[type]=2&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&UITargetedPrivacyWidget=80&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDxCm4VoScw&__req=i&ttstamp=265817111585119117508810812098&__rev=1259482";
+
                                                 res = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
                                                 if (res.Contains("errorSummary"))
                                                 {
-                                                    SharePostData = "fb_dtsg="+fb_dtsg+"&ad_params=&pubcontent_params=%7B%22sbj_type%22%3A%22fof%22%7D&mode=self&friendTarget=&groupTarget=&pageTarget="+pageTarget+"&post_as_page=1&message_text=&message=&attachment[params][0]="+P+"&attachment[params][1]="+p1+"&attachment[type]=2&share_source_type=unknown&src=i&appid="+appid+"&parent_fbid=&ogid=&audience[0][value]=80&UITargetedPrivacyWidget=80&__user="+__user+"&__a=1&__dyn=7n8anEAMCBynzpQ9UoGya4Cqm5Aqbx2mbAKGiBAGGzQAjO7xCm4VpZaECdw&__req=x&ttstamp=265817211689578857551076788&__rev=1259482";
+                                                    SharePostData = "fb_dtsg=" + fb_dtsg + "&ad_params=&pubcontent_params=%7B%22sbj_type%22%3A%22fof%22%7D&mode=self&friendTarget=&groupTarget=&pageTarget=" + pageTarget + "&post_as_page=1&message_text=&message=&attachment[params][0]=" + P + "&attachment[params][1]=" + p1 + "&attachment[type]=2&share_source_type=unknown&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&UITargetedPrivacyWidget=80&__user=" + __user + "&__a=1&__dyn=7n8anEAMCBynzpQ9UoGya4Cqm5Aqbx2mbAKGiBAGGzQAjO7xCm4VpZaECdw&__req=x&ttstamp=265817211689578857551076788&__rev=1259482";
                                                     res = HttpHelper.postFormData(new Uri(PostUrl), SharePostData);
                                                 }
                                             }
@@ -4718,7 +5489,7 @@ namespace WallPoster
                         break;
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -4727,7 +5498,7 @@ namespace WallPoster
 
             GlobusLogHelper.log.Info("Process Completed Of Share With Username : " + fbUser.username);
             GlobusLogHelper.log.Debug("Process Completed Of Share With Username : " + fbUser.username);
-        
+
         }
 
         public void PostPictureOnWall(ref FacebookUser fbUser)
@@ -4796,91 +5567,113 @@ namespace WallPoster
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
-                        try
-                        {
-                            string Dialogposturl = FBGlobals.Instance.PostPicOnWallPostAjaxComposeUriHashUrl;
-                            string DialogPostData = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=maininput&loaded_components[3]=mainprivacywidget&nctr[_mod]=pagelet_composer&__user=" + __user + "&__a=1&phstamp=16581679711110554116411";
-
-                            string res = HttpHelper.postFormData(new Uri(Dialogposturl), DialogPostData);
-                            if (string.IsNullOrEmpty(res))
-                            {
-                                Dialogposturl = FBGlobals.Instance.PostPicOnWallPostAjaxComposeUriHashUrl;
-                                res = HttpHelper.postFormData(new Uri(Dialogposturl), DialogPostData);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
                         string imagePath = string.Empty;
-                        try
-                        {
-                            imagePath = lstPicturecollectionPostPicOnWall[new Random().Next(0, lstPicturecollectionPostPicOnWall.Count)];
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
                         string message = string.Empty;
-                        try
-                        {
-                            if (chkWallPostPicOnWallWithMessage == true)
-                            {
-                                message = lstMessageCollectionPostPicOnWall[new Random().Next(0, lstMessageCollectionPostPicOnWall.Count)];                              
-                            }
-                            else
-                            {
-                                message = "";
-                            }
-
-                   
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                       
                         string status = string.Empty;
-
-                        if(chkCountinueProcessGroupCamapinScheduler = false)
+                        for (int l = 1; l <= NoOFPicsOnOwnWall; l++)
                         {
-                            ReturnPicstatus = PostPicture(ref fbUser, fbUser.username, fbUser.password, imagePath, fbUser.proxyip, fbUser.proxyport, fbUser.proxyusername, fbUser.proxypassword, message, ref status);
-                        }
-                        else
-                        {
-                            ReturnPicstatus = PostPicture1(ref fbUser, fbUser.username, fbUser.password, imagePath, fbUser.proxyip, fbUser.proxyport, fbUser.proxyusername, fbUser.proxypassword, ref status);
-
-                        }
-
-                        if (ReturnPicstatus)
-                        {
-                            GlobusLogHelper.log.Info("Posted Picture On Own Wall !");
-                            GlobusLogHelper.log.Debug("Posted Picture On Own Wall !");
-
-                            if (string.IsNullOrEmpty(message))
+                            try
                             {
-                                GlobusLogHelper.log.Info("Posted Picture " + imagePath + " On Own Wall with UserName : " + fbUser.username);
-                                GlobusLogHelper.log.Debug("Posted Picture " + imagePath + " On Own Wall with UserName : " + fbUser.username);
+                                string Dialogposturl = FBGlobals.Instance.PostPicOnWallPostAjaxComposeUriHashUrl;
+                                string DialogPostData = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&ishome=1&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=maininput&loaded_components[3]=mainprivacywidget&nctr[_mod]=pagelet_composer&__user=" + __user + "&__a=1&phstamp=16581679711110554116411";
 
+                                string res = HttpHelper.postFormData(new Uri(Dialogposturl), DialogPostData);
+                                if (string.IsNullOrEmpty(res))
+                                {
+                                    Dialogposturl = FBGlobals.Instance.PostPicOnWallPostAjaxComposeUriHashUrl;
+                                    res = HttpHelper.postFormData(new Uri(Dialogposturl), DialogPostData);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
+                            try
+                            {
+                                imagePath = queueImgPathToPostOnOwnWall.Dequeue();
+                            }
+                            catch (Exception ex)
+                            {
+                                imagePath = lstPicturecollectionPostPicOnWall[new Random().Next(0, lstPicturecollectionPostPicOnWall.Count)];
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
+                            try
+                            {
+                                if (chkWallPostPicOnWallWithMessage == true)
+                                {
+                                    message = lstMessageCollectionPostPicOnWall[new Random().Next(0, lstMessageCollectionPostPicOnWall.Count)];
+                                }
+                                else
+                                {
+                                    message = "";
+                                }
+
+                                if (Globals.CheckLicenseManager == "fdfreetrial")
+                                {
+                                    message = message + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
+
+
+                            if (chkCountinueProcessGroupCamapinScheduler = false)
+                            {
+                                ReturnPicstatus = PostPicture(ref fbUser, fbUser.username, fbUser.password, imagePath, fbUser.proxyip, fbUser.proxyport, fbUser.proxyusername, fbUser.proxypassword, message, ref status);
                             }
                             else
                             {
-                                GlobusLogHelper.log.Info("Posted Picture " + imagePath + "  with Message " + message + "On Own Wall With UserName : " + fbUser.username);
-                                GlobusLogHelper.log.Debug("Posted Picture " + imagePath + "  with Message " + message + "On Own Wall With UserName : " + fbUser.username);
+                                ReturnPicstatus = PostPicture1(ref fbUser, fbUser.username, fbUser.password, imagePath, fbUser.proxyip, fbUser.proxyport, fbUser.proxyusername, fbUser.proxypassword, message, ref status);
 
                             }
-                        }
-                        else
-                        {
-                            GlobusLogHelper.log.Info("Picture  Post  On Wall Using UserName : " + fbUser.username);
-                            GlobusLogHelper.log.Debug("Picture Not Post To on Wall Using UserName : " + fbUser.username);
 
-                        }
+                            if (ReturnPicstatus)
+                            {
+                                GlobusLogHelper.log.Info("Posted Picture On Own Wall !");
+                                GlobusLogHelper.log.Debug("Posted Picture On Own Wall !");
 
+                                if (string.IsNullOrEmpty(message))
+                                {
+                                    GlobusLogHelper.log.Info("Posted Picture " + imagePath + " On Own Wall with UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Posted Picture " + imagePath + " On Own Wall with UserName : " + fbUser.username);
+
+                                }
+                                else
+                                {
+                                    GlobusLogHelper.log.Info("Posted Picture " + imagePath + "  with Message " + message + "On Own Wall With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Posted Picture " + imagePath + "  with Message " + message + "On Own Wall With UserName : " + fbUser.username);
+
+                                }
+                            }
+                            else
+                            {
+                                GlobusLogHelper.log.Info("Picture Not Posted  On Wall Using UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Picture Not Posted On Wall Using UserName : " + fbUser.username);
+
+                            }
+                            try
+                            {
+
+                                int delayInSeconds = Utils.GenerateRandom(minDelayPostPicOnWal * 1000, maxDelayPostPicOnWal * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds);
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
 
                         //Friends wallposting started
 
-                        if (NumberOfFriendsSendPicOnWall>0)
+                        if (NumberOfFriendsSendPicOnWall > 0)
                         {
                             GlobusLogHelper.log.Info("Please wait finding the friends ID...");
                             GlobusLogHelper.log.Debug("Please wait finding the friends ID...");
@@ -4917,9 +5710,9 @@ namespace WallPoster
                                 try
                                 {
                                     try
-                                    {                                       
+                                    {
                                         message = lstMessageCollectionPostPicOnWall[new Random().Next(0, TempMessage.Count)];
-                                       // TempMessage.Remove(message);
+                                        // TempMessage.Remove(message);
                                     }
                                     catch (Exception ex)
                                     {
@@ -4987,7 +5780,7 @@ namespace WallPoster
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-                                } 
+                                }
                             }
                         }
                     }
@@ -5078,7 +5871,7 @@ namespace WallPoster
                         Dialogposturl = FBGlobals.Instance.PostPicOnWallPostAjaxComposeUriHashUrl;
                         res = HttpHelper.postFormData(new Uri(Dialogposturl), DialogPostData);
                     }
-                  
+
                 }
                 catch (Exception ex)
                 {
@@ -5104,10 +5897,13 @@ namespace WallPoster
                         message = "";
                     }
 
-                
+                    if (Globals.CheckLicenseManager == "fdfreetrial")
+                    {
+                        message = message + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                    }
 
                     string status = string.Empty;
-                   // if (chkCountinueProcessGroupCamapinScheduler == true)
+                    // if (chkCountinueProcessGroupCamapinScheduler == true)
                     {
                         ReturnPicstatus = PostPicture(ref fbUser, fbUser.username, fbUser.password, imagePath, fbUser.proxyip, fbUser.proxyport, fbUser.proxyusername, fbUser.proxypassword, message, ref status);
                     }
@@ -5148,7 +5944,7 @@ namespace WallPoster
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
-                        }                       
+                        }
                     }
                     else
                     {
@@ -5186,6 +5982,10 @@ namespace WallPoster
             string message_text = string.Empty;
             string picfilepath = string.Empty;
 
+            string PhotoWaterfallId = string.Empty;
+            string privacyXVal = string.Empty;
+            string impId = string.Empty;
+
             try
             {
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
@@ -5193,6 +5993,11 @@ namespace WallPoster
                 picfilepath = localImagePath;
 
                 string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                PhotoWaterfallId = Utils.getBetween(pageSource_Home, "photoswaterfallid\" value=\"", "\"");
+                privacyXVal = Utils.getBetween(pageSource_Home, "privacyx\" value=\"", "\"");
+                impId = Utils.getBetween(pageSource_Home, "\"imp_id\":\"", "\"");
+
 
                 UsreId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
                 if (string.IsNullOrEmpty(UsreId))
@@ -5240,18 +6045,90 @@ namespace WallPoster
                 nvc.Add("xhpc_message_text", message);
                 nvc.Add("xhpc_message", message);
 
+                System.Collections.Specialized.NameValueCollection nvc1 = new System.Collections.Specialized.NameValueCollection();
 
+                nvc1.Add("fb_dtsg", fb_dtsg);
+                nvc1.Add("source", "8");
+                nvc1.Add("profile_id", UsreId);
+                nvc1.Add("grid_id", "u_j_3");
+                nvc1.Add("qn", "2640");
+                nvc1.Add("pic", "" + localImagePath + "<:><:><:>image/jpeg");
+                nvc1.Add("upload_id", "1024");
 
                 string response = string.Empty;
                 try
                 {
-                    response = HttpHelper.HttpUploadPictureForWall(ref HttpHelper, UsreId, FBGlobals.Instance.PostPicOnWallPostUploadPhotosUrl + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword, picfilepath);
-                    
+                    if (string.IsNullOrEmpty(proxyPort))
+                    {
+                        proxyPort = "0";
+                    }
+                    string UploadUrl = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?av=" + UsreId + "&composerurihash=1";
+                    string UploadPost = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + UsreId + "&ishome=1&photoswaterfallid=" + PhotoWaterfallId + "&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=withtaggericon&loaded_components[3]=ogtaggericon&loaded_components[4]=placetaggericon&loaded_components[5]=ogtaggericon&loaded_components[6]=withtaggericon&loaded_components[7]=placetaggericon&loaded_components[8]=mainprivacywidget&loaded_components[9]=maininput&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx97xN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8GqcEwy8ACxtpmdAw&__req=g&ttstamp=2658170115844511745768511452&__rev=1747572";
+                    string UploadRes = HttpHelper.postFormDataProxy(new Uri(UploadUrl), UploadPost, proxyAddress, int.Parse(proxyPort), proxyUsername, proxyPassword);
+                    string fbId = string.Empty;
+                    string sessionID = string.Empty;
+                    sessionID = Utils.getBetween(UploadRes, "false,\"session_id\":", ",");
+                    string facebookUrl = "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + UsreId + "&image_height=100&image_width=100&letterbox=0&av=" + UsreId + "&qn=2640&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9zob4q8zUK5Uc-dwIxbxjyaJ2aCz588y99Enmlzp8&__req=t&fb_dtsg=" + fb_dtsg + "&ttstamp=265816969558566529711965103&__rev=1745336";
+                    response = HttpHelper.UploadImageWaterfallModel(facebookUrl, facebookUrl, nvc1, "upload_id", "pic", proxyAddress, int.Parse(proxyPort), proxyUsername, proxyPassword);
+
+
+                    if (response.Contains("\"payload\":null"))
+                    {
+
+                        fbId = Utils.getBetween(response, "fbid\":\"", "\"");
+
+                        string PhotoTagUrl = "https://www.facebook.com/photos/tagging/recognition/";
+                        string PhotoTagData = "recognition_project=composer_facerec&photos[0]=" + fbId + "&waterfallID=" + PhotoWaterfallId + "&target=" + UsreId + "&is_page=false&include_unrecognized_faceboxes=false&include_face_crop_src=false&include_recognized_user_profile_picture=false&include_low_confidence_recognitions=false&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8Gqckwy8ACxtpmdAw&__req=x&fb_dtsg=" + fb_dtsg + "&ttstamp=265817110488705595958472112&__rev=1748666";
+                        string PhotoTagresp = HttpHelper.postFormData(new Uri(PhotoTagUrl), PhotoTagData);
+
+                        string getresp = HttpHelper.getHtmlfromUrl(new Uri("https://upload.facebook.com/media/upload/photos/composer/?av=" + UsreId + "&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8Gqckwy8ACxtpmdAw&__req=14&fb_dtsg=" + fb_dtsg + "&ttstamp=265817110488705595958472112&__rev=1748666"));
+
+                        System.Collections.Specialized.NameValueCollection nvc2 = new System.Collections.Specialized.NameValueCollection();
+                        nvc2.Add("composer_session_id", "75363636-65f5-4504-8c01-37540737390a");
+                        nvc2.Add("fb_dtsg", fb_dtsg);
+                        nvc2.Add("xhpc_context", "home");
+                        nvc2.Add("xhpc_ismeta", "1");
+                        nvc2.Add("xhpc_timeline", string.Empty);
+                        nvc2.Add("xhpc_composerid", xhpc_composerid);
+                        nvc2.Add("xhpc_targetid", UsreId);
+                        nvc2.Add("xhpc_publish_type", "1");
+                        nvc2.Add("clp", "{\"cl_impid\":\"" + impId + "\",\"clearcounter\":0,\"elementid\":\"u_0_1a\",\"version\":\"x\",\"parent_fbid\":" + UsreId + "}");
+                        nvc2.Add("xhpc_message_text", message);
+                        nvc2.Add("xhpc_message", message);
+                        nvc2.Add("composer_unpublished_photo[]", fbId);
+                        nvc2.Add("album_type", "128");
+                        nvc2.Add("is_file_form", "1");
+                        nvc2.Add("oid", string.Empty);
+                        nvc2.Add("qn", PhotoWaterfallId);
+                        nvc2.Add("application", "composer");
+                        nvc2.Add("is_explicit_place", string.Empty);
+                        nvc2.Add("composertags_place", string.Empty);
+                        nvc2.Add("composertags_place_name", string.Empty);
+                        nvc2.Add("tagger_session_id", sessionID);
+                        nvc2.Add("action_type_id[]", string.Empty);
+                        nvc2.Add("object_str[]", string.Empty);
+                        nvc2.Add("object_id[]", string.Empty);
+                        nvc2.Add("hide_object_attachment", "0");
+                        nvc2.Add("og_suggestion_mechanism", string.Empty);
+                        nvc2.Add("og_suggestion_logging_data", string.Empty);
+                        nvc2.Add("icon_id", string.Empty);
+                        nvc2.Add("composertags_city", string.Empty);
+                        nvc2.Add("disable_location_sharing", "false");
+                        nvc2.Add("composer_predicted_city", string.Empty);
+                        nvc2.Add("privacyx", privacyXVal);
+
+                        string UpdateWallPicurl = "https://upload.facebook.com/media/upload/photos/composer/?av=" + UsreId + "&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8Gqckwy8ACxtpmdAw&__req=14&fb_dtsg=" + fb_dtsg + "&ttstamp=265817110488705595958472112&__rev=1748666";
+                        response = HttpHelper.UploadImageWaterfallModel(UpdateWallPicurl, string.Empty, nvc2, "privacyx", string.Empty, proxyAddress, int.Parse(proxyPort), proxyUsername, proxyPassword);
+
+
+                    }
                 }
                 catch (Exception ex)
                 {
-                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    GlobusLogHelper.log.Error(ex.Message);
                 }
+
+
                 if (string.IsNullOrEmpty(response))
                 {
                     try
@@ -5278,7 +6155,7 @@ namespace WallPoster
             return isSentPicMessage;
         }
 
-        public bool PostPicture1(ref FacebookUser fbUser, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword,  ref string status)
+        public bool PostPicture1(ref FacebookUser fbUser, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, string message, ref string status)
         {
 
             bool isSentPicMessage = false;
@@ -5289,6 +6166,9 @@ namespace WallPoster
             string xhpc_targetid = string.Empty;
             string message_text = string.Empty;
             string picfilepath = string.Empty;
+            string PhotoWaterfallId = string.Empty;
+            string privacyXVal = string.Empty;
+            string impId = string.Empty;
 
             try
             {
@@ -5297,6 +6177,10 @@ namespace WallPoster
                 picfilepath = localImagePath;
 
                 string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                PhotoWaterfallId = Utils.getBetween(pageSource_Home, "photoswaterfallid\" value=\"", "\"");
+                privacyXVal = Utils.getBetween(pageSource_Home, "privacyx\" value=\"", "\"");
+                impId = Utils.getBetween(pageSource_Home, "\"imp_id\":\"", "\"");
 
                 UsreId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
                 if (string.IsNullOrEmpty(UsreId))
@@ -5340,34 +6224,112 @@ namespace WallPoster
                 //nvc.Add("xhpc_message_text", message);
                 //nvc.Add("xhpc_message", message);
 
+                System.Collections.Specialized.NameValueCollection nvc1 = new System.Collections.Specialized.NameValueCollection();
 
+                nvc1.Add("fb_dtsg", fb_dtsg);
+                nvc1.Add("source", "8");
+                nvc1.Add("profile_id", UsreId);
+                nvc1.Add("grid_id", "u_j_3");
+                nvc1.Add("qn", "2640");
+                nvc1.Add("pic", "" + localImagePath + "<:><:><:>image/jpeg");
+                nvc1.Add("upload_id", "1024");
 
                 string response = string.Empty;
                 try
                 {
-                    response = HttpHelper.HttpUploadPictureForWall(ref HttpHelper, UsreId, FBGlobals.Instance.PostPicOnWallPostUploadPhotosUrl + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword, picfilepath);
+                    if (string.IsNullOrEmpty(proxyPort))
+                    {
+                        proxyPort = "0";
+                    }
+                    string UploadUrl = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?av=" + UsreId + "&composerurihash=1";
+                    string UploadPost = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + UsreId + "&ishome=1&photoswaterfallid=" + PhotoWaterfallId + "&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=withtaggericon&loaded_components[3]=ogtaggericon&loaded_components[4]=placetaggericon&loaded_components[5]=ogtaggericon&loaded_components[6]=withtaggericon&loaded_components[7]=placetaggericon&loaded_components[8]=mainprivacywidget&loaded_components[9]=maininput&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx97xN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8GqcEwy8ACxtpmdAw&__req=g&ttstamp=2658170115844511745768511452&__rev=1747572";
+                    string UploadRes = HttpHelper.postFormDataProxy(new Uri(UploadUrl), UploadPost, proxyAddress, int.Parse(proxyPort), proxyUsername, proxyPassword);
+                    string fbId = string.Empty;
+                    string sessionID = string.Empty;
+                    sessionID = Utils.getBetween(UploadRes, "false,\"session_id\":", ",");
+                    string facebookUrl = "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + UsreId + "&image_height=100&image_width=100&letterbox=0&av=" + UsreId + "&qn=2640&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9zob4q8zUK5Uc-dwIxbxjyaJ2aCz588y99Enmlzp8&__req=t&fb_dtsg=" + fb_dtsg + "&ttstamp=265816969558566529711965103&__rev=1745336";
+                    response = HttpHelper.UploadImageWaterfallModel(facebookUrl, facebookUrl, nvc1, "upload_id", "pic", proxyAddress, int.Parse(proxyPort), proxyUsername, proxyPassword);
 
+
+                    if (response.Contains("\"payload\":null"))
+                    {
+
+                        fbId = Utils.getBetween(response, "fbid\":\"", "\"");
+
+                        string PhotoTagUrl = "https://www.facebook.com/photos/tagging/recognition/";
+                        string PhotoTagData = "recognition_project=composer_facerec&photos[0]=" + fbId + "&waterfallID=" + PhotoWaterfallId + "&target=" + UsreId + "&is_page=false&include_unrecognized_faceboxes=false&include_face_crop_src=false&include_recognized_user_profile_picture=false&include_low_confidence_recognitions=false&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8Gqckwy8ACxtpmdAw&__req=x&fb_dtsg=" + fb_dtsg + "&ttstamp=265817110488705595958472112&__rev=1748666";
+                        string PhotoTagresp = HttpHelper.postFormData(new Uri(PhotoTagUrl), PhotoTagData);
+
+                        string getresp = HttpHelper.getHtmlfromUrl(new Uri("https://upload.facebook.com/media/upload/photos/composer/?av=" + UsreId + "&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8Gqckwy8ACxtpmdAw&__req=14&fb_dtsg=" + fb_dtsg + "&ttstamp=265817110488705595958472112&__rev=1748666"));
+
+                        System.Collections.Specialized.NameValueCollection nvc2 = new System.Collections.Specialized.NameValueCollection();
+                        nvc2.Add("composer_session_id", "75363636-65f5-4504-8c01-37540737390a");
+                        nvc2.Add("fb_dtsg", fb_dtsg);
+                        nvc2.Add("xhpc_context", "home");
+                        nvc2.Add("xhpc_ismeta", "1");
+                        nvc2.Add("xhpc_timeline", string.Empty);
+                        nvc2.Add("xhpc_composerid", xhpc_composerid);
+                        nvc2.Add("xhpc_targetid", UsreId);
+                        nvc2.Add("xhpc_publish_type", "1");
+                        nvc2.Add("clp", "{\"cl_impid\":\"" + impId + "\",\"clearcounter\":0,\"elementid\":\"u_0_1a\",\"version\":\"x\",\"parent_fbid\":" + UsreId + "}");
+                        nvc2.Add("xhpc_message_text", message);
+                        nvc2.Add("xhpc_message", message);
+                        nvc2.Add("composer_unpublished_photo[]", fbId);
+                        nvc2.Add("album_type", "128");
+                        nvc2.Add("is_file_form", "1");
+                        nvc2.Add("oid", string.Empty);
+                        nvc2.Add("qn", PhotoWaterfallId);
+                        nvc2.Add("application", "composer");
+                        nvc2.Add("is_explicit_place", string.Empty);
+                        nvc2.Add("composertags_place", string.Empty);
+                        nvc2.Add("composertags_place_name", string.Empty);
+                        nvc2.Add("tagger_session_id", sessionID);
+                        nvc2.Add("action_type_id[]", string.Empty);
+                        nvc2.Add("object_str[]", string.Empty);
+                        nvc2.Add("object_id[]", string.Empty);
+                        nvc2.Add("hide_object_attachment", "0");
+                        nvc2.Add("og_suggestion_mechanism", string.Empty);
+                        nvc2.Add("og_suggestion_logging_data", string.Empty);
+                        nvc2.Add("icon_id", string.Empty);
+                        nvc2.Add("composertags_city", string.Empty);
+                        nvc2.Add("disable_location_sharing", "false");
+                        nvc2.Add("composer_predicted_city", string.Empty);
+                        nvc2.Add("privacyx", privacyXVal);
+
+                        string UpdateWallPicurl = "https://upload.facebook.com/media/upload/photos/composer/?av=" + UsreId + "&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlymfDgDxiWEyx9CxN6yUgByVbGAEG8DDirZo8popyui9wWhEyfyUnwPUS2O4K5e8GQ8Gqckwy8ACxtpmdAw&__req=14&fb_dtsg=" + fb_dtsg + "&ttstamp=265817110488705595958472112&__rev=1748666";
+                        response = HttpHelper.UploadImageWaterfallModel(UpdateWallPicurl, string.Empty, nvc2, "privacyx", string.Empty, proxyAddress, int.Parse(proxyPort), proxyUsername, proxyPassword);
+
+
+                    }
                 }
                 catch (Exception ex)
                 {
-                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    GlobusLogHelper.log.Error(ex.Message);
                 }
-                if (string.IsNullOrEmpty(response))
-                {
-                    try
-                    {
-                        response = HttpHelper.HttpUploadPictureForWall(ref HttpHelper, UsreId, FBGlobals.Instance.PostPicOnWallPostUploadPhotosUrl + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword, picfilepath);
-                    }
-                    catch (Exception ex)
-                    {
-                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    }
-                }
+
+
+
                 string posturl = FBGlobals.Instance.PostPicOnWallPostAjaxCitySharerResetUrl;
                 string postdata = "__user=" + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=1658167761111108210145";
                 string responsestring = HttpHelper.postFormData(new Uri(posturl), postdata);
-                if (!response.Contains("error") && !string.IsNullOrEmpty(response))
+                string PhotoFbId = string.Empty;
+                if (response.Contains("photo_fbid") && !string.IsNullOrEmpty(response))
                 {
+                    PhotoFbId = Utils.getBetween(response, "photo_fbid\":", ",");
+                    //try
+                    //{
+                    //    string photoUrl = "https://www.facebook.com/photo.php?fbid="+PhotoFbId;
+                    //    string CSVHeader = "Username" + "," + "Photourl";
+
+                    //    string CSV_Content = Username + "," + photoUrl ;
+
+                    //    Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, GlobusFileHelper.DesktopPath+"\\WallPhotoUrl.csv");
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    //}
+
                     isSentPicMessage = true;
                 }
             }
@@ -5378,7 +6340,7 @@ namespace WallPoster
             return isSentPicMessage;
         }
 
-        public bool PostPictureOnFriendWall(ref FacebookUser fbUser,string Message,string FriendID, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, ref string status)
+        public bool PostPictureOnFriendWall(ref FacebookUser fbUser, string Message, string FriendID, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, ref string status)
         {
 
             bool isSentPicMessage = false;
@@ -5396,8 +6358,8 @@ namespace WallPoster
 
                 picfilepath = localImagePath;
 
-               // string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
-                string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/profile.php?id=" + fbUser.username));
+                // string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+                string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/profile.php?id=" + FriendID));
 
                 UserId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
                 if (string.IsNullOrEmpty(UserId))
@@ -5434,15 +6396,15 @@ namespace WallPoster
                 string tagger_session_id = string.Empty;
                 string hide_object_attachment = string.Empty;
 
-                string is_file_form =  string.Empty;
+                string is_file_form = string.Empty;
                 string album_type = string.Empty;
-                string composer_unpublished_photo= string.Empty;
+                string composer_unpublished_photo = string.Empty;
                 string clp = string.Empty;
-                string xhpc_publish_type =  string.Empty;
+                string xhpc_publish_type = string.Empty;
                 string xhpc_context = string.Empty;
-                string application =  string.Empty;
-                string xhpc_ismeta= string.Empty;
-                string xhpc_timeline= string.Empty;
+                string application = string.Empty;
+                string xhpc_ismeta = string.Empty;
+                string xhpc_timeline = string.Empty;
                 string disable_location_sharing = string.Empty;
 
 
@@ -5595,7 +6557,7 @@ namespace WallPoster
                 nvc.Add("grid_id", gridid);
                 nvc.Add("qn", qn);
                 nvc.Add("0", localImagePath);
-                nvc.Add("upload_id","1025");
+                nvc.Add("upload_id", "1025");
 
 
 
@@ -5603,7 +6565,7 @@ namespace WallPoster
                 try
                 {
                     response = HttpHelper.HttpUploadPictureForWallNew(ref HttpHelper, UserId, "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + FriendID + "&__av=" + UserId + "&__user=" + UserId + "&__a=1&__dyn=7n8ajEAMBlynzpQ9UoHaEWCueyp9Esx6iWF29aGEVFLFwxBxCbzESu49UJ6K4bBw&__req=13&fb_dtsg=" + fb_dtsg + "&ttstamp=26581728812272951201044890108&__rev=1391091" + UserId + "&__a=1&fb_dtsg=" + fb_dtsg, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword, picfilepath);
-                    composer_unpublished_photo = Utils.getBetween(response, "composer_unpublished_photo[]\\\" value=\\\"", "\\\"");
+                    composer_unpublished_photo = Utils.getBetween(response, "fbid\":\"", "\"");
                     //fb_dtsg = Utils.getBetween(response, "fb_dtsg\\\" value=\\\"", "\\\"");
                 }
                 catch (Exception ex)
@@ -5625,7 +6587,7 @@ namespace WallPoster
                 {
 
                     nvc.Clear();
-                    nvc.Add("composer_session_id","");
+                    nvc.Add("composer_session_id", "");
                     nvc.Add("fb_dtsg", fb_dtsg);
                     nvc.Add("xhpc_context", xhpc_context);
                     nvc.Add("xhpc_ismeta", xhpc_ismeta);
@@ -5639,10 +6601,10 @@ namespace WallPoster
                     nvc.Add("composer_unpublished_photo[]", composer_unpublished_photo);
                     nvc.Add("album_type", album_type);
                     nvc.Add("is_file_form", is_file_form);
-                    nvc.Add("oid","");
+                    nvc.Add("oid", "");
                     nvc.Add("qn", qn);
                     nvc.Add("application", application);
-                    nvc.Add("backdated_date[year]","" );
+                    nvc.Add("backdated_date[year]", "");
                     nvc.Add("backdated_date[month]", "");
                     nvc.Add("backdated_date[day]", "");
                     nvc.Add("backdated_date[hour]", "");
@@ -5651,7 +6613,7 @@ namespace WallPoster
                     nvc.Add("composertags_place", "");
                     nvc.Add("composertags_place_name", "");
                     nvc.Add("tagger_session_id", tagger_session_id);
-                    nvc.Add("action_type_id[]","");
+                    nvc.Add("action_type_id[]", "");
                     nvc.Add("object_str[]", "");
                     nvc.Add("object_id[]", "");
                     nvc.Add("og_location_id[]", "");
@@ -5661,9 +6623,9 @@ namespace WallPoster
                     nvc.Add("icon_id", "");
                     nvc.Add("composertags_city", "");
                     nvc.Add("disable_location_sharing", disable_location_sharing);
-                    nvc.Add("composer_predicted_city","");
+                    nvc.Add("composer_predicted_city", "");
                 }
-                string responsestring = HttpHelper.HttpUploadPictureForWallNewFinal(ref HttpHelper, UserId, "https://upload.facebook.com/media/upload/photos/composer/?__av="+UserId+"&__user="+UserId+"&__a=1&__dyn=7n8ajEAMBlynzpQ9UoHaEWCueyp9Esx6iWF29aGEVFLFwxBxCbzESu49UJ6K4bBw&__req=o&fb_dtsg="+fb_dtsg+"&ttstamp=26581691188750571181101086979&__rev=1391091", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword, picfilepath);
+                string responsestring = HttpHelper.HttpUploadPictureForWallNewFinal(ref HttpHelper, UserId, "https://upload.facebook.com/media/upload/photos/composer/?__av=" + UserId + "&__user=" + UserId + "&__a=1&__dyn=7n8ajEAMBlynzpQ9UoHaEWCueyp9Esx6iWF29aGEVFLFwxBxCbzESu49UJ6K4bBw&__req=o&fb_dtsg=" + fb_dtsg + "&ttstamp=26581691188750571181101086979&__rev=1391091", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword, picfilepath);
                 if (responsestring.Contains("error") && !string.IsNullOrEmpty(responsestring))
                 {
                     //string resp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/places/city_sharer_reset.php"), "target_id=0&__user="+UserId+"&__a=1&__dyn=7n8ajEAMBlynzpQ9UoHaEWCueyp9Esx6iWF29aGEVFLFwxBxCbzESu49UJ6K4bBw&__req=r&fb_dtsg=AQEvW29vnlEO&ttstamp=26581691188750571181101086979&__rev=1391091");
@@ -5711,22 +6673,33 @@ namespace WallPoster
                 }
 
                 lstMessagesWallPoster = lstWallMessageWallPoster.Distinct().ToList();
+                lstMessagesWallPoster.Shuffle();
                 if (IsUseTextMessageWallPoster)
                 {
-                    MsgWallPoster = lstWallMessageWallPoster[Utils.GenerateRandom(0, lstWallMessageWallPoster.Count)];
+                    MsgWallPoster = lstWallMessageWallPoster[new Random().Next(0, lstMessagesWallPoster.Count - 1)];
                 }
                 if (IsUseURLsMessageWallPoster)
                 {
-                    MsgWallPoster = lstWallPostURLsWallPoster[Utils.GenerateRandom(0, lstWallPostURLsWallPoster.Count)];
+                    MsgWallPoster = lstWallPostURLsWallPoster[new Random().Next(0, lstWallPostURLsWallPoster.Count - 1)];
                 }
                 if (ChkSpinnerWallMessaeWallPoster)
                 {
-                    MsgWallPoster = lstSpinnerWallMessageWallPoster[Utils.GenerateRandom(0, lstSpinnerWallMessageWallPoster.Count)];
+                    MsgWallPoster = lstSpinnerWallMessageWallPoster[new Random().Next(0, lstSpinnerWallMessageWallPoster.Count - 1)];
                 }
-
-                if (Globals.CheckLicenseManager =="fdfreetrial")
-                { 
-                    MsgWallPoster=MsgWallPoster+"\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                if (IsUniqueMessagePosting)
+                {
+                    if (MessagesQueue.Count > 0)
+                    {
+                        MsgWallPoster = MessagesQueue.Dequeue();
+                    }
+                    else
+                    {
+                        MsgWallPoster = lstWallMessageWallPoster[Utils.GenerateRandom(0, lstWallMessageWallPoster.Count - 1)];
+                    }
+                }
+                if (Globals.CheckLicenseManager == "fdfreetrial")
+                {
+                    MsgWallPoster = MsgWallPoster + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
                 }
 
                 #region CommentedCode
@@ -5777,7 +6750,7 @@ namespace WallPoster
                     {
                         xhpc_composerid = GlobusHttpHelper.ParseJson(pageSource_Home, "fb_dtsg");
                     }
-                   
+
                     string xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSourceWallPostUser, "xhpc_targetid");
                     if (string.IsNullOrEmpty(fb_dtsg))
                     {
@@ -5817,7 +6790,7 @@ namespace WallPoster
                 var itemId = lstFriend.Distinct();
                 try
                 {
-                     int countFrnd=0;
+                    int countFrnd = 0;
                     string pageSource = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl + UsreId));
                     if (pageSource.Contains("pagelet_timeline_medley_friends"))
                     {
@@ -5826,22 +6799,24 @@ namespace WallPoster
                         {
                             string[] aa = System.Text.RegularExpressions.Regex.Split(pageSource, "pagelet_timeline_medley_friends");
                             findTheAllFrnList = FBUtils.getBetween(aa[1], "\"_gs6\">", "</span>");
-                         
+
                         }
-                   
+
                         countFrnd = Convert.ToInt32(findTheAllFrnList);
                     }
                     else if (pageSource.Contains("FriendCount"))
                     {
                         string findTheAllFrnList = FBUtils.getBetween(pageSource_Home, "FriendCount", "}");
+                        findTheAllFrnList = Utils.getBetween(findTheAllFrnList + "@&@&&@&@&&@", "FriendCount\":", "@&@&&@&@&&@");
+                        countFrnd = Convert.ToInt32(findTheAllFrnList);
                     }
-                   
 
-                 
-                      //FriendCount
 
-                    GlobusLogHelper.log.Info("Found " + countFrnd + " friend's ids");
-                    GlobusLogHelper.log.Debug("Found " + countFrnd + " friend's ids");
+
+                    //FriendCount
+
+                    GlobusLogHelper.log.Info("Found " + lstFriend.Count + " friend's ids");
+                    GlobusLogHelper.log.Debug("Found " + lstFriend.Count + " friend's ids");
 
                 }
                 catch (Exception ex)
@@ -5874,6 +6849,7 @@ namespace WallPoster
 
                     foreach (string friendId in itemId)
                     {
+                        bool isPosted = false;
                         if (IsUniqueMessagePosting)
                         {
                             if (Utils.CheckIfMessagePosted(fbUser.username, friendId, "Text"))
@@ -5959,7 +6935,7 @@ namespace WallPoster
                                                     {
                                                         lstSpinnerWallMessageWallPoster.Remove(message);
                                                     }
-                                                
+
                                                 }
                                                 catch (Exception ex)
                                                 {
@@ -5978,7 +6954,7 @@ namespace WallPoster
                                                     message = lstMessagesWallPoster[Utils.GenerateRandom(0, lstMessagesWallPoster.Count - 1)];
                                                 }
 
-                                                    
+
                                             }
                                         }
                                     }
@@ -5994,11 +6970,14 @@ namespace WallPoster
                                         {
                                             if (!string.IsNullOrEmpty(message))
                                             {
-                                              
+                                                if (Globals.CheckLicenseManager == "fdfreetrial")
+                                                {
+                                                    message = message + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                                                }
 
-                                                PostOnFriendsWallTestMessage(friendId, message, ref fbUser, ref UsreId); 
+                                                isPosted = PostOnFriendsWallTestMessage(friendId, message, ref fbUser, ref UsreId);
                                             }
-                                           
+
                                         }
                                         else
                                         {
@@ -6006,8 +6985,13 @@ namespace WallPoster
                                             {
                                                 if (!string.IsNullOrEmpty(message))
                                                 {
-                                                  
+                                                    if (Globals.CheckLicenseManager == "fdfreetrial")
+                                                    {
+                                                        message = message + "\n\n\n\n Sent from FREE version of Facedominator. To remove this message, please buy it.";
+                                                    }
+
                                                     PostOnFriendWallUsingSpinMsg(friendId, message, ref fbUser, ref UsreId);
+                                                    isPosted = true;
                                                 }
                                             }
                                         }
@@ -6016,7 +7000,10 @@ namespace WallPoster
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-                                    CountPostWall++;
+                                    if (isPosted)
+                                    {
+                                        CountPostWall++;
+                                    }
                                 }
                             }
                         }
@@ -6044,10 +7031,11 @@ namespace WallPoster
                 GlobusLogHelper.log.Debug("Wall Posting Completed With Username : " + fbUser.username);
                 // HttpHelper.http.Dispose(); 
             }
-        }       
+        }
 
-        private void PostOnFriendsWallTestMessage(string friendId, string wallmessage, ref FacebookUser fbUser, ref string UsreId)
+        private bool PostOnFriendsWallTestMessage(string friendId, string wallmessage, ref FacebookUser fbUser, ref string UsreId)
         {
+            bool isPosted = false;
             try
             {
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
@@ -6094,15 +7082,15 @@ namespace WallPoster
                                     TotalNoOfWallPoster_Counter++;
                                     if (IsUniqueMessagePosting)
                                     {
-                                        Utils.InsertIntoDB(fbUser.username, friendId , "Text"); 
+                                        Utils.InsertIntoDB(fbUser.username, friendId, "Text");
                                     }
                                     GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
-
+                                    isPosted = true;
                                     countWallPoster++;
 
                                     try
-                                    {                                      
+                                    {
 
                                         int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
                                         GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
@@ -6132,9 +7120,10 @@ namespace WallPoster
                                     GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
                                     countWallPoster++;
+                                    isPosted = true;
 
                                     try
-                                    {                                       
+                                    {
 
                                         int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
                                         GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
@@ -6171,7 +7160,7 @@ namespace WallPoster
 
                                 GlobusLogHelper.log.Info("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
                                 GlobusLogHelper.log.Debug("Posted on Friend's wall :" + postUrl + " With Username : " + fbUser.username);
-
+                                isPosted = true;
                                 countWallPoster++;
                                 if (IsUniqueMessagePosting)
                                 {
@@ -6179,7 +7168,7 @@ namespace WallPoster
                                 }
 
                                 try
-                                {                                 
+                                {
 
                                     int delayInSeconds = Utils.GenerateRandom(minDelayWallPoster * 1000, maxDelayWallPoster * 1000);
                                     GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
@@ -6220,6 +7209,7 @@ namespace WallPoster
                     try
                     {
                         PostOnFriendWallUsingGreetMsg(friendid, wallMessage, ref fbUser, ref UsreId);
+                        isPosted = true;
                     }
                     catch (Exception ex)
                     {
@@ -6231,6 +7221,7 @@ namespace WallPoster
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
+            return isPosted;
         }
     }
 }

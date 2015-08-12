@@ -6,6 +6,10 @@ using BaseLib;
 using Accounts;
 using System.Threading;
 using faceboardpro;
+using System.Data;
+using System.Text.RegularExpressions;
+using Globussoft;
+using System.IO;
 
 namespace Campaigns
 {
@@ -19,10 +23,10 @@ namespace Campaigns
         {
             try
             {
-                string cmpName=string.Empty; 
-                string cmpProcess=string.Empty; 
-                string account=string.Empty; 
-                List<string> lstFanPageURLs=new List<string>();
+                string cmpName = string.Empty;
+                string cmpProcess = string.Empty;
+                string account = string.Empty;
+                List<string> lstFanPageURLs = new List<string>();
                 List<string> lstFanPageMessages = new List<string>();
                 List<string> lstFanPageComments = new List<string>();
 
@@ -46,7 +50,7 @@ namespace Campaigns
 
         public void cmpFanPageLikerLogin(string cmpName, string cmpProcess, string account, List<string> lstFanPageURLs, List<string> lstFanPageMessages, List<string> lstFanPageComments)
         {
-            
+
             try
             {
                 if (isStopCmpFanPageLiker)
@@ -121,7 +125,7 @@ namespace Campaigns
                             {
                                 // Call LikePage
 
-                                StartCmpFanPageLikerProcess(ref objFacebookUser,cmpName,cmpProcess,account, lstFanPageURLs, lstFanPageMessages,lstFanPageComments);
+                                StartCmpFanPageLikerProcess(ref objFacebookUser, cmpName, cmpProcess, account, lstFanPageURLs, lstFanPageMessages, lstFanPageComments);
 
                             }
                             else
@@ -140,7 +144,7 @@ namespace Campaigns
                         GlobusLogHelper.log.Info("Account : " + account + " Not In Correct Format !");
                         GlobusLogHelper.log.Debug("Account : " + account + " Not In Correct Format !");
 
-                        return ;
+                        return;
                     }
                 }
 
@@ -149,10 +153,10 @@ namespace Campaigns
                     GlobusLogHelper.log.Info("Account : " + account + " Not In Correct Format !");
                     GlobusLogHelper.log.Debug("Account : " + account + " Not In Correct Format !");
 
-                    return ;
+                    return;
                 }
 
-               
+
             }
             catch (Exception ex)
             {
@@ -195,6 +199,8 @@ namespace Campaigns
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
         }
-        
+
     }
+
+
 }

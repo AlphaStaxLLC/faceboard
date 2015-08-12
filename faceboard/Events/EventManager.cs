@@ -232,7 +232,7 @@ namespace Events
             {
                 try
                 {
-                 //   if (!isStopEventInviter)
+                    //   if (!isStopEventInviter)
                     {
                         lock (lockrThreadControllerEventInviter)
                         {
@@ -371,40 +371,56 @@ namespace Events
                         {
                             try
                             {
-                                index = 0;
-                                string checkableitems = "&checkableitems[" + index + "]";
-                                string profileChooserItems = "%7B%22";
 
+                                index = 0;
+                                //string checkableitems = "&checkableitems[" + index + "]";
+                                //string profileChooserItems = "%7B%22";
+
+                                //foreach (string lstFrienditem in item)
+                                //{
+                                //    try
+                                //    {
+                                //        index++;
+                                //        profileChooserItems = profileChooserItems + lstFrienditem + "%22%3A1%2C%22";
+                                //        checkableitems = checkableitems + "=" + lstFrienditem + "&checkableitems[" + index + "]";
+                                //    }
+                                //    catch (Exception ex)
+                                //    {
+                                //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                //    }
+                                //}
+
+
+                                //try
+                                //{
+                                //    int indexOfLastComma = profileChooserItems.LastIndexOf("%2C%22");
+                                //    profileChooserItems = profileChooserItems.Remove(indexOfLastComma);
+                                //    profileChooserItems = profileChooserItems + "%7D";
+                                //    int indexOfLastcheckableitems = checkableitems.LastIndexOf("&checkableitems[" + index + "]");
+                                //    checkableitems = checkableitems.Remove(indexOfLastcheckableitems);
+                                //}
+                                //catch (Exception ex)
+                                //{
+                                //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                //}
+
+                                string FriendList = string.Empty;
                                 foreach (string lstFrienditem in item)
                                 {
                                     try
                                     {
                                         index++;
-                                        profileChooserItems = profileChooserItems + lstFrienditem + "%22%3A1%2C%22";
-                                        checkableitems = checkableitems + "=" + lstFrienditem + "&checkableitems[" + index + "]";
+                                        FriendList = FriendList + "\"" + lstFrienditem + "\":1,";
+
                                     }
                                     catch (Exception ex)
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
                                 }
-
-
-                                try
-                                {
-                                    int indexOfLastComma = profileChooserItems.LastIndexOf("%2C%22");
-                                    profileChooserItems = profileChooserItems.Remove(indexOfLastComma);
-                                    profileChooserItems = profileChooserItems + "%7D";
-                                    int indexOfLastcheckableitems = checkableitems.LastIndexOf("&checkableitems[" + index + "]");
-                                    checkableitems = checkableitems.Remove(indexOfLastcheckableitems);
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-
-
-
+                                FriendList = FriendList.Remove(FriendList.LastIndexOf(","));
+                                FriendList = "{" + FriendList + "}";
+                                FriendList = Uri.EscapeDataString(FriendList);
                                 if (lstEventURLsFileitem.Contains("events/"))
                                 {
                                     try
@@ -442,11 +458,13 @@ namespace Events
                                     string strAjaxGetRequest2 = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.EventInviterGetAjaxIncludeAllPlan_Id + strplan_id + "&__user=" + __user + "&__a=1"));
 
                                     //string strPostData = "fb_dtsg=" + fb_dtsg + "&profileChooserItems=" + profileChooserItems + checkableitems + "&__user=" + __user + "&__a=1&phstamp=" + Globals.GenerateTimeStamp() + ""; //fb_dtsg=AQCAp9jD&profileChooserItems=%7B%22100001409031727%22%3A1%7D&checkableitems[0]=100001409031727&__user=100003798185175&__a=1&phstamp=1658167651125710668131"
-                                    string strPostData = "fb_dtsg=" + fb_dtsg + "&profileChooserItems=" + profileChooserItems + checkableitems + "&__user=" + __user + "&__a=1&__dyn=798aD5z5ynU&__req=a&phstamp=" + Utils.GenerateTimeStamp() + ""; //fb_dtsg=AQCAp9jD&profileChooserItems=%7B%22100001409031727%22%3A1%7D&checkableitems[0]=100001409031727&__user=100003798185175&__a=1&phstamp=1658167651125710668131"
-
+                                    //string strPostData = "fb_dtsg=" + fb_dtsg + "&profileChooserItems=" + profileChooserItems + checkableitems + "&__user=" + __user + "&__a=1&__dyn=798aD5z5ynU&__req=a&phstamp=" + Utils.GenerateTimeStamp() + ""; //fb_dtsg=AQCAp9jD&profileChooserItems=%7B%22100001409031727%22%3A1%7D&checkableitems[0]=100001409031727&__user=100003798185175&__a=1&phstamp=1658167651125710668131"
+                                    string strPostData = string.Empty;
+                                    strPostData = "fb_dtsg=" + fb_dtsg + "&at_limit=false&session_id=73081061&profileChooserItems=" + FriendList + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bHaEWCueyp9Esx6iWF3oyupFLHwxBxCbzGwThE-8yUnwPUS2O58kUyu7W88zpEngy4U_CKuEOqUlzU&__req=i&ttstamp=26581708073854582728654108&__rev=1849386";
                                     //string strPostURL = "http://www.facebook.com/ajax/events/permalink/invite.php?plan_id=" + strplan_id + "&profile_chooser=1";
 
                                     string strPostURL = FBGlobals.Instance.EventInviterPostAjaxInvitePlan_Id + strplan_id + "&source=1";
+                                    strPostURL = "https://www.facebook.com/ajax/events/permalink/invite.php?plan_id=" + strplan_id + "&acontext[ref]=51&acontext[source]=1&acontext[action_history]=[%7B%22surface%22%3A%22permalink%22%2C%22mechanism%22%3A%22surface%22%2C%22extra_data%22%3A[]%7D]";
 
 
                                     string lastResponseStatus = string.Empty;
@@ -508,7 +526,7 @@ namespace Events
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-                                    
+
                                 }
                             }
                             catch (Exception ex)
@@ -570,7 +588,7 @@ namespace Events
             get;
             set;
         }
-       
+
         #endregion
 
         public void StartEvenCreator()
@@ -692,7 +710,7 @@ namespace Events
 
                                 objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
                             }
-                        
+
 
                             if (objFacebookUser.isloggedin)
                             {
@@ -722,7 +740,7 @@ namespace Events
             {
                 try
                 {
-                   // if (!isStopEvenCreator)
+                    // if (!isStopEvenCreator)
                     {
                         lock (lockrThreadControllerEvenCreator)
                         {
@@ -778,7 +796,7 @@ namespace Events
 
                 GlobusHttpHelper gHttpHelper = fbUser.globusHttpHelper;
 
-                string homePageSource=gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+                string homePageSource = gHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
 
                 userid = GlobusHttpHelper.GetParamValue(homePageSource, "user");
                 if (string.IsNullOrEmpty(userid))
@@ -795,26 +813,26 @@ namespace Events
                 }
 
                 fbdtsg = GlobusHttpHelper.Get_fb_dtsg(homePageSource);
-                
+
 
                 foreach (string item in LstEventDetailsEventCreator)
                 {
                     try
                     {
-                        string[] eventDetailsArr=Regex.Split(item, "<:>");
+                        string[] eventDetailsArr = Regex.Split(item, "<:>");
 
                         for (int i = 0; i < eventDetailsArr.Length; i++)
                         {
                             try
                             {
-                                string EventDetails=eventDetailsArr[i];
-                                
+                                string EventDetails = eventDetailsArr[i];
+
                                 if (EventDetails.Contains("Name") || EventDetails.Contains("name"))
                                 {
                                     try
                                     {
                                         //title = Uri.EscapeDataString(EventDetails.Replace("Name", string.Empty).Replace("name", string.Empty).Trim());
-                                        title = Uri.EscapeDataString(EventDetails.Replace("Name", string.Empty).Replace("name", string.Empty).Replace("<",string.Empty).Replace(">",string.Empty).Trim());
+                                        title = Uri.EscapeDataString(EventDetails.Replace("Name", string.Empty).Replace("name", string.Empty).Replace("<", string.Empty).Replace(">", string.Empty).Trim());
                                     }
                                     catch (Exception ex)
                                     {
@@ -896,12 +914,12 @@ namespace Events
 
                         try
                         {
-                            string getlocationpage = "https://www.facebook.com/ajax/places/typeahead?value=" + location + "&include_address=2&include_subtext=true&exact_match=false&use_unicorn=true&allow_places=true&allow_cities=true&render_map=true&limit=15&new_js_ranking=0&include_source=plan_edit&city_bias=false&map_height=150&map_width=348&ref=xhp_fb__events__create__location_input%3A%3Arender&sid=771836702690&city_id=1019627&city_set=false&request_id=0.6745269983075559&__user=" + userid +"&__a=1&__dyn=7n8ahyj35zoSt2u6aWizG85oCiq78hyWgSmEVFLFwxBxCbzGxa48jhHw&__req=1q&__rev=1353801%20HTTP/1.1";
+                            string getlocationpage = "https://www.facebook.com/ajax/places/typeahead?value=" + location + "&include_address=2&include_subtext=true&exact_match=false&use_unicorn=true&allow_places=true&allow_cities=true&render_map=true&limit=15&new_js_ranking=0&include_source=plan_edit&city_bias=false&map_height=150&map_width=348&ref=xhp_fb__events__create__location_input%3A%3Arender&sid=771836702690&city_id=1019627&city_set=false&request_id=0.6745269983075559&__user=" + userid + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizG85oCiq78hyWgSmEVFLFwxBxCbzGxa48jhHw&__req=1q&__rev=1353801%20HTTP/1.1";
                             string pageresponseGetlocationpage = gHttpHelper.getHtmlfromUrl(new Uri(getlocationpage));
                             int startindex = pageresponseGetlocationpage.IndexOf("uid\":");
-                            string start = pageresponseGetlocationpage.Substring(startindex).Replace("uid\":",string.Empty);
+                            string start = pageresponseGetlocationpage.Substring(startindex).Replace("uid\":", string.Empty);
                             int endindex = start.IndexOf(",");
-                            string end = start.Substring(0, endindex).Replace(",",string.Empty);
+                            string end = start.Substring(0, endindex).Replace(",", string.Empty);
                             locationid = end.Trim();
                         }
                         catch (Exception ex)
@@ -914,19 +932,19 @@ namespace Events
                             if (whentime.StartsWith("0"))
                             {
                                 int startindex2 = whentime.IndexOf("0");
-                               whentime  = whentime.Substring(startindex2).Replace("0",string.Empty);
+                                whentime = whentime.Substring(startindex2).Replace("0", string.Empty);
                             }
                             string gettimepage = "https://www.facebook.com/ajax/typeahead/time_bootstrap.php?request_id=0.8878094537649304&__user=" + userid + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzGxa49UJ6K&__req=25&__rev=1353801%20HTTP/1.1";
                             string pageresponseGetTimePage = gHttpHelper.getHtmlfromUrl(new Uri(gettimepage));
                             int startindex = pageresponseGetTimePage.IndexOf(whentime);
                             string start = pageresponseGetTimePage.Substring(startindex).Replace(whentime, string.Empty);
                             int startindex1 = start.IndexOf("uid\":");
-                            string start1 = start.Substring(startindex1).Replace("uid\":",string.Empty);
+                            string start1 = start.Substring(startindex1).Replace("uid\":", string.Empty);
                             int endindex1 = start1.IndexOf(",");
-                            string end = start1.Substring(0, endindex1).Replace(",", string.Empty).Replace("\"",string.Empty);
+                            string end = start1.Substring(0, endindex1).Replace(",", string.Empty).Replace("\"", string.Empty);
                             timeid = end.Trim();
-                            
-                                
+
+
                         }
                         catch (Exception ex)
                         {
@@ -940,7 +958,7 @@ namespace Events
                             int startindex = pgresponse.IndexOf("tz_identifier\":\"");
                             string start = pgresponse.Substring(startindex).Replace("tz_identifier\":\"", string.Empty);
                             int endindex = start.IndexOf("}");
-                            string end = start.Substring(0, endindex).Replace("}", string.Empty).Replace("\"",string.Empty).Replace("\\",string.Empty);
+                            string end = start.Substring(0, endindex).Replace("}", string.Empty).Replace("\"", string.Empty).Replace("\\", string.Empty);
                             timezone = Uri.EscapeDataString(end.Trim());
                         }
                         catch
@@ -952,17 +970,17 @@ namespace Events
 
                         string createEventPostSaveUrl = FBGlobals.Instance.EventCreatorPostAjaxCreateEventSaveUrl;
 
-                       //string savePostData = "fb_dtsg=" + fbdtsg + "&title=" + title + "&details_text=" + detailstext + "&details=" + details + "&pre_details=&location_id="+ locationid + "&location=" + location + "&isplacetexttag=&pre_location=&pre_location_id=&when_dateIntlDisplay=" + whendateIntlDisplay + "&when_date=" + whendate + "&when_time="+ timeid +"&when_time_display_time=" + whentimedisplaytime+"&audience[0][value]=" + audiencevalue + "&guest_invite=on&pre_guest_invite=&parent_id=&source=10&who=&__user=" + userid + "&__a=1&__dyn=7n8apij35zpVpQ9UmAEKU&__req=1f&phstamp=" + Utils.GenerateTimeStamp() + "";
+                        //string savePostData = "fb_dtsg=" + fbdtsg + "&title=" + title + "&details_text=" + detailstext + "&details=" + details + "&pre_details=&location_id="+ locationid + "&location=" + location + "&isplacetexttag=&pre_location=&pre_location_id=&when_dateIntlDisplay=" + whendateIntlDisplay + "&when_date=" + whendate + "&when_time="+ timeid +"&when_time_display_time=" + whentimedisplaytime+"&audience[0][value]=" + audiencevalue + "&guest_invite=on&pre_guest_invite=&parent_id=&source=10&who=&__user=" + userid + "&__a=1&__dyn=7n8apij35zpVpQ9UmAEKU&__req=1f&phstamp=" + Utils.GenerateTimeStamp() + "";
                         string savePostData = "fb_dtsg=" + fbdtsg + "&title=" + title + "&details_text=" + detailstext + "&details=" + details + "&pre_details=&location_id=" + locationid + "&location=" + location + "&isplacetexttag=&pre_location=&pre_location_id=&when_dateIntlDisplay=" + whendateIntlDisplay + "&when_date=" + whendate + "&when_time=" + timeid + "&when_time_display_time=" + whentimedisplaytime + "&when_timezone=" + timezone + "&privacyx=1439959856260766&extra_data=&who=&__user=" + userid + "&__a=1&__dyn=7n8apij35zpVpQ9UmAEKU&__req=g&ttstamp=" + Utils.GenerateTimeStamp() + "";
                         string createEventPostSaveRes = gHttpHelper.postFormData(new Uri(createEventPostSaveUrl), savePostData);
 
                         if (createEventPostSaveRes.Contains("?context=create"))
                         {
-                            string eventCreatedURL=string.Empty;
+                            string eventCreatedURL = string.Empty;
 
                             try
                             {
-                                eventCreatedURL = createEventPostSaveRes.Substring(createEventPostSaveRes.IndexOf("goURI("), createEventPostSaveRes.IndexOf("?context=create", createEventPostSaveRes.IndexOf("goURI(")) - createEventPostSaveRes.IndexOf("goURI(")).Replace("\"", string.Empty).Replace("goURI(", string.Empty).Replace("events", string.Empty).Replace("\\",string.Empty).Replace(@"\\\/",string.Empty).Replace(@"//",string.Empty).Replace(@"/",string.Empty).Trim();
+                                eventCreatedURL = createEventPostSaveRes.Substring(createEventPostSaveRes.IndexOf("goURI("), createEventPostSaveRes.IndexOf("?context=create", createEventPostSaveRes.IndexOf("goURI(")) - createEventPostSaveRes.IndexOf("goURI(")).Replace("\"", string.Empty).Replace("goURI(", string.Empty).Replace("events", string.Empty).Replace("\\", string.Empty).Replace(@"\\\/", string.Empty).Replace(@"//", string.Empty).Replace(@"/", string.Empty).Trim();
                                 eventCreatedURL = FBGlobals.Instance.fbeventsUrl + eventCreatedURL;
                             }
                             catch (Exception ex)

@@ -6,12 +6,12 @@ using log4net;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FaceDominator")]
+[assembly: AssemblyTitle("faceboardpro")]
 [assembly: AssemblyDescription("Facebook Marketing Software")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("FaceDominator LLC")]
-[assembly: AssemblyProduct("FaceDominator")]
-[assembly: AssemblyCopyright("Copyright © FaceDominator LLC 2013")]
+[assembly: AssemblyCompany("socioboard Technology")]
+[assembly: AssemblyProduct("faceboardpro")]
+[assembly: AssemblyCopyright("Copyright © faceboardpro LLC 2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,6 +33,6 @@ using log4net;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.9")]
-[assembly: AssemblyFileVersion("2.0.0.9")]
+[assembly: AssemblyVersion("2.0.0.8")]
+[assembly: AssemblyFileVersion("2.0.0.8")]
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "App.config", Watch = true)]

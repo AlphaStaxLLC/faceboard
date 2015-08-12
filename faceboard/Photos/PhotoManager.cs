@@ -38,6 +38,7 @@ namespace Photos
             get;
             set;
         }
+        public string SelectedAccount = string.Empty;
 
         public int NoOfThreadsPhotoTagging
         {
@@ -56,6 +57,8 @@ namespace Photos
             get;
             set;
         }
+        public List<string> LstPhotoTaggingtargettedProfiles = new List<string>();
+
 
         #endregion
 
@@ -100,60 +103,88 @@ namespace Photos
                     numberOfAccountPatch = NoOfThreadsPhotoTagging;
                 }
 
-                List<List<string>> list_listAccounts = new List<List<string>>();
-                if (FBGlobals.listAccounts.Count >= 1)
+                if (string.IsNullOrEmpty(SelectedAccount))
                 {
-
-                    list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
-
-                    foreach (List<string> listAccounts in list_listAccounts)
+                    List<List<string>> list_listAccounts = new List<List<string>>();
+                    if (FBGlobals.listAccounts.Count >= 1)
                     {
-                        //int tempCounterAccounts = 0; 
 
-                        foreach (string account in listAccounts)
+                        list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
+
+                        foreach (List<string> listAccounts in list_listAccounts)
                         {
-                            try
+                            //int tempCounterAccounts = 0; 
+
+                            foreach (string account in listAccounts)
                             {
-                                lock (lockrThreadControllerPhotoTagging)
+                                try
                                 {
-                                    try
+                                    lock (lockrThreadControllerPhotoTagging)
                                     {
-                                        if (countThreadControllerPhotoTagging >= listAccounts.Count)
+                                        try
                                         {
-                                            Monitor.Wait(lockrThreadControllerPhotoTagging);
+                                            if (countThreadControllerPhotoTagging >= listAccounts.Count)
+                                            {
+                                                Monitor.Wait(lockrThreadControllerPhotoTagging);
+                                            }
+
+                                            string acc = account.Remove(account.IndexOf(':'));
+
+                                            //Run a separate thread for each account
+                                            FacebookUser item = null;
+                                            if (acc == SelectedAccount)
+                                            {
+                                                FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                                                if (item != null)
+                                                {
+
+                                                    Thread profilerThread = new Thread(StartMultiThreadsPhotoTagging);
+                                                    profilerThread.Name = "workerThread_Profiler_" + acc;
+                                                    profilerThread.IsBackground = true;
+
+
+                                                    profilerThread.Start(new object[] { item });
+
+                                                    countThreadControllerPhotoTagging++;
+                                                }
+                                            }
                                         }
-
-                                        string acc = account.Remove(account.IndexOf(':'));
-
-                                        //Run a separate thread for each account
-                                        FacebookUser item = null;
-                                        FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
-
-                                        if (item != null)
+                                        catch (Exception ex)
                                         {
-
-                                            Thread profilerThread = new Thread(StartMultiThreadsPhotoTagging);
-                                            profilerThread.Name = "workerThread_Profiler_" + acc;
-                                            profilerThread.IsBackground = true;
-
-
-                                            profilerThread.Start(new object[] { item });
-
-                                            countThreadControllerPhotoTagging++;
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
                             }
                         }
                     }
+                }
+                else
+                {
+                    string acc = SelectedAccount;
+
+                    //Run a separate thread for each account
+                    FacebookUser item = null;
+                    FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                    if (item != null)
+                    {
+
+                        Thread profilerThread = new Thread(StartMultiThreadsPhotoTagging);
+                        profilerThread.Name = "workerThread_Profiler_" + acc;
+                        profilerThread.IsBackground = true;
+
+
+                        profilerThread.Start(new object[] { item });
+
+                        countThreadControllerPhotoTagging++;
+                    }
+
                 }
             }
             catch (Exception ex)
@@ -162,8 +193,20 @@ namespace Photos
             }
         }
 
+        Queue<string> QueueFriendsUrls = new Queue<string>();
         public void StartMultiThreadsPhotoTagging(object parameters)
         {
+            try
+            {
+                foreach (var item in LstPhotoTaggingtargettedProfiles)
+                {
+                    QueueFriendsUrls.Enqueue(item);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
             try
             {
                 if (!isStopPhotoTagging)
@@ -227,7 +270,7 @@ namespace Photos
             {
                 try
                 {
-                   // if (!isStopPhotoTagging)
+                    // if (!isStopPhotoTagging)
                     {
                         lock (lockrThreadControllerPhotoTagging)
                         {
@@ -243,11 +286,17 @@ namespace Photos
             }
         }
 
+
         private void StartActionPhotoTagging(ref FacebookUser fbUser)
         {
+
             try
             {
-                if (PhotoTagingProcessUsing=="Photo Tag")
+                if (LstPhotoTaggingtargettedProfiles.Count > 0)
+                {
+                    TagPhotoWithTargettedProfiles(ref fbUser);
+                }
+                else if (PhotoTagingProcessUsing == "Photo Tag")
                 {
                     AddPhotosTag(ref fbUser);
                 }
@@ -256,13 +305,90 @@ namespace Photos
                     AddPostTag(ref fbUser);
 
                 }
-                
+
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
         }
+
+        public void TagPhotoWithTargettedProfiles(ref FacebookUser fbUser)
+        {
+            try
+            {
+
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+                string UserId = string.Empty;
+
+                string pageSource_HomePage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
+
+                foreach (string photoUrl in LstPhotoTaggingURLsPhotoTagging)
+                {
+                    bool CheckLikePage = false;
+
+                    string PhotoPage = HttpHelper.getHtmlfromUrl(new Uri(photoUrl));
+                    string PhotoFbID = string.Empty;
+                    string fb_dtsg = string.Empty;
+                    string OwnerId = string.Empty;
+                    PhotoFbID = Utils.getBetween(PhotoPage, "photo.php?fbid=", "&");
+                    fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PhotoPage);
+                    if (CheckLikePage)
+                    {
+                        LikePageWIthPhotoTaging(ref fbUser, photoUrl);
+                        CheckLikePage = false;
+
+                    }
+                    string slsset = string.Empty;
+                    string qn = string.Empty;
+                    string PhotoOwnerId = string.Empty;
+                    slsset = Utils.getBetween(photoUrl, "&set=", "&");
+                    OwnerId = Utils.getBetween(PhotoPage, "ownerid\":\"", "\"");
+                    string Pid = string.Empty;
+                    Pid = Utils.getBetween(PhotoPage, "info\":{\"pid\":", ",");
+                    qn = Utils.getBetween(PhotoPage, "serverTime\":", "}").Replace("0", string.Empty);
+                    PhotoOwnerId = Utils.getBetween(PhotoPage, "/profile.php?id=", "\"");
+                    string PhotoTagPost = "cachedAlbum=-1&photo=" + PhotoFbID + "&__user=" + UserId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u59G85ku699Esx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjyV8hgOBy9FFEnG&__req=c&fb_dtsg=" + fb_dtsg + "&ttstamp=265817088808389106721029867&__rev=1708953";
+                    string PhotoTaggingUrl = "https://www.facebook.com/ajax/photo_tagging_ajax.php";
+
+
+
+                    for (int i = 0; i < NoOfTaggingFriendsPhotoTagging; i++)
+                    {
+                        string FriendProfileUrl = string.Empty;
+                        FriendProfileUrl = QueueFriendsUrls.Dequeue();
+                        string friendpage = HttpHelper.getHtmlfromUrl(new Uri(FriendProfileUrl));
+                        string friendID = Utils.getBetween(friendpage, "entity_id\":\"", "\"");
+                        string GraphREsp = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + friendID));
+                        string Name = string.Empty;
+
+                        Name = Utils.getBetween(GraphREsp, "\"name\": \"", "\"").Replace(" ", "%");
+                        string TagPostData = "cs_ver=0&pid=" + Pid + "&fbid=" + PhotoFbID + "&id=" + OwnerId + "&subject=" + friendID + "&name=" + Name + "&action=add&source=permalink&qn=" + qn + "&position=" + PhotoFbID + "&slsource&slset=t." + PhotoOwnerId + "&x=32.402234636871505&y=62.5&from_facebox=false&tagging_mode=true&__user=" + UserId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u59G85ku699Esx6iqAdy9VQC-K26m6oKewWhEoyUnwPUS2O4K5ebAx53am8zpEnGq&__req=f&fb_dtsg=" + fb_dtsg + "&ttstamp=265817068119107876783729995&__rev=1711798";
+                        string PhotoTagResp = HttpHelper.postFormData(new Uri(PhotoTaggingUrl), TagPostData);
+                        if (PhotoTagResp.Contains("payload\":null"))
+                        {
+                            GlobusLogHelper.log.Info((i + 1) + ") PhotoId:" + PhotoFbID + " Tagging Completed with UserName : " + fbUser.username + "(" + UserId + ")" + " And Friend name: " + Name);
+                            GlobusLogHelper.log.Debug((i + 1) + ") PhotoId:" + PhotoFbID + " Tagging Completed with UserName : " + fbUser.username + "(" + UserId + ")" + " And Friend name: " + Name);
+                        }
+                        else if (PhotoTagResp.Contains("errorSummary"))
+                        {
+                            i--;
+                            GlobusLogHelper.log.Info("Unable To Tag where PhotoUrl is : " + photoUrl + " UserName: " + fbUser.username);
+                            GlobusLogHelper.log.Debug("Unable To Tag where PhotoUrl is : " + photoUrl + " UserName: " + fbUser.username);
+                        }
+
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.Message);
+            }
+        }
+
 
         public void AddPhotosTag(ref FacebookUser fbUser)
         {
@@ -281,7 +407,7 @@ namespace Photos
 
                     string pageSource_HomePage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
 
-                    UserId =GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
+                    UserId = GlobusHttpHelper.GetParamValue(pageSource_HomePage, "user");
                     if (string.IsNullOrEmpty(UserId))
                     {
                         UserId = GlobusHttpHelper.ParseJson(pageSource_HomePage, "user");
@@ -308,7 +434,7 @@ namespace Photos
                     try
                     {
                         findTheAllFrnList = FBUtils.getBetween(pageSource, "<span class=\"_gs6\">", "</span>");
-                       // findTheAllFrnList = findTheAllFrnList.Replace("\">Friends<span class=\"_gs6\">", string.Empty).Replace(",", string.Empty);
+                        // findTheAllFrnList = findTheAllFrnList.Replace("\">Friends<span class=\"_gs6\">", string.Empty).Replace(",", string.Empty);
                         try
                         {
                             countFrnd = Convert.ToInt32(findTheAllFrnList);
@@ -322,7 +448,7 @@ namespace Photos
                     }
 
                     GlobusLogHelper.log.Info("Total Friends : " + countFrnd + " With Username : " + fbUser.username);
-                    GlobusLogHelper.log.Debug("Total Friends : " + countFrnd+ " With Username : " + fbUser.username);
+                    GlobusLogHelper.log.Debug("Total Friends : " + countFrnd + " With Username : " + fbUser.username);
 
 
                     GlobusLogHelper.log.Info("Process Start Of Photo Tagging  With Username >>> " + fbUser.username);
@@ -337,7 +463,7 @@ namespace Photos
                         {
                             NoOfTaggingFriendsPhotoTagging = lstfriendsId.Count;
                         }
-                        for (int i = 0; i < NoOfTaggingFriendsPhotoTagging+1; i++)
+                        for (int i = 0; i < NoOfTaggingFriendsPhotoTagging + 1; i++)
                         {
                             try
                             {
@@ -363,13 +489,14 @@ namespace Photos
                             }
                         }
                         for (int i = 0; i < LstPhotoTaggingURLsPhotoTagging.Count; i++)
-                         {
+                        {
                             try
                             {
 
                                 string photoUrl = LstPhotoTaggingURLsPhotoTagging[i];
-                                PhotoTagingToYourFriends(ref fbUser,photoUrl, UserId, ref lstfriendsId,ref lstFriendname,ref lstFriend);
-
+                                //  PhotoTagingToYourFriends(ref fbUser,photoUrl, UserId, ref lstfriendsId,ref lstFriendname,ref lstFriend);
+                                //PhotoTagingToYourFriends1(ref fbUser, photoUrl, UserId, ref lstfriendsId, ref lstFriendname, ref lstFriend);
+                                PhotoTagingToYourFriendsNew(ref fbUser, photoUrl, UserId, ref lstfriendsId, ref lstFriendname, ref lstFriend);
                             }
                             catch (Exception ex)
                             {
@@ -416,9 +543,9 @@ namespace Photos
 
                             PhotoTaging(ref fbUser, randomphotourl, userId);
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
-                            GlobusLogHelper.log.Error("Error : " +ex.StackTrace);
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
                     }
                 }
@@ -439,164 +566,118 @@ namespace Photos
 
         private void PhotoTagingToYourFriends(ref FacebookUser fbuser, string photourl, string userId, ref List<string> lstfriendsId, ref List<string> lstFriendname, ref List<string> lstFriend)
         {
-            lock(this)
+            //lock(this)
             {
-            bool CheckLikePage = true;
-            try
-            {               
-                GlobusHttpHelper HttpHelper = fbuser.globusHttpHelper;
-                string cachedAlbum = "";
-                string cs_ver = "";
-                string pid = "";
-                string id = "";
-                string subject = "";
-                string name = "";
-                string action = "";
-                string source = "";
-                string qn = "";
-                string position = "";
-                string x = "";
-                string y = "";
-                string from_facebox = "";
-                string fb_dtsg = "";
-                string _user = "";
-                string phstamp = "";
-
-                string FanpageUrl = Utils.getBetween("@@" + photourl, "@@", "/photos/");
-                string pagesourceofrandomphotourl = HttpHelper.getHtmlfromUrl(new Uri(photourl));
-
-                if (CheckLikePage)
+                bool CheckLikePage = true;
+                try
                 {
-                    LikePageWIthPhotoTaging(ref fbuser, photourl);
-                    CheckLikePage = false;
-                    
-                }
-                                    
+                    GlobusHttpHelper HttpHelper = fbuser.globusHttpHelper;
+                    string cachedAlbum = "";
+                    string cs_ver = "";
+                    string pid = "";
+                    string id = "";
+                    string subject = "";
+                    string name = "";
+                    string action = "";
+                    string source = "";
+                    string qn = "";
+                    string position = "";
+                    string x = "";
+                    string y = "";
+                    string from_facebox = "";
+                    string fb_dtsg = "";
+                    string _user = "";
+                    string phstamp = "";
 
+                    string FanpageUrl = Utils.getBetween("@@" + photourl, "@@", "/photos/");
+                    string pagesourceofrandomphotourl = HttpHelper.getHtmlfromUrl(new Uri(photourl));
 
-                if (lstFriendname.Count == lstFriend.Count)
-                {
-
+                    if (CheckLikePage)
                     {
-                        int counter = 1;
+                        LikePageWIthPhotoTaging(ref fbuser, photourl);
+                        CheckLikePage = false;
 
-                        GlobusLogHelper.log.Info("Number of tagging friends : " + NoOfTaggingFriendsPhotoTagging);
-                        GlobusLogHelper.log.Debug("Number of tagging friends : " + NoOfTaggingFriendsPhotoTagging);
+                    }
 
-                        for (int i = 0; i < NoOfTaggingFriendsPhotoTagging+1; i++)
+
+
+                    if (lstFriendname.Count == lstFriend.Count)
+                    {
+
                         {
-                            try
+                            int counter = 1;
+
+                            GlobusLogHelper.log.Info("Number of tagging friends : " + NoOfTaggingFriendsPhotoTagging);
+                            GlobusLogHelper.log.Debug("Number of tagging friends : " + NoOfTaggingFriendsPhotoTagging);
+
+                            for (int i = 0; i < NoOfTaggingFriendsPhotoTagging + 1; i++)
                             {
-                                ///for tagging All friends (Not only Starting Friends)
-
-                                if (lstfriendsId.Count <= counterFriend)
-                                {
-                                    counterFriendName = 0;
-                                    counterFriend = 0;
-                                }
-
-                                string randomfriendId = lstfriendsId[counterFriend];
-                                string randomfriendName = string.Empty;
-
-                                counterFriendName++;
-                                counterFriend++;
-
                                 try
                                 {
-                                    string strFriendInfo = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + randomfriendId));
-                                    if (strFriendInfo.Contains("\"name\":"))
+                                    ///for tagging All friends (Not only Starting Friends)
+
+                                    if (lstfriendsId.Count <= counterFriend)
                                     {
-                                        string strName = strFriendInfo.Substring(strFriendInfo.IndexOf("\"name\":"), strFriendInfo.IndexOf(",", strFriendInfo.IndexOf("\"name\":")) - strFriendInfo.IndexOf("\"name\":")).Replace("\"name\":", string.Empty).Replace("\"", string.Empty).Trim();
-                                        randomfriendName = strName;
+                                        counterFriendName = 0;
+                                        counterFriend = 0;
                                     }
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
 
-                                if (string.IsNullOrEmpty(randomfriendName))
-                                {
-                                    continue;
-                                }
+                                    string randomfriendId = lstfriendsId[counterFriend];
+                                    string randomfriendName = string.Empty;
 
-                                cachedAlbum = "-1";
-                                cs_ver = "0";
-                                string[] pidArr = Regex.Split(pagesourceofrandomphotourl, "pid");
-                                if (pidArr.Count() > 2)
-                                {
+                                    counterFriendName++;
+                                    counterFriend++;
+
                                     try
                                     {
-                                        pidArr = Regex.Split(pidArr[2], "\"");
-                                        foreach (string item in pidArr)
+                                        string strFriendInfo = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + randomfriendId));
+                                        if (strFriendInfo.Contains("\"name\":"))
                                         {
-                                            try
-                                            {
-                                                if (item.Length > 3)
-                                                {
-                                                    if (item.Contains(","))
-                                                    {
-                                                        try
-                                                        {
-                                                            pid = item.Substring(0, item.IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Trim();
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
-                                                        
-                                                        break;
-                                                    }
-                                                    else
-                                                    {
-                                                        pid = item.Replace("\"", string.Empty).Trim();
-                                                        pid = pid.Replace("=","");
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
+                                            string strName = strFriendInfo.Substring(strFriendInfo.IndexOf("\"name\":"), strFriendInfo.IndexOf(",", strFriendInfo.IndexOf("\"name\":")) - strFriendInfo.IndexOf("\"name\":")).Replace("\"name\":", string.Empty).Replace("\"", string.Empty).Trim();
+                                            randomfriendName = strName;
                                         }
                                     }
                                     catch (Exception ex)
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-                                }
 
-                                string[] idArr = Regex.Split(pagesourceofrandomphotourl, "owner");
-                                if (idArr.Count() > 1)
-                                {
-                                    try
+                                    if (string.IsNullOrEmpty(randomfriendName))
                                     {
-                                        idArr = Regex.Split(idArr[1], "\"");
-                                        if (idArr.Count() > 1)
-                                        {
-                                            foreach (string item in idArr)
-                                            {
+                                        continue;
+                                    }
 
+                                    cachedAlbum = "-1";
+                                    cs_ver = "0";
+                                    string[] pidArr = Regex.Split(pagesourceofrandomphotourl, "pid");
+                                    if (pidArr.Count() > 2)
+                                    {
+                                        try
+                                        {
+                                            pidArr = Regex.Split(pidArr[2], "\"");
+                                            foreach (string item in pidArr)
+                                            {
                                                 try
                                                 {
-                                                    if (item.Length > 6)
+                                                    if (item.Length > 3)
                                                     {
                                                         if (item.Contains(","))
                                                         {
-                                                                try
-                                                                {
-                                                                   id = item.Substring(0, item.IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Trim();
-                                                                }
-                                                                catch(Exception ex)
-                                                                {
-                                                                    GlobusLogHelper.log.Error("Error : " +ex.StackTrace);
-                                                                }
-                                                                    break;
+                                                            try
+                                                            {
+                                                                pid = item.Substring(0, item.IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Trim();
+                                                            }
+                                                            catch (Exception ex)
+                                                            {
+                                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                            }
+
+                                                            break;
                                                         }
                                                         else
                                                         {
-                                                            id = item.Replace("\"", string.Empty).Trim();
+                                                            pid = item.Replace("\"", string.Empty).Trim();
+                                                            pid = pid.Replace("=", "");
                                                             break;
                                                         }
                                                     }
@@ -607,334 +688,470 @@ namespace Photos
                                                 }
                                             }
                                         }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    string[] idArr = Regex.Split(pagesourceofrandomphotourl, "owner");
+                                    if (idArr.Count() > 1)
+                                    {
+                                        try
+                                        {
+                                            idArr = Regex.Split(idArr[1], "\"");
+                                            if (idArr.Count() > 1)
+                                            {
+                                                foreach (string item in idArr)
+                                                {
+
+                                                    try
+                                                    {
+                                                        if (item.Length > 6)
+                                                        {
+                                                            if (item.Contains(","))
+                                                            {
+                                                                try
+                                                                {
+                                                                    id = item.Substring(0, item.IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Trim();
+                                                                }
+                                                                catch (Exception ex)
+                                                                {
+                                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                                }
+                                                                break;
+                                                            }
+                                                            else
+                                                            {
+                                                                id = item.Replace("\"", string.Empty).Trim();
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                    subject = randomfriendId;
+                                    name = randomfriendName;
+                                    action = "add";
+                                    source = "permalink";
+
+                                    string _rev = Utils.getBetween(pagesourceofrandomphotourl, "_rev", ",\"");
+                                    _rev = _rev.Replace(":", string.Empty).Replace("\"", string.Empty);
+
+                                    string[] qnArr = Regex.Split(pagesourceofrandomphotourl, "serverTime\":");
+
+                                    if (qnArr.Count() > 1)
+                                    {
+                                        try
+                                        {
+                                            qnArr = Regex.Split(qnArr[1], "\"");
+                                            foreach (string item in qnArr)
+                                            {
+                                                try
+                                                {
+                                                    if (item.Length > 3)
+                                                    {
+                                                        if (item.Contains(","))
+                                                        {
+                                                            qn = item.Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Replace("0", string.Empty).Trim();
+                                                            qn = qn.Replace("[", string.Empty).Replace("]", string.Empty);
+                                                            break;
+                                                        }
+                                                        else
+                                                        {
+                                                            qn = item.Replace("\"", string.Empty).Trim();
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    string[] positionArr = Regex.Split(pagesourceofrandomphotourl, "fbid\":");
+                                    if (positionArr.Count() > 1)
+                                    {
+                                        try
+                                        {
+                                            positionArr = Regex.Split(positionArr[1], "\"");
+                                            foreach (string item in positionArr)
+                                            {
+                                                try
+                                                {
+                                                    if (item.Length > 6)
+                                                    {
+                                                        if (item.Contains(","))
+                                                        {
+                                                            position = positionArr[0].Substring(0, positionArr[0].IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty);
+                                                            break;
+                                                        }
+                                                        else
+                                                        {
+                                                            position = item.Replace("\"", string.Empty).Trim();
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    try
+                                    {
+                                        pid = pid.Replace("=", "");
+
+                                        x = new Random().Next(53, 57).ToString();
+                                        x = x + ".18518518518518";
+                                        y = new Random().Next(73, 77).ToString();
+                                        y = y + ".55555555555556";
+                                        from_facebox = "false";
+
                                     }
                                     catch (Exception ex)
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-                                }
-                                subject = randomfriendId;
-                                name = randomfriendName;
-                                action = "add";
-                                source = "permalink";
 
-                                string _rev = Utils.getBetween(pagesourceofrandomphotourl,"_rev",",\"");
-                                _rev = _rev.Replace(":", string.Empty).Replace("\"",string.Empty);
+                                    fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pagesourceofrandomphotourl);
 
-                                string[] qnArr = Regex.Split(pagesourceofrandomphotourl, "serverTime\":");
-
-                                if (qnArr.Count() > 1)
-                                {
-                                    try
+                                    //string fbid = string.Empty;
+                                    // fbid = Utils.getBetween(pagesourceofrandomphotourl, "fbid=", "&amp");
+                                    _user = userId;
+                                    // 
+                                    if (pagesourceofrandomphotourl.Contains("fbPhotosPhotoActionsTag tagButton uiButton uiButtonOverlay") || pagesourceofrandomphotourl.Contains("Click on the photo to start tagging") || pagesourceofrandomphotourl.Contains("fbPhotosPhotoTagboxBase"))   //  fbPhotosPhotoActionsTag tagButton rfloat uiButton uiButtonOverlay
                                     {
-                                        qnArr = Regex.Split(qnArr[1], "\"");
-                                        foreach (string item in qnArr)
+                                        string postdata = " cachedAlbum=" + cachedAlbum + "&photo=" + position + "&fb_dtsg=" + fb_dtsg + "&__user=" + _user + "&phstamp=";  //(Almost) cachedAlbum=-1&photo=114983038652468&__user=100004223172781&__a=1&fb_dtsg=AQAuULXo&phstamp=165816511785768811182
+                                        string posturl = FBGlobals.Instance.PhotoTaggingPostAjaxTagsAlbumUrl;
+
+                                        //GoRound:
+                                        try
+                                        {
+                                            System.Threading.Thread.Sleep(2 * 1000);
+                                            string response = HttpHelper.postFormData(new Uri(posturl), postdata);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                        //name = Uri.EscapeUriString(name);
+                                        string postdata1 = "cs_ver=" + cs_ver + "&pid=" + pid + "&id" + id + "&subject=" + subject + "&name=" + name + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&x=" + x + "&y=" + y + "&from_facebox=" + from_facebox + "&fb_dtsg=" + fb_dtsg + "&__user=" + _user + "&phstamp=2658168122979010753"; // (Almost)  cs_ver=0&pid=121971&id=100004223172781&subject=100004155841334&name=Bones%20Hood&action=add&source=permalink&qn=1347604780&position=114983038652468&x=40.55555555555556&y=52.928870292887034&from_facebox=false&tagging_mode=true&__user=100004223172781&__a=1&fb_dtsg=AQAuULXo&phstamp=1658165117857688111271
+
+                                        string posturl1 = FBGlobals.Instance.PhotoTaggingPostAjaxPhotoTaggingAjaxUrl;
+
+                                        string response1 = string.Empty;
+
+                                        System.Threading.Thread.Sleep(2 * 1000);
+                                        response1 = HttpHelper.postFormData(new Uri(posturl1), postdata1);
+
+
+                                        if (response1.Contains("Sorry, an error occurred.  Please try again.") || response1.Contains("Something Went Wrong"))
+                                        {
+                                            postdata1 = "cs_ver=" + cs_ver + "&pid=" + pid + "&fbid=1571706343072884&id=100007006000732&subject=100001169497244&name=Alisha%20Rajpoot&action=add&source=permalink&qn=1421653748&position=1571706343072884&slsource&slset=o.156687351012419&x=80.9670781893005&y=44.372222222222&from_facebox=true&tagging_mode=true&__user=100007006000732&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxCbzElx2ubhHximmey8szoyfwMw&__req=r&fb_dtsg=AQFxWUaIAwGI&ttstamp=265817012087859773651197173&__rev=1565393";
+                                        }
+
+
+                                        if (response1.Contains("Sorry, an error occurred.  Please try again.") || response1.Contains("Something Went Wrong"))
+                                        {
+                                            string PostUrl = "https://www.facebook.com/ajax/photo_tagging_ajax.php";
+                                            if (pid.Contains("&amp;p"))
+                                            {
+                                                pid = Utils.getBetween("@@" + pid, "@@", "&amp");
+                                            }
+                                            string slset = Utils.getBetween(photourl, "photos/", "/?");
+                                            if (string.IsNullOrEmpty(slset))
+                                            {
+                                                slset = Utils.getBetween(photourl, "set=", "&");
+                                            }
+                                            string fbid = Utils.getBetween(pagesourceofrandomphotourl, "targetID\":", "},");
+
+                                            string PostData = "cs_ver=" + cs_ver + "&pid=" + pid + "&fbid=" + fbid + "&id=" + id.Replace("&quot;", "") + "&subject=" + subject + "&name=" + Uri.EscapeDataString(name) + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&slsource&slset=" + slset + "&x=" + x + "&y=" + y + "&from_facebox=" + from_facebox + "&tagging_mode=true&__user=" + _user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyKAEWCueyp9Esx6iqAdBGeqrWo8pojLDKexm49UJ6K59poW8z8Tzoyfw&__req=p&fb_dtsg=" + fb_dtsg + "&ttstamp=2658171117905365451138410597&__rev=1514665";
+                                            PostData = "cs_ver=" + cs_ver + "&pid=" + pid + "&fbid=" + fbid + "&id=" + userId + "&subject=" + subject + "&name=" + Uri.EscapeDataString(name) + "&action=" + action + "&source=permalink&qn=" + qn + "&position=" + position + "&slsource&slset=" + slset + "&x=" + x + "&y=" + y + "&from_facebox=true&tagging_mode=true&__user=" + userId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxCbzElx2ubhHximmey8szoyfwMw&__req=r&fb_dtsg=" + fb_dtsg + "&ttstamp=265817012087859773651197173&__rev=1565393";
+                                            System.Threading.Thread.Sleep(1000);
+                                            response1 = HttpHelper.postFormData(new Uri(PostUrl), PostData);
+                                        }
+
+
+                                        //GoRound1:
+                                        if (response1.Contains("\"errorSummary\":\"Something Went Wrong\",\"errorDescription\":\"Sorry, an error occurred.  Please try again"))
                                         {
                                             try
                                             {
-                                                if (item.Length > 3)
-                                                {
-                                                    if (item.Contains(","))
-                                                    {
-                                                        qn = item.Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Replace("0", string.Empty).Trim();
-                                                        qn = qn.Replace("[", string.Empty).Replace("]", string.Empty); 
-                                                        break;
-                                                    }
-                                                    else
-                                                    {
-                                                        qn = item.Replace("\"", string.Empty).Trim();
-                                                        break;
-                                                    }
-                                                }
+                                                string Fbid = Utils.getBetween(pagesourceofrandomphotourl, "fbid=", "&");
+                                                string PostD = "cs_ver=" + cs_ver + "&pid=" + pid + "&fbid=" + Fbid + "&id=" + id + "&subject=" + subject + "&name=" + name + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&slsource&slset=a.447316393454.234124.119317973454&x=" + x + "&y=" + y + "&from_facebox=false&tagging_mode=true&__user=" + _user + "&__a=1&__dyn=7n8apij2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDy8gBw&__req=l&fb_dtsg=" + fb_dtsg + "&ttstamp=265816584106517157&__rev=1175958";
+                                                response1 = HttpHelper.postFormData(new Uri(posturl1), PostD);
                                             }
                                             catch (Exception ex)
                                             {
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
                                         }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
 
-                                string[] positionArr = Regex.Split(pagesourceofrandomphotourl, "fbid\":");
-                                if (positionArr.Count() > 1)
-                                {
-                                    try
-                                    {
-                                        positionArr = Regex.Split(positionArr[1], "\"");
-                                        foreach (string item in positionArr)
+                                        if (response1.Contains("\"errorSummary\":\"Something Went Wrong\",\"errorDescription\":\"Sorry, an error occurred.  Please try again"))
                                         {
                                             try
                                             {
-                                                if (item.Length > 6)
-                                                {
-                                                    if (item.Contains(","))
-                                                    {
-                                                        position = positionArr[0].Substring(0, positionArr[0].IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty);
-                                                        break;
-                                                    }
-                                                    else
-                                                    {
-                                                        position = item.Replace("\"", string.Empty).Trim();
-                                                        break;
-                                                    }
-                                                }
+                                                name = Uri.EscapeUriString(name);
+                                                postdata = "cs_ver =" + cs_ver + "&pid=" + pid + "&fbid=" + id + "&id=" + id + "&subject=" + subject + "&name=" + name + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&slsource&slset=a.1435859579972781.1073741827.100006462599174&x=48.888888888888886&y=64.88888888888889&from_facebox=false&tagging_mode=true&__user=" + _user + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=l&fb_dtsg=" + fb_dtsg + "&__rev=" + _rev + "&ttstamp=26581665310810249100";
+                                                response1 = HttpHelper.postFormData(new Uri(posturl1), postdata);
                                             }
                                             catch (Exception ex)
                                             {
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
                                         }
+
+                                        ///Delay For 1 second                                  
+
+                                        if (response1.Contains("errorDescription"))
+                                        {
+                                            if (response1.Contains("Already Tagged"))
+                                            {
+                                                GlobusLogHelper.log.Info("-) PhotoId:" + position + " Already Tagged with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
+                                                GlobusLogHelper.log.Debug("-) PhotoId:" + position + " TAlready Tagged with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
+                                                counterFriendName = counterFriendName - 1;
+                                                // counterFriend = counterFriend - 1;
+                                            }
+                                            else
+                                            {
+                                                string[] summaryArr = Regex.Split(response1, "errorSummary\":");
+                                                summaryArr = Regex.Split(summaryArr[1], "\"");
+                                                string errorSummery = summaryArr[1];
+                                                string errorDiscription = summaryArr[5];
+
+                                                if (response1.Contains("Something went wrong. We're working on getting it fixed as soon as we can.") || response1.Contains("fbPhotosPhotoTagboxes"))
+                                                {
+                                                    name = name.Replace("%20", " ");
+                                                    GlobusLogHelper.log.Info("-) PhotoId:" + position + " Tag with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
+                                                    GlobusLogHelper.log.Debug("-) PhotoId:" + position + " Tag with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
+
+                                                }
+                                                try
+                                                {
+                                                    GlobusLogHelper.log.Info(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+                                                    GlobusLogHelper.log.Debug(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+
+                                                    int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
+                                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
+                                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
+                                                    Thread.Sleep(delayInSeconds);
+
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            try
+                                            {
+                                                string CSVHeader = "User_Name" + "," + "userId" + ", " + "FriendName" + "," + " PhotoId";
+                                                string CSV_Content = fbuser.username + "," + userId + ", " + name + "," + position;
+                                                //FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, FilePath);
+
+                                                try
+                                                {
+                                                    int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
+                                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds ");
+                                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds ");
+                                                    Thread.Sleep(delayInSeconds);
+
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+
+
+                                            TotalNoOfPhotoTaged_Counnter++;
+
+                                            GlobusLogHelper.log.Info(counter + ") PhotoId:" + position + " Tagging Completed with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
+                                            GlobusLogHelper.log.Debug(counter + ") PhotoId:" + position + " Tagging Completed with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
+
+                                            counter++;
+                                        }
                                     }
-                                    catch (Exception ex)
+                                    else
                                     {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                        GlobusLogHelper.log.Info(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+                                        GlobusLogHelper.log.Debug(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+                                        GlobusLogHelper.log.Info("Please wait .. ");
+
+                                        if (CheckLikePage)
+                                        {
+                                            LikePageWIthPhotoTaging(ref fbuser, photourl);
+                                            CheckLikePage = false;
+                                            counterFriendName = counterFriendName - 1;
+                                            counterFriend = counterFriend - 1;
+                                        }
+
+
+
+                                        //  counter++;
+
+                                        try
+                                        {
+
+                                            int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
+                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
+                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
+                                            Thread.Sleep(delayInSeconds);
+
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
                                     }
-                                }
-
-                                try
-                                {
-                                    pid = pid.Replace("=", "");
-
-                                    x = new Random().Next(53, 57).ToString();
-                                    x = x + ".18518518518518";
-                                    y = new Random().Next(73, 77).ToString();
-                                    y = y + ".55555555555556";
-                                    from_facebox = "false";
-
                                 }
                                 catch (Exception ex)
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-
-                                fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pagesourceofrandomphotourl);
-
-                                //string fbid = string.Empty;
-                               // fbid = Utils.getBetween(pagesourceofrandomphotourl, "fbid=", "&amp");
-                                _user = userId;
-                               // 
-                                if (pagesourceofrandomphotourl.Contains("fbPhotosPhotoActionsTag tagButton uiButton uiButtonOverlay") || pagesourceofrandomphotourl.Contains("Click on the photo to start tagging") || pagesourceofrandomphotourl.Contains("fbPhotosPhotoTagboxBase"))   //  fbPhotosPhotoActionsTag tagButton rfloat uiButton uiButtonOverlay
-                                {
-                                    string postdata = " cachedAlbum=" + cachedAlbum + "&photo=" + position + "&fb_dtsg=" + fb_dtsg + "&__user=" + _user + "&phstamp=";  //(Almost) cachedAlbum=-1&photo=114983038652468&__user=100004223172781&__a=1&fb_dtsg=AQAuULXo&phstamp=165816511785768811182
-                                    string posturl = FBGlobals.Instance.PhotoTaggingPostAjaxTagsAlbumUrl;
-
-                                    //GoRound:
-                                    try
-                                    {
-                                        System.Threading.Thread.Sleep(2 * 1000);
-                                        string response = HttpHelper.postFormData(new Uri(posturl), postdata);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                    //name = Uri.EscapeUriString(name);
-                                    string postdata1 = "cs_ver=" + cs_ver + "&pid=" + pid + "&id" + id + "&subject=" + subject + "&name=" + name + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&x=" + x + "&y=" + y + "&from_facebox=" + from_facebox + "&fb_dtsg=" + fb_dtsg + "&__user=" + _user + "&phstamp=2658168122979010753"; // (Almost)  cs_ver=0&pid=121971&id=100004223172781&subject=100004155841334&name=Bones%20Hood&action=add&source=permalink&qn=1347604780&position=114983038652468&x=40.55555555555556&y=52.928870292887034&from_facebox=false&tagging_mode=true&__user=100004223172781&__a=1&fb_dtsg=AQAuULXo&phstamp=1658165117857688111271
-                                   
-                                    string posturl1 = FBGlobals.Instance.PhotoTaggingPostAjaxPhotoTaggingAjaxUrl;
-
-                                    string response1 = string.Empty;
-
-                                    System.Threading.Thread.Sleep(2 * 1000);
-                                    response1 = HttpHelper.postFormData(new Uri(posturl1), postdata1);
-
-
-                                    if (response1.Contains("Sorry, an error occurred.  Please try again.") || response1.Contains("Something Went Wrong"))
-                                    {
-                                        postdata1 = "cs_ver="+cs_ver+"&pid="+pid+"&fbid=1571706343072884&id=100007006000732&subject=100001169497244&name=Alisha%20Rajpoot&action=add&source=permalink&qn=1421653748&position=1571706343072884&slsource&slset=o.156687351012419&x=80.9670781893005&y=44.372222222222&from_facebox=true&tagging_mode=true&__user=100007006000732&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxCbzElx2ubhHximmey8szoyfwMw&__req=r&fb_dtsg=AQFxWUaIAwGI&ttstamp=265817012087859773651197173&__rev=1565393";
-                                    }
-
-
-                                    if (response1.Contains("Sorry, an error occurred.  Please try again.") || response1.Contains("Something Went Wrong"))
-                                    {
-                                        string PostUrl = "https://www.facebook.com/ajax/photo_tagging_ajax.php";
-                                        if (pid.Contains("&amp;p"))
-                                        {
-                                            pid = Utils.getBetween("@@"+pid,"@@","&amp");
-                                        }
-                                        string slset = Utils.getBetween(photourl, "photos/", "/?");
-                                        if (string.IsNullOrEmpty(slset))
-                                        {
-                                            slset = Utils.getBetween(photourl, "set=", "&");
-                                        }
-                                        string fbid = Utils.getBetween(pagesourceofrandomphotourl, "targetID\":", "},");
-
-                                        string PostData = "cs_ver=" + cs_ver + "&pid=" + pid + "&fbid=" + fbid + "&id=" + id.Replace("&quot;", "") + "&subject=" + subject + "&name=" + Uri.EscapeDataString(name) + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&slsource&slset=" + slset + "&x=" + x + "&y=" + y + "&from_facebox=" + from_facebox + "&tagging_mode=true&__user=" + _user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyKAEWCueyp9Esx6iqAdBGeqrWo8pojLDKexm49UJ6K59poW8z8Tzoyfw&__req=p&fb_dtsg=" + fb_dtsg + "&ttstamp=2658171117905365451138410597&__rev=1514665";
-                                        PostData = "cs_ver="+cs_ver+"&pid="+pid+"&fbid="+fbid+"&id="+userId+"&subject="+subject+"&name="+Uri.EscapeDataString(name)+"&action="+action+"&source=permalink&qn="+qn+"&position="+position+"&slsource&slset="+slset+"&x="+x+"&y="+y+"&from_facebox=true&tagging_mode=true&__user="+userId+"&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxCbzElx2ubhHximmey8szoyfwMw&__req=r&fb_dtsg="+fb_dtsg+"&ttstamp=265817012087859773651197173&__rev=1565393";
-                                        System.Threading.Thread.Sleep(1000);
-                                        response1 = HttpHelper.postFormData(new Uri(PostUrl), PostData);
-                                    }
-
-
-                                    //GoRound1:
-                                    if (response1.Contains("\"errorSummary\":\"Something Went Wrong\",\"errorDescription\":\"Sorry, an error occurred.  Please try again"))
-                                    {
-                                        try
-                                        {
-                                            string Fbid = Utils.getBetween(pagesourceofrandomphotourl, "fbid=", "&");
-                                            string PostD = "cs_ver=" + cs_ver + "&pid=" + pid + "&fbid=" + Fbid + "&id=" + id + "&subject=" + subject + "&name=" + name + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&slsource&slset=a.447316393454.234124.119317973454&x=" + x + "&y=" + y + "&from_facebox=false&tagging_mode=true&__user=" + _user + "&__a=1&__dyn=7n8apij2qm9udDgDxyG8EipEtCxO4pbGAdGGzQAjFDy8gBw&__req=l&fb_dtsg=" + fb_dtsg + "&ttstamp=265816584106517157&__rev=1175958";
-                                            response1 = HttpHelper.postFormData(new Uri(posturl1), PostD);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        } 
-                                    }
-
-                                    if (response1.Contains("\"errorSummary\":\"Something Went Wrong\",\"errorDescription\":\"Sorry, an error occurred.  Please try again"))
-                                    {
-                                        try
-                                        {
-                                            name = Uri.EscapeUriString(name);
-                                            postdata = "cs_ver =" + cs_ver + "&pid=" + pid + "&fbid=" + id + "&id=" + id + "&subject=" + subject + "&name=" + name + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&slsource&slset=a.1435859579972781.1073741827.100006462599174&x=48.888888888888886&y=64.88888888888889&from_facebox=false&tagging_mode=true&__user=" + _user + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=l&fb_dtsg=" + fb_dtsg + "&__rev=" + _rev + "&ttstamp=26581665310810249100";
-                                            response1 = HttpHelper.postFormData(new Uri(posturl1), postdata);                                            
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                    }
-
-                                    ///Delay For 1 second                                  
-
-                                    if (response1.Contains("errorDescription"))
-                                    {
-                                        if (response1.Contains("Already Tagged"))
-                                        {
-                                            GlobusLogHelper.log.Info("-) PhotoId:" + position + " Already Tagged with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
-                                            GlobusLogHelper.log.Debug("-) PhotoId:" + position + " TAlready Tagged with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
-                                            counterFriendName = counterFriendName - 1;
-                                           // counterFriend = counterFriend - 1;
-                                        }
-                                        else
-                                        {
-                                            string[] summaryArr = Regex.Split(response1, "errorSummary\":");
-                                            summaryArr = Regex.Split(summaryArr[1], "\"");
-                                            string errorSummery = summaryArr[1];
-                                            string errorDiscription = summaryArr[5];
-
-                                            if (response1.Contains("Something went wrong. We're working on getting it fixed as soon as we can.") || response1.Contains("fbPhotosPhotoTagboxes"))
-                                            {
-                                                name = name.Replace("%20", " ");
-                                                GlobusLogHelper.log.Info("-) PhotoId:" + position + " Tag with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
-                                                GlobusLogHelper.log.Debug("-) PhotoId:" + position + " Tag with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
-
-                                            }
-                                            try
-                                            {
-                                                GlobusLogHelper.log.Info(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
-                                                GlobusLogHelper.log.Debug(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
-
-                                                int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
-                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
-                                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
-                                                Thread.Sleep(delayInSeconds);
-
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }                                     
-                                    }
-                                    else
-                                    {
-                                        try
-                                        {
-                                            string CSVHeader = "User_Name" + "," + "userId" + ", " + "FriendName" + "," + " PhotoId";
-                                            string CSV_Content = fbuser.username + "," + userId + ", " + name + "," + position;
-                                            //FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, FilePath);
-
-                                            try
-                                            {
-                                                int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
-                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds ");
-                                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds ");
-                                                Thread.Sleep(delayInSeconds);
-
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-
-
-                                        TotalNoOfPhotoTaged_Counnter++;
-
-                                        GlobusLogHelper.log.Info(counter + ") PhotoId:" + position + " Tagging Completed with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
-                                        GlobusLogHelper.log.Debug(counter + ") PhotoId:" + position + " Tagging Completed with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + name);
-
-                                        counter++;
-                                    }
-                                }
-                                else
-                                {
-
-                                    GlobusLogHelper.log.Info(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
-                                    GlobusLogHelper.log.Debug(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
-                                    GlobusLogHelper.log.Info("Please wait .. ");
-
-                                    if (CheckLikePage)
-                                    {
-                                        LikePageWIthPhotoTaging(ref fbuser, photourl);
-                                        CheckLikePage = false;
-                                        counterFriendName=counterFriendName-1;
-                                        counterFriend = counterFriend-1;
-                                    }
-                                    
-
-                               
-                                  //  counter++;
-
-                                    try
-                                    {
-
-                                        int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
-                                        Thread.Sleep(delayInSeconds);
-
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
                     }
+                    else
+                    {
+                        GlobusLogHelper.log.Info("There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+                        GlobusLogHelper.log.Debug("There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+
+
+                        int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
+                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
+                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
+                        Thread.Sleep(delayInSeconds);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    GlobusLogHelper.log.Info("There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
-                    GlobusLogHelper.log.Debug("There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
-
-
-                    int delayInSeconds = Utils.GenerateRandom(minDelayPhotoTagging * 1000, maxDelayPhotoTagging * 1000);
-                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
-                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbuser.username);
-                    Thread.Sleep(delayInSeconds);
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
+            }
+        }
+
+
+
+        private void PhotoTagingToYourFriendsNew(ref FacebookUser fbuser, string photourl, string userId, ref List<string> lstfriendsId, ref List<string> lstFriendname, ref List<string> lstFriend)
+        {
+            try
+            {
+                bool CheckLikePage = false;
+                GlobusHttpHelper objHttp = fbuser.globusHttpHelper;
+                string PhotoPage = objHttp.getHtmlfromUrl(new Uri(photourl));
+                string PhotoFbID = string.Empty;
+                string fb_dtsg = string.Empty;
+                string OwnerId = string.Empty;
+                PhotoFbID = Utils.getBetween(PhotoPage, "photo.php?fbid=", "&");
+                fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PhotoPage);
+                if (CheckLikePage)
+                {
+                    LikePageWIthPhotoTaging(ref fbuser, photourl);
+                    CheckLikePage = false;
+
+                }
+                string slsset = string.Empty;
+                string qn = string.Empty;
+                string PhotoOwnerId = string.Empty;
+                slsset = Utils.getBetween(photourl, "&set=", "&");
+                OwnerId = Utils.getBetween(PhotoPage, "ownerid\":\"", "\"");
+                string Pid = string.Empty;
+                Pid = Utils.getBetween(PhotoPage, "info\":{\"pid\":", ",");
+                qn = Utils.getBetween(PhotoPage, "serverTime\":", "}").Replace("0", string.Empty);
+                PhotoOwnerId = Utils.getBetween(PhotoPage, "/profile.php?id=", "\"");
+                string PhotoTagPost = "cachedAlbum=-1&photo=" + PhotoFbID + "&__user=" + userId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u59G85ku699Esx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjyV8hgOBy9FFEnG&__req=c&fb_dtsg=" + fb_dtsg + "&ttstamp=265817088808389106721029867&__rev=1708953";
+                string PhotoTaggingUrl = "https://www.facebook.com/ajax/photo_tagging_ajax.php";
+                for (int i = 0; i < NoOfTaggingFriendsPhotoTagging; i++)
+                {
+                    string pageSrc = objHttp.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl + lstfriendsId[i]));
+                    string Name = string.Empty;
+                    string FBUserName = string.Empty;
+                    try
+                    {
+                        FBUserName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                        string aboutUrl = string.Empty;
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+                            aboutUrl = "https://www.facebook.com/" + FBUserName + "/about";
+                        }
+                        else
+                        {
+                            aboutUrl = "https://www.facebook.com/profile.php?id=" + lstfriendsId[i] + "&sk=about";
+                        }
+
+                        string AboutPage = objHttp.getHtmlfromUrl(new Uri(aboutUrl));
+                        string WorkDetails = Utils.getBetween(Utils.getBetween(AboutPage, "Works at <a", "</div>"), ">", "</a>").Replace(",", string.Empty);
+                        Name = Utils.getBetween(AboutPage, "setPageTitle\",[],[\"", "\"");
+                        if (string.IsNullOrEmpty(Name))
+                        {
+                            Name = Utils.getBetween(AboutPage, "<title id=\"pageTitle\">", "</title>");
+
+                        }
+                        Name = Name.Replace(",", string.Empty);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+
+
+
+                    string TagPostData = "cs_ver=0&pid=" + Pid + "&fbid=" + PhotoFbID + "&id=" + OwnerId + "&subject=" + lstfriendsId[i] + "&name=" + Uri.EscapeDataString(Name) + "&action=add&source=permalink&qn=" + qn + "&position=" + PhotoFbID + "&slsource&slset=t." + PhotoOwnerId + "&x=32.402234636871505&y=62.5&from_facebox=false&tagging_mode=true&__user=" + userId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u59G85ku699Esx6iqAdy9VQC-K26m6oKewWhEoyUnwPUS2O4K5ebAx53am8zpEnGq&__req=f&fb_dtsg=" + fb_dtsg + "&ttstamp=265817068119107876783729995&__rev=1711798";
+                    string PhotoTagResp = objHttp.postFormData(new Uri(PhotoTaggingUrl), TagPostData);
+                    if (PhotoTagResp.Contains("payload\":null"))
+                    {
+                        GlobusLogHelper.log.Info((i + 1) + ") PhotoId:" + PhotoFbID + " Tagging Completed with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + Name);
+                        GlobusLogHelper.log.Debug((i + 1) + ") PhotoId:" + PhotoFbID + " Tagging Completed with UserName : " + fbuser.username + "(" + userId + ")" + " And Friend name: " + Name);
+                    }
+                    else if (PhotoTagResp.Contains("errorSummary"))
+                    {
+                        i--;
+                        GlobusLogHelper.log.Info("Unable To Tag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+                        GlobusLogHelper.log.Debug("Unable To Tag where PhotoUrl is : " + photourl + " UserName: " + fbuser.username);
+                    }
+                }
+
             }
             catch (Exception ex)
             {
-                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                GlobusLogHelper.log.Error(ex.Message);
             }
         }
-        }
+
+
 
 
         public void LikePageWIthPhotoTaging(ref FacebookUser fbUser, string lstFanPageUrlsFanPageLiker)
@@ -956,9 +1173,9 @@ namespace Photos
 
                 #endregion
 
-               // List<string> FanpageUrls = lstFanPageUrlsFanPageLiker;
+                // List<string> FanpageUrls = lstFanPageUrlsFanPageLiker;
 
-              // foreach (string item in FanpageUrls)
+                // foreach (string item in FanpageUrls)
                 {
                     try
                     {
@@ -1080,7 +1297,7 @@ namespace Photos
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Liking Error: " + ex.StackTrace);
-                               
+
                             }
                         }
                         else if (res_post_1st.Contains("\"errorSummary\""))
@@ -1104,23 +1321,23 @@ namespace Photos
                                 GlobusLogHelper.log.Error(" Error: " + ex.StackTrace);
 
                             }
-                        }                        
+                        }
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error(" Error: " + ex.StackTrace);
-                    }                    
+                    }
                 }
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error(" Error: " + ex.StackTrace);
 
-            }           
+            }
         }
 
 
-        private void PhotoTaging(ref FacebookUser fbUser,string photourl, string userId)
+        private void PhotoTaging(ref FacebookUser fbUser, string photourl, string userId)
         {
             try
             {
@@ -1161,7 +1378,7 @@ namespace Photos
                                     string friendid = friendIdArr[1];
                                     string[] friendNameArr = Regex.Split(friendIdNameArr[i], "<span");
                                     string friendname = friendNameArr[1].Substring(friendNameArr[1].IndexOf(">"), friendNameArr[1].IndexOf("</span>") - friendNameArr[1].IndexOf(">")).Replace(">", string.Empty).Replace("&#039;", string.Empty);
-                                    
+
                                     try
                                     {
                                         if (!string.IsNullOrEmpty(friendid) && !string.IsNullOrEmpty(friendname) && !string.IsNullOrWhiteSpace(friendname))
@@ -1257,14 +1474,14 @@ namespace Photos
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-                             }
+                            }
                             else
                             {
                                 try
                                 {
                                     string CSVHeader = "User_Name" + "," + "userId" + ", " + "FriendName" + "," + " PhotoId";
                                     string CSV_Content = fbUser.username + "," + userId + ", " + name + "," + position;
-                                    
+
                                     //FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, FilePath);
 
                                     try
@@ -1285,7 +1502,7 @@ namespace Photos
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-                                
+
                                 TotalNoOfPhotoTaged_Counnter++;
 
                                 GlobusLogHelper.log.Info("PhotoId:" + position + " Tagging Completed with UserName : " + fbUser.username + "(" + userId + ")" + " And Friend name: " + name);
@@ -1348,7 +1565,7 @@ namespace Photos
                                 }
 
 
-                                KeyValuePair<string, string> randonfriendIdName = DfriendIdName.ElementAt(counterFriend); 
+                                KeyValuePair<string, string> randonfriendIdName = DfriendIdName.ElementAt(counterFriend);
 
                                 counterFriend++;
 
@@ -1391,12 +1608,12 @@ namespace Photos
                                 if (pagesourceofrandomphotourl.Contains("fbPhotosPhotoActionsTag tagButton rfloat uiButton uiButtonOverlay"))
                                 {
                                     string postdata = " cachedAlbum=" + cachedAlbum + "&photo=" + position + "&fb_dtsg=" + fb_dtsg + "&__user=" + _user + "&phstamp=";
-                                    
+
                                     string posturl = FBGlobals.Instance.PhotoTaggingPostAjaxTagsAlbumUrl;
 
                                     string response = HttpHelper.postFormData(new Uri(posturl), postdata);
                                     string postdata1 = "cs_ver=" + cs_ver + "&pid=" + pid + "&id=" + id + "&subject=" + subject + "&name=" + name + "&action=" + action + "&source=" + source + "&qn=" + qn + "&position=" + position + "&x=" + x + "&y=" + y + "&from_facebox=" + from_facebox + "&fb_dtsg=" + fb_dtsg + "&__user=" + _user + "&phstamp=";
-                                    
+
                                     string posturl1 = FBGlobals.Instance.PhotoTaggingPostAjaxPhotoTaggingAjaxUrl;
 
                                     string response1 = HttpHelper.postFormData(new Uri(posturl1), postdata1);
@@ -1408,7 +1625,7 @@ namespace Photos
                                         string errorDiscription = summaryArr[5];
 
                                         GlobusLogHelper.log.Info(counter + ") PhotoId:" + position + " Error Summary : " + errorSummery + " And Error Description :" + errorDiscription + "  With UserName : " + fbUser.username);
-                                        
+
                                         counter++;
 
                                         try
@@ -1431,7 +1648,7 @@ namespace Photos
                                         {
                                             string CSVHeader = "User_Name" + "," + "userId" + ", " + "FriendName" + "," + " PhotoId";
                                             string CSV_Content = fbUser.username + "," + userId + ", " + name + "," + position;
-                                            
+
                                             //FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, FilePath);
 
                                             try
@@ -1458,7 +1675,7 @@ namespace Photos
 
                                         GlobusLogHelper.log.Info(counter + ") PhotoId:" + position + " Tagging Completed with UserName : " + fbUser.username + "(" + userId + ")" + " And Friend name: " + name);
                                         GlobusLogHelper.log.Debug(counter + ") PhotoId:" + position + " Tagging Completed with UserName : " + fbUser.username + "(" + userId + ")" + " And Friend name: " + name);
-                                        
+
                                         counter++;
 
                                         try
@@ -1480,7 +1697,7 @@ namespace Photos
                                 {
                                     GlobusLogHelper.log.Info(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbUser.username);
                                     GlobusLogHelper.log.Debug(counter + ") There is no option for PhotoTag where PhotoUrl is : " + photourl + " UserName: " + fbUser.username);
-                                    
+
                                     counter++;
 
                                     try
@@ -1558,7 +1775,7 @@ namespace Photos
                 string client_id = string.Empty;
                 string ftId = string.Empty;
                 string pagesourceofrandomphotourl = HttpHelper.getHtmlfromUrl(new Uri(photourl));
-                string RefUrl=photourl;
+                string RefUrl = photourl;
                 try
                 {
                     client_id = Utils.getBetween(pagesourceofrandomphotourl, "clientid\":", "}]");
@@ -1646,7 +1863,7 @@ namespace Photos
                                                     {
                                                         try
                                                         {
-                                                            pid = item.Substring(0, item.IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Replace("&quot;",string.Empty).Trim();
+                                                            pid = item.Substring(0, item.IndexOf(",") - 0).Replace(":", string.Empty).Replace(",", string.Empty).Replace("}", string.Empty).Replace("&quot;", string.Empty).Trim();
                                                         }
                                                         catch (Exception ex)
                                                         {
@@ -1829,7 +2046,7 @@ namespace Photos
 
                                 fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(pagesourceofrandomphotourl);
                                 _user = userId;
-                                string comment_text=string.Empty;
+                                string comment_text = string.Empty;
                                 int countId = 0;
                                 if (pagesourceofrandomphotourl.Contains(""))   //  fbPhotosPhotoActionsTag tagButton rfloat uiButton uiButtonOverlay
                                 {
@@ -1840,7 +2057,7 @@ namespace Photos
                                         {
 
 
-                                            string ss="https://www.facebook.com/ajax/typeahead/record_basic_metrics.php";
+                                            string ss = "https://www.facebook.com/ajax/typeahead/record_basic_metrics.php";
                                             string p = HttpHelper.getHtmlfromUrl(new Uri(ss));
 
 
@@ -1851,13 +2068,13 @@ namespace Photos
                                             comment_text = comment_text + Uri.EscapeDataString(comment);
                                             countId = countId + 1;
 
-                                          
+
 
                                             string selected_score = Utils.getBetween(PageSource, "\"score\":", "}]");
                                             if (selected_score.Contains("},{"))
                                             {
-                                                string[] arr = System.Text.RegularExpressions.Regex.Split(selected_score,"}");  
-                                                selected_score=arr[0];
+                                                string[] arr = System.Text.RegularExpressions.Regex.Split(selected_score, "}");
+                                                selected_score = arr[0];
                                             }
                                             string stats_request_id = Utils.getBetween(PageSource, "oh=", "=");
                                             string stats_selected_query = Utils.getBetween(PageSource, "oh=", "=");
@@ -1871,7 +2088,7 @@ namespace Photos
                                             }
                                             catch { };
 
-                                            string PostDATA = "ft_ent_identifier="+ft_ent_identifier+"&comment_text=%40[" + comment_text + "]&source=2&client_id=1416288959884%3A1595380136&reply_fbid&parent_comment_id&rootid=u_0_u&clp=%7B%22cl_impid%22%3A%22e603e06c%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22js_l%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A686423211456024%7D&attached_sticker_fbid=0&attached_photo_fbid=0&&ft[tn]=[]&ft[fbfeed_location]=5&av=100001006024349&__user=100001006024349&__a=1&__dyn=7n8ajEyl2qm9udDgDxyKAEWCueyp9Esx6iqAdBGeqrWo8pojLyUW5ogDyQqUkBBzEy6Kdy8&__req=q&fb_dtsg=AQHl7AoAsabQ&ttstamp=2658172108556511165115979881&__rev=1498265";
+                                            string PostDATA = "ft_ent_identifier=" + ft_ent_identifier + "&comment_text=%40[" + comment_text + "]&source=2&client_id=1416288959884%3A1595380136&reply_fbid&parent_comment_id&rootid=u_0_u&clp=%7B%22cl_impid%22%3A%22e603e06c%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22js_l%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A686423211456024%7D&attached_sticker_fbid=0&attached_photo_fbid=0&&ft[tn]=[]&ft[fbfeed_location]=5&av=100001006024349&__user=100001006024349&__a=1&__dyn=7n8ajEyl2qm9udDgDxyKAEWCueyp9Esx6iqAdBGeqrWo8pojLyUW5ogDyQqUkBBzEy6Kdy8&__req=q&fb_dtsg=AQHl7AoAsabQ&ttstamp=2658172108556511165115979881&__rev=1498265";
                                             string PostURL = "https://www.facebook.com/ajax/ufi/add_comment.php";
                                             string PageResponce = HttpHelper.postFormData(new Uri(PostURL), PostDATA);
 
@@ -1891,7 +2108,7 @@ namespace Photos
 
                                     string response1 = HttpHelper.postFormData(new Uri(PostUrlG), FinalPostData, "https://www.facebook.com/ever.gusman.3/posts/796243103752550");
 
-      
+
                                     ///Delay For 1 second                                  
 
                                     if (response1.Contains("errorDescription"))
@@ -2763,7 +2980,7 @@ namespace Photos
                             countThreadControllerDownloadPhoto--;
                             if (!isStopDwnloadPhoto)
                             {
-                                Monitor.Pulse(lockrThreadControllerDownloadPhoto); 
+                                Monitor.Pulse(lockrThreadControllerDownloadPhoto);
                             }
                         }
                     }
@@ -2802,9 +3019,9 @@ namespace Photos
                 string ExportPath = ExportPhotosPath;
                 if (string.IsNullOrEmpty(ExportPath))
                 {
-                        GlobusLogHelper.log.Info("Please Select Photo Export Folder Path !! ");
-                        GlobusLogHelper.log.Debug("Please Select Photo Export Folder Path !! ");
-                        return;
+                    GlobusLogHelper.log.Info("Please Select Photo Export Folder Path !! ");
+                    GlobusLogHelper.log.Debug("Please Select Photo Export Folder Path !! ");
+                    return;
                 }
                 string userId = "";
                 List<string> lstphotourl = new List<string>();
@@ -2836,7 +3053,7 @@ namespace Photos
                             string PageSourceOfTargetedUrl = string.Empty;
                             string URL = string.Empty;
                             string PageTitle = string.Empty;
-                            string PageID = string.Empty;                            
+                            string PageID = string.Empty;
                             if (!LstDownloadPhotoURLsDownloadPhoto_item.Contains("/photos_stream"))
                             {
                                 URL = LstDownloadPhotoURLsDownloadPhoto_item.Replace("?ref=br_rs", "/photos_stream");
@@ -2848,14 +3065,18 @@ namespace Photos
 
                             if (!LstDownloadPhotoURLsDownloadPhoto_item.Contains("/photos_stream"))
                             {
-                                URL = LstDownloadPhotoURLsDownloadPhoto_item+ "/photos_stream";
+                                URL = LstDownloadPhotoURLsDownloadPhoto_item + "/photos_stream";
                             }
                             List<string> PhotoURL = new List<string>();
                             try
                             {
                                 if (URL.Contains("?ref=br_rs"))
                                 {
-                                    URL = URL.Replace("?ref=br_rs","/photos_stream");
+                                    URL = URL.Replace("?ref=br_rs", "/photos_stream");
+                                }
+                                if (URL.Contains("?fref=ts"))
+                                {
+                                    URL = URL.Replace("?fref=ts", string.Empty);
                                 }
                                 PageSourceOfTargetedUrl = HttpHelper.getHtmlfromUrl(new Uri(URL));
 
@@ -2869,12 +3090,12 @@ namespace Photos
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
-                            string AjaxPipeToken=Utils.getBetween(PageSourceOfTargetedUrl,"ajaxpipe_token\":\"","\"");
-                            string scrollLoad = Utils.getBetween(PageSourceOfTargetedUrl, "scroll_load\\\":",",");
+                            string AjaxPipeToken = Utils.getBetween(PageSourceOfTargetedUrl, "ajaxpipe_token\":\"", "\"");
+                            string scrollLoad = Utils.getBetween(PageSourceOfTargetedUrl, "scroll_load\\\":", ",");
                             string LastFBID = Utils.getBetween(PageSourceOfTargetedUrl, "last_fbid\\\":", ",");
                             string FetchSize = Utils.getBetween(PageSourceOfTargetedUrl, "fetch_size\\\":", ",");
                             PageTitle = Utils.getBetween(PageSourceOfTargetedUrl, "pageTitle\">", "</title>");
-                            PageID = Utils.getBetween(PageSourceOfTargetedUrl,"pageID\":",",");
+                            PageID = Utils.getBetween(PageSourceOfTargetedUrl, "pageID\":", ",");
                             string[] PhotoId = Regex.Split(PageSourceOfTargetedUrl, "data-non-starred-src");
                             PhotoId = PhotoId.Skip(1).ToArray();
                             int RandomNumber = 0;
@@ -2889,9 +3110,9 @@ namespace Photos
                                     {
                                         try
                                         {
-                                           // string[] arr = Regex.Split(temp, "/p");
-                                           // string Locatstr = arr[1] + "###";
-                                           // CompletePicUrl = arr[0] + "/" + Utils.getBetween(Locatstr, "/", "###");
+                                            // string[] arr = Regex.Split(temp, "/p");
+                                            // string Locatstr = arr[1] + "###";
+                                            // CompletePicUrl = arr[0] + "/" + Utils.getBetween(Locatstr, "/", "###");
                                             //Modified by MAhesh 07-01-2014
                                             CompletePicUrl = temp;
                                         }
@@ -2899,8 +3120,8 @@ namespace Photos
                                         {
                                             GlobusLogHelper.log.Error(ex.StackTrace);
                                         }
-                                       // CompletePicUrl = CompletePicUrl.Replace("/v", "");
-                                        CompletePicUrl = CompletePicUrl.Replace("amp;",string.Empty);
+                                        // CompletePicUrl = CompletePicUrl.Replace("/v", "");
+                                        CompletePicUrl = CompletePicUrl.Replace("amp;", string.Empty);
                                         if (string.IsNullOrEmpty(CompletePicUrl))
                                         {
                                             CompletePicUrl = temp.Replace("/v", "");
@@ -2930,7 +3151,7 @@ namespace Photos
                                 {
                                     break;
                                 }
-                                string AjaxPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/TimelinePhotosStreamPagelet?ajaxpipe=1&ajaxpipe_token=" + AjaxPipeToken + "&no_script_path=1&data=%7B%22scroll_load%22%3A" + scrollLoad + "%2C%22last_fbid%22%3A" + LastFBID.Replace("\\\"","") + "%2C%22fetch_size%22%3A" + FetchSize + "%2C%22profile_id%22%3A" + PageID + "%2C%22sk%22%3A%22photos_stream%22%2C%22tab_key%22%3A%22photos_stream%22%2C%22page%22%3A" + PageID + "%2C%22is_medley_view%22%3Atrue%2C%22pager_fired_on_init%22%3Atrue%7D&__user=" + UserId + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizGomyp9Esx6bF3pqzCC-C26m6oKezpUgxd6K4bBw&__req=jsonp_2&__rev=1392897&__adt=2"));
+                                string AjaxPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/TimelinePhotosStreamPagelet?ajaxpipe=1&ajaxpipe_token=" + AjaxPipeToken + "&no_script_path=1&data=%7B%22scroll_load%22%3A" + scrollLoad + "%2C%22last_fbid%22%3A" + LastFBID.Replace("\\\"", "") + "%2C%22fetch_size%22%3A" + FetchSize + "%2C%22profile_id%22%3A" + PageID + "%2C%22sk%22%3A%22photos_stream%22%2C%22tab_key%22%3A%22photos_stream%22%2C%22page%22%3A" + PageID + "%2C%22is_medley_view%22%3Atrue%2C%22pager_fired_on_init%22%3Atrue%7D&__user=" + UserId + "&__a=1&__dyn=7n8ahyj35zoSt2u6aWizGomyp9Esx6bF3pqzCC-C26m6oKezpUgxd6K4bBw&__req=jsonp_2&__rev=1392897&__adt=2"));
                                 PhotoId = Regex.Split(AjaxPageSource, "data-non-starred-src");
                                 PhotoId = PhotoId.Skip(1).ToArray();
                                 foreach (string Photoid in PhotoId)
@@ -2944,17 +3165,17 @@ namespace Photos
                                         {
                                             //string[] arr = Regex.Split(temp, "/p");
                                             //string Locatstr = arr[1] + "###";
-                                           // CompletePicUrl = arr[0] + "/" + Utils.getBetween(Locatstr, "/", "###");
-                                           // CompletePicUrl = temp.Replace("/v", "");
+                                            // CompletePicUrl = arr[0] + "/" + Utils.getBetween(Locatstr, "/", "###");
+                                            // CompletePicUrl = temp.Replace("/v", "");
                                             //Modified by MAhesh 07-01-2014
-                                            CompletePicUrl = temp.Replace("amp;",string.Empty);
+                                            CompletePicUrl = temp.Replace("amp;", string.Empty);
                                             if (string.IsNullOrEmpty(CompletePicUrl))
                                             {
                                                 CompletePicUrl = temp.Replace("/v", "");
                                             }
                                         }
                                         string PicName = PageTitle + "-" + PageID + "-" + RandomNumber.ToString();
-                                        PicName = PicName.Replace(" ","-"); ;
+                                        PicName = PicName.Replace(" ", "-"); ;
                                         Utils.GetImageFromUrl(CompletePicUrl, PicName, ExportPhotosPath);
                                         GlobusLogHelper.log.Info(PicName + " downloaded to " + ExportPhotosPath);
                                     }
@@ -2963,7 +3184,7 @@ namespace Photos
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
                                 }
-                                LastFBID = Utils.getBetween(AjaxPageSource, "last_fbid\\\":", ","); 
+                                LastFBID = Utils.getBetween(AjaxPageSource, "last_fbid\\\":", ",");
                             }
                         }
                         catch (Exception ex)

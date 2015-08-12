@@ -33,7 +33,7 @@ namespace Groups
         public static string GroupExprotFilePath = string.Empty;
         public static bool ChkbGroup_GrpRequestManager_MultiplePicPerGroup = false;
         public static string GroupRequestCampaignName = string.Empty;
-        public static bool GrouRequestUseSavedCampaign=false;
+        public static bool GrouRequestUseSavedCampaign = false;
         public static bool ScheduleGroupPosting = false;
         public static string GroupDeletePostFilePath = string.Empty;
         public static string GroupDeletePostCommentFilePath = string.Empty;
@@ -130,7 +130,7 @@ namespace Groups
         {
             try
             {
-                
+
                 int numberOfAccountPatch = 25;
 
                 if (NoOfThreadsGroupInviter > 0)
@@ -285,7 +285,7 @@ namespace Groups
             {
                 AddFriendsToGroup(ref fbUser);
 
-         
+
                 GlobusLogHelper.log.Info("Group Inviter Process Completed With : " + fbUser.username);
                 GlobusLogHelper.log.Debug("Group Inviter Process Completed With : " + fbUser.username);
             }
@@ -328,25 +328,51 @@ namespace Groups
                 List<string> lstFriendname = new List<string>();
                 List<string> lstFriendId = new List<string>();
                 GlobusLogHelper.log.Info("Please wait finding the friends name : " + " with User Name : " + fbUser.username);
-                int friendAddLimit = AddNoOfFriendsGroupInviter + 20;
+                int friendAddLimit = AddNoOfFriendsGroupInviter;
                 //for (int i = 0; i < lstfriendsId.Count; i++) 
                 for (int i = 0; i < friendAddLimit; i++)
                 {
-                    int rndm =Utils.GenerateRandom(0, lstfriendsId.Count);
+                    int rndm = Utils.GenerateRandom(0, lstfriendsId.Count);
                     try
                     {
                         //string strFriendInfo = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + lstfriendsId[i]));
-                        string strFriendInfo = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + lstfriendsId[rndm]));
-                        if (strFriendInfo.Contains("\"name\":"))
+                        //
+                        string UserUrl = FBGlobals.Instance.fbhomeurl + lstfriendsId[rndm];
+                        string pageSrc = HttpHelper.getHtmlfromUrl(new Uri(UserUrl));
+                        string id = string.Empty;
+                        string FBUserName = string.Empty;
+                        try
+                        {
+                            id = Utils.getBetween(pageSrc, "\"profile_id\":", ",");
+                            if (string.IsNullOrEmpty(id))
+                            {
+                                id = Utils.getBetween(pageSrc, "entity_id\":\"", "\"");
+                            }
+
+                            FBUserName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                            if (string.IsNullOrEmpty(FBUserName))
+                            {
+                                FBUserName = Utils.getBetween(pageSrc, "<title id=\"pageTitle\">", "</title>");
+                            }
+
+
+                        }
+                        catch (Exception ex)
                         {
 
-                            //   string strName = strFriendInfo.Substring(strFriendInfo.IndexOf("\"name\":"), strFriendInfo.IndexOf(",", strFriendInfo.IndexOf("\"name\":")) - strFriendInfo.IndexOf("\"name\":")).Replace("\"name\":", string.Empty).Replace("\"", string.Empty).Trim();
-                            string strName = Utils.getBetween(strFriendInfo, "first_name\": \"", "\",\n ");
-                            lstFriendname.Add(strName);
-                            lstFriendId.Add(lstfriendsId[i]);
+                        }                        //
+
+
+
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+
+                            //   string strName = strFriendInfo.Substring(strFriendInfo.IndexOf("\"name\":"), strFriendInfo.IndexOf(",", strFriendInfo.IndexOf("\"name\":")) - strFriendInfo.IndexOf("\"name\":")).Replace("\"name\":", string.Empty).Replace("\"", string.Empty).Trim();                            
+                            lstFriendname.Add(FBUserName);
+                            lstFriendId.Add(lstfriendsId[rndm]);
                         }
                     }
-                        
+
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
@@ -395,11 +421,11 @@ namespace Groups
                 GlobusLogHelper.log.Debug("Total No of  friends : " + frndCount + " with User Name : " + fbUser.username);
 
 
-                  for (int i = 0; i < lstFriend.Count; i++)
+                for (int i = 0; i < lstFriend.Count; i++)
                 {
-                      try
+                    try
                     {
-                        
+
                         string friendID = lstFriend[i];
                         string friendName = string.Empty;
 
@@ -470,29 +496,33 @@ namespace Groups
                         //Get Friends Name
                         try
                         {
-                            string strFriendInfo = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + friendID));
-                            if (strFriendInfo.Contains("\"name\":"))
+
+
+                            string pageSrc = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl + friendID));
+                            string id = string.Empty;
+                            string FBUserName = string.Empty;
+                            try
                             {
-                                try
+                                id = Utils.getBetween(pageSrc, "\"profile_id\":", ",");
+                                if (string.IsNullOrEmpty(id))
                                 {
-                                    friendName = strFriendInfo.Substring(strFriendInfo.IndexOf("\"name\":"), strFriendInfo.IndexOf(",", strFriendInfo.IndexOf("\"name\":")) - strFriendInfo.IndexOf("\"name\":")).Replace("\"name\":", string.Empty).Replace("\"", string.Empty).Trim();
+                                    id = Utils.getBetween(pageSrc, "entity_id\":\"", "\"");
                                 }
-                                catch (Exception ex)
+
+                                friendName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                                if (string.IsNullOrEmpty(FBUserName))
                                 {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    friendName = Utils.getBetween(pageSrc, "<title id=\"pageTitle\">", "</title>");
                                 }
-                                if (friendName == string.Empty)
-                                {
-                                    try
-                                    {
-                                        friendName = strFriendInfo.Substring(strFriendInfo.IndexOf("\"name\":"), strFriendInfo.IndexOf("}", strFriendInfo.IndexOf("\"name\":")) - strFriendInfo.IndexOf("\"name\":")).Replace("\"name\":", string.Empty).Replace("\"", string.Empty).Trim();
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
+
+                                friendName = Uri.EscapeDataString(friendName);
                             }
+                            catch (Exception ex)
+                            {
+
+                            }
+
+
                         }
                         catch (Exception ex)
                         {
@@ -500,10 +530,21 @@ namespace Groups
                         }
 
                         //string strPostData = "fb_dtsg=" + fb_dtsg + "&group_id=" + group_id + "&source=typeahead&ref=&message_id=" + message_id + "&members=" + lstFriend[i] + "&freeform=" + lstFriendname[i] + "&__user=" + userId + "&__a=1&phstamp=1658166769810210182162";
+                        string strResponse = string.Empty;
 
-                        string strPostData = "fb_dtsg=" + fb_dtsg + "&group_id=" + group_id + "&source=typeahead&ref=&message_id=" + message_id + "&members=" + friendID + "&freeform=" + friendName + "&__user=" + userId + "&__a=1&phstamp=1658166769810210182162";
-                        string lastResponseStatus = string.Empty;
-                        string strResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupInviterPostAjaxGroupsMembersAddUrl), strPostData, ref lastResponseStatus);
+                        if (!string.IsNullOrEmpty(message_id))
+                        {
+                            string strPostData = "fb_dtsg=" + fb_dtsg + "&group_id=" + group_id + "&source=typeahead&ref=&message_id=" + message_id + "&members=" + friendID + "&freeform=" + friendName + "&__user=" + userId + "&__a=1&phstamp=1658166769810210182162";
+
+                            string lastResponseStatus = string.Empty;
+                            strResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupInviterPostAjaxGroupsMembersAddUrl), strPostData, ref lastResponseStatus);
+                        }
+                        else
+                        {
+                            string strPostData = "fb_dtsg=" + fb_dtsg + "&members[0]=" + friendID + "&text_members[0]=" + friendName + "&__user=" + userId + "&__a=1&__dyn=7AmajEyl35xKt2u6aOGeFxq9ACxO4oKAdy8VFLHwxBxCbzEeAq8zUK5Uc-dwIxi5e8Dx-y28S7At1ebLVbDGcCxC&__req=t&ttstamp=26581717266708367734910267&__rev=1843986";
+                            string lastResponseStatus = string.Empty;
+                            strResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/groups/members/add_post.php?source=dialog_typeahead&group_id=" + group_id + "&refresh=1"), strPostData, ref lastResponseStatus);
+                        }
 
                         if (strResponse.Contains("You don't have permission"))
                         {
@@ -552,7 +593,7 @@ namespace Groups
                             GlobusLogHelper.log.Debug(counter + ") Friend Name:" + friendName + " Added to Group  with UserName : " + fbUser.username);
 
 
-                          
+
 
                             if (!string.IsNullOrEmpty(GroupReportExprotFilePath))
                             {
@@ -627,7 +668,10 @@ namespace Groups
         public static bool ChkbGroup_GrpRequestManager_UniquePostPerGroup = false;
         int countThreadControllerGroupCamapinScheduler = 0;
         public List<Thread> lstThreadsGroupCamapinScheduler = new List<Thread>();
+        public List<string> lstWallPostURLsSummaries = new List<string>();
+        public List<string> lstWallPostURLsTitles = new List<string>();
         public bool chkCountinueProcessGroupCamapinScheduler = false;
+        public bool useOriginalMessage = true;
 
         public bool ChkbGroupGrpRequestManagerMultiplePicPerGroup = false;
         //public bool ChkbGroup_GrpRequestManager_MultiplePicPerGroup = false;
@@ -784,7 +828,7 @@ namespace Groups
                                         else
                                         {
                                             if (item != null)
-                                            {                                               
+                                            {
                                                 Thread profilerThread = new Thread(StartMultiThreadsGroupCamapinScheduler);
                                                 profilerThread.Name = "workerThread_Profiler_" + acc;
                                                 profilerThread.IsBackground = true;
@@ -808,10 +852,10 @@ namespace Groups
                             }
                         }
                     }
-                    if (i==1)
+                    if (i == 1)
                     {
 
-                        DialogResult dialogresult = MessageBox.Show("Please Upload Account : " + faceboardpro.FbGroupCampaignManagerGlobals.Account, "FaceDominator", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        DialogResult dialogresult = MessageBox.Show("Please Upload Account : " + faceboardpro.FbGroupCampaignManagerGlobals.Account, "faceboardpro", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                         GlobusLogHelper.log.Info("Please Upload Account");
                         if (dialogresult == DialogResult.Yes)
                         {
@@ -845,7 +889,7 @@ namespace Groups
 
                                                 if (faceboardpro.FbGroupCampaignManagerGlobals.Account.Count() > 1)
                                                 {
-                                                    //if (acc == FaceDominator.FbGroupCampaignManagerGlobals.Account)
+                                                    //if (acc == faceboardpro.FbGroupCampaignManagerGlobals.Account)
                                                     //{
 
                                                     if (item != null)
@@ -1041,8 +1085,8 @@ namespace Groups
                         }
                         else
                         {
-                          //  GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                           // GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                            //  GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                            // GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
                         }
 
                     }
@@ -1051,7 +1095,7 @@ namespace Groups
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -1110,7 +1154,7 @@ namespace Groups
                                 objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
 
                                 Accounts.AccountManager objAccountManager = new AccountManager();
-                                objAccountManager.LoginUsingGlobusHttpWithProxy(ref objFacebookUser);
+                                objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
                             }
 
                             if (objFacebookUser.isloggedin)
@@ -1118,7 +1162,7 @@ namespace Groups
 
                                 if (strGroup_DeleteCommentPostProcessUsing == "DeleteGroupPost")
                                 {
-                                   //StartDeleteGrpPostProcess(ref objFacebookUser);
+                                    //StartDeleteGrpPostProcess(ref objFacebookUser);
                                     StartDeleteGroupPostProcessNew(ref objFacebookUser);
                                 }
                                 else if (strGroup_DeleteCommentPostProcessUsing == "PostDeleteComments")
@@ -1135,13 +1179,13 @@ namespace Groups
                                         }
                                         GlobusLogHelper.log.Info("Process Completed with : " + objFacebookUser.username);
                                         GlobusLogHelper.log.Debug("Process Completed with : " + objFacebookUser.username);
-                                          
+
                                     }
                                     else
                                     {
                                         StartPostDeleteCommentsProcess(ref objFacebookUser);
                                     }
-                                   
+
                                 }
                             }
                             else
@@ -1284,7 +1328,7 @@ namespace Groups
 
                 //string finalDeletePostUrl = "https://www.facebook.com/ajax/timeline/delete?identifier=S%3A_I" + __user + "%3A586891894749357&location=3&story_dom_id=u_0_1f";
                 //string PostDataFinalPost = HttpHelper.postFormData(new Uri(finalDeletePostUrl), "fb_dtsg=" + fb_dtsg + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl35zoSt2u6aWizGomyp9Esx6bF299qzCC-C26m4VoKezpUgxd6K59poW8xOdy8-&__req=g&ttstamp=2658170899576819772488868&__rev=1509424");
-                
+
                 #endregion
 
                 string[] ArrStoryIdNew = System.Text.RegularExpressions.Regex.Split(pgSrc_FanPageSearch, "identifier");
@@ -1495,7 +1539,7 @@ namespace Groups
                                     {
                                         story_dom_id = Utils.getBetween(PostHtml, "story_dom_id=", "&");
                                         if (story_dom_id.Contains("\",\""))
-                                        {  
+                                        {
                                             story_dom_id = Utils.getBetween(PostHtml, "story_dom_id=", "\",\"");
                                         }
                                     }
@@ -1533,7 +1577,7 @@ namespace Groups
                                             {
                                                 if (SecondFarziCount == DeleteNUmberOfPost)
                                                 {
-                                                    Thread.Sleep(60*1000*IntervalTime);
+                                                    Thread.Sleep(60 * 1000 * IntervalTime);
                                                     SecondFarziCount = 0;
                                                 }
                                             }
@@ -1896,16 +1940,16 @@ namespace Groups
                 int countNoOfProcessDeleted = 0;
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
                 string msg = string.Empty;
-                string pageSourceFb = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));               
+                string pageSourceFb = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
                 string UserID = GlobusHttpHelper.GetParamValue(pageSourceFb, "user");
-                string UserNameResp= HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/"+UserID));
-               
-                string UserName=Utils.getBetween(UserNameResp,"\"username\": \"","\"");
+                string UserNameResp = HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/" + UserID));
+
+                string UserName = Utils.getBetween(UserNameResp, "\"username\": \"", "\"");
                 string ActivityPageUrl = "https://www.facebook.com/" + UserName + "/allactivity?privacy_source=activity_log&log_filter=groups";
                 string GroupActivityPage = HttpHelper.getHtmlfromUrl(new Uri(ActivityPageUrl));
                 if (string.IsNullOrEmpty(GroupActivityPage))
                 {
-                    ActivityPageUrl = "https://www.facebook.com/profile.php?id="+UserID+"&sk=allactivity&privacy_source=activity_log&log_filter=groups";
+                    ActivityPageUrl = "https://www.facebook.com/profile.php?id=" + UserID + "&sk=allactivity&privacy_source=activity_log&log_filter=groups";
                     GroupActivityPage = HttpHelper.getHtmlfromUrl(new Uri(ActivityPageUrl));
                 }
                 string fb_dtsg = GlobusHttpHelper.GetParamValue(GroupActivityPage, "fb_dtsg");
@@ -1918,7 +1962,7 @@ namespace Groups
                 DateTime now = DateTime.Now;
                 string currentMonth = now.Month.ToString();
                 string currentYear = now.Year.ToString();
-                foreach(string id in PostUrls)
+                foreach (string id in PostUrls)
                 {
                     if (id.Contains("confirm?identifier"))
                     {
@@ -1930,10 +1974,10 @@ namespace Groups
                             Tempid = Utils.getBetween(Tempid, "=", "\"");
                             postIDs.Add(Tempid);
                             deletePostData = "identifier=" + Tempid + "3&story_dom_id=u_1e_1u&nctr[_mod]=pagelet_all_activity_" + currentYear + "_" + currentMonth + "&__user=" + UserID + "&__a=1&__dyn=7nmajEyl35zoSt2u6aOGeFxq9ACxO4oKA8ABGeqrWo8pojByUWdDx24QqUkBBzEy78S8zU&__req=1h&fb_dtsg=" + fb_dtsg + "&ttstamp=265817012173104117539510210572&__rev=1542074";
-                           deleteResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/delete/confirm"), deletePostData);
+                            deleteResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/delete/confirm"), deletePostData);
                             deleteFinalPostData = "fb_dtsg=" + fb_dtsg + "&__user=" + UserID + "&__a=1&__dyn=7nmajEyl35zoSt2u6aOGeFxq9ACxO4oKA8ABGeqrWo8pojByUWdDx24QqUkBBzEy78S8zU&__req=14&ttstamp=265817012173104117539510210572&__rev=1542074";
                             deleteFinalResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/delete?identifier=" + Tempid), deleteFinalPostData);
-                            if (!string.IsNullOrEmpty(GroupDeletePostFilePath))                         
+                            if (!string.IsNullOrEmpty(GroupDeletePostFilePath))
                             {
 
                                 string CSVHeader = "Post Id" + "," + "From" + ", " + "Date";
@@ -1950,12 +1994,12 @@ namespace Groups
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
                             }
-                            
-                            
+
+
                             countNoOfProcessDeleted++;
                             int delay = new Random().Next(minDelayDeleteGroupPost, maxDelayDeleteGroupPost);
                             GlobusLogHelper.log.Info("Deleted Post : " + Tempid);
-                            GlobusLogHelper.log.Info("Delaying For : " + delay +"Seconds");
+                            GlobusLogHelper.log.Info("Delaying For : " + delay + "Seconds");
                             Thread.Sleep(delay * 1000);
                             if (DeleteScheduleGroupPosting)
                             {
@@ -1971,7 +2015,7 @@ namespace Groups
                         {
                             GlobusLogHelper.log.Error(ex.Message);
                         }
- 
+
                     }
                 }
 
@@ -1979,12 +2023,12 @@ namespace Groups
                 bool isvalidUrl = true;
                 string nextPage = string.Empty;
                 string ajaxpipe_token = Utils.getBetween(GroupActivityPage, "ajaxpipe_token", "\",").Replace("\":\"", "");
-                int[] year={2014,2013,2012,2011,2010,2009,2008,2007,2006,2005};
-                int[] month = {12,11,10,9,8,7,6,5,4,3,2,1};                
-                for(int i=0;i<10;i++)
+                int[] year = { 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005 };
+                int[] month = { 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+                for (int i = 0; i < 10; i++)
                 {
-                   for (int s = 0; s < 4;s++ )
-                   {
+                    for (int s = 0; s < 4; s++)
+                    {
                         for (int j = 0; j < 12; j++)
                         {
                             try
@@ -2004,7 +2048,7 @@ namespace Groups
                                             //postIDs.Add(Utils.getBetween(Tempid,"=","="));
                                             Tempid = Utils.getBetween(Tempid, "=", "\"");
                                             postIDs.Add(Tempid);
-                                            deletePostData = "identifier=" + Tempid + "3&story_dom_id=u_1e_1u&nctr[_mod]=pagelet_all_activity_" +year[i] + "_" +month[j] + "&__user=" + UserID + "&__a=1&__dyn=7nmajEyl35zoSt2u6aOGeFxq9ACxO4oKA8ABGeqrWo8pojByUWdDx24QqUkBBzEy78S8zU&__req=1h&fb_dtsg=" + fb_dtsg + "&ttstamp=265817012173104117539510210572&__rev=1542074";
+                                            deletePostData = "identifier=" + Tempid + "3&story_dom_id=u_1e_1u&nctr[_mod]=pagelet_all_activity_" + year[i] + "_" + month[j] + "&__user=" + UserID + "&__a=1&__dyn=7nmajEyl35zoSt2u6aOGeFxq9ACxO4oKA8ABGeqrWo8pojByUWdDx24QqUkBBzEy78S8zU&__req=1h&fb_dtsg=" + fb_dtsg + "&ttstamp=265817012173104117539510210572&__rev=1542074";
                                             deleteResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/delete/confirm"), deletePostData);
                                             deleteFinalPostData = "fb_dtsg=" + fb_dtsg + "&__user=" + UserID + "&__a=1&__dyn=7nmajEyl35zoSt2u6aOGeFxq9ACxO4oKA8ABGeqrWo8pojByUWdDx24QqUkBBzEy78S8zU&__req=14&ttstamp=265817012173104117539510210572&__rev=1542074";
                                             deleteFinalResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/delete?identifier=" + Tempid), deleteFinalPostData);
@@ -2025,7 +2069,7 @@ namespace Groups
                                                 {
                                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                 }
-                                            } 
+                                            }
 
                                             countNoOfProcessDeleted++;
                                             int delay = new Random().Next(minDelayDeleteGroupPost, maxDelayDeleteGroupPost);
@@ -2035,7 +2079,7 @@ namespace Groups
                                             {
                                                 if (countNoOfProcessDeleted == DeleteNUmberOfPost)
                                                 {
-                                                    GlobusLogHelper.log.Info("Process Paused For "+IntervalTime+" Minute With User"+fbUser.username);
+                                                    GlobusLogHelper.log.Info("Process Paused For " + IntervalTime + " Minute With User" + fbUser.username);
                                                     Thread.Sleep(60 * 1000 * IntervalTime);
                                                     countNoOfProcessDeleted = 0;
                                                 }
@@ -2054,10 +2098,10 @@ namespace Groups
                                 GlobusLogHelper.log.Error(ex.Message);
                             }
                         }
+                    }
                 }
-                }
-                GlobusLogHelper.log.Info("Process Completed With User"+fbUser.username);              
-                
+                GlobusLogHelper.log.Info("Process Completed With User" + fbUser.username);
+
             }
             catch (Exception ex)
             {
@@ -2121,6 +2165,17 @@ namespace Groups
                 {
                     lstallgroup_EachAccount = FindOwnGroupUrl(ref fbUser);
                     GlobusLogHelper.log.Info("Username : " + fbUser.username + " Get GroupUrl : " + lstallgroup_EachAccount.Count);
+                    foreach (string item in lstallgroup_EachAccount)
+                    {
+                        try
+                        {
+                            Queue_GroupUrls.Enqueue(item);
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.StackTrace);
+                        }
+                    }
 
                     {
 
@@ -2159,8 +2214,16 @@ namespace Groups
                             string grpurl = string.Empty;
                             lock (locker_Queue_UserIDs)
                             {
+                                Conuter = lstallgroup_EachAccount.Count;
                                 if (Queue_GroupUrls.Count == 0)
                                 {
+                                    GlobusLogHelper.log.Info("All Grup Urls Are Used");
+                                    break;
+                                }
+
+                                if (Queue_GroupUrls.Count == 0)
+                                {
+
                                     try
                                     {
                                         foreach (var item in lstallgroup_EachAccount)
@@ -2285,7 +2348,7 @@ namespace Groups
                                 if (faceboardpro.FbGroupCampaignManagerGlobals.MessageMode == "One Message")
                                 {
 
-                                    
+
                                     if (faceboardpro.FbGroupCampaignManagerGlobals.MessageType == "Only Picture with message")
                                     {
                                         try
@@ -2312,11 +2375,11 @@ namespace Groups
                                             {
                                                 if (ChkbGroupGrpRequestManagerMultiplePicPerGroup == true)
                                                 {
-                                                    IssendMessage = SendingPicMsgToOwnGroup(grpurl, message, LstPicUrlsGroupCampaignManager, ref fbUser);
+                                                    SendingPicMsgToOwnGroup(grpurl, message, LstPicUrlsGroupCampaignManager, ref fbUser);
                                                 }
                                                 else
                                                 {
-                                                    IssendMessage = SendingPicMsgToOwnGroup(grpurl, message, Picpath, ref fbUser);
+                                                    SendingPicMsgToOwnGroup(grpurl, message, Picpath, ref fbUser);
                                                 }
                                             }
 
@@ -2346,20 +2409,20 @@ namespace Groups
                                                                 try
                                                                 {
                                                                     i = i + 1;
-                                                                   
+
                                                                     if (arr_item.Contains("Just now") && !arr_item.Contains("<!DOCTYPE html>"))
                                                                     {
                                                                         GetPostUrl = Utils.getBetween(arr_item, "href=\"", "&amp;");
                                                                         if (GetPostUrl.Contains("<abbr"))
                                                                         {
-                                                                            string[] arr11 = System.Text.RegularExpressions.Regex.Split(GetPostUrl,"<abbr");
+                                                                            string[] arr11 = System.Text.RegularExpressions.Regex.Split(GetPostUrl, "<abbr");
                                                                             if (arr11[0].Contains("facebook.com"))
                                                                             {
                                                                                 GetPostUrl = arr11[0];
                                                                             }
                                                                             else
                                                                             {
-                                                                                GetPostUrl="https://www.facebook.com/"+arr11[0];
+                                                                                GetPostUrl = "https://www.facebook.com/" + arr11[0];
                                                                             }
                                                                         }
                                                                         break;
@@ -2375,14 +2438,14 @@ namespace Groups
                                                                 }
                                                             }
 
-                                                          if(Pagesource.Contains("posts pending approval"))
+                                                            if (Pagesource.Contains("posts pending approval"))
                                                             {
                                                                 GetPostUrl = "Post pending approval.";
                                                             }
-                                                            else if(string.IsNullOrEmpty(GetPostUrl) && !Pagesource.Contains("post pending approval."))
+                                                            else if (string.IsNullOrEmpty(GetPostUrl) && !Pagesource.Contains("post pending approval."))
                                                             {
                                                                 string[] arr11 = System.Text.RegularExpressions.Regex.Split(Pagesource, "<span class=\"fsm fwn fcg\">");
-                                                                GetPostUrl =  Utils.getBetween(arr11[1], "href=\"", "&amp;").Replace("amp;", "").Replace("\"", "").Trim();
+                                                                GetPostUrl = Utils.getBetween(arr11[1], "href=\"", "&amp;").Replace("amp;", "").Replace("\"", "").Trim();
                                                                 if (!GetPostUrl.Contains("www.facebook.com"))
                                                                 {
                                                                     GetPostUrl = "https://www.facebook.com" + GetPostUrl;
@@ -2401,7 +2464,7 @@ namespace Groups
 
                                                 try
                                                 {
-                                                    string CSVHeader = "UserAccount" + "," + "GroupUrl" + "," + "message" + "," + "FilePath" + "," +"PostUrl" +"," + "DateTime";
+                                                    string CSVHeader = "UserAccount" + "," + "GroupUrl" + "," + "message" + "," + "FilePath" + "," + "PostUrl" + "," + "DateTime";
                                                     string CSV_Content = username + "," + grpurl + "," + message.Replace(",", string.Empty) + "," + Picpath + "," + GetPostUrl + "," + DateTime.Now;
                                                     Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, GroupReportExprotFilePath);
                                                 }
@@ -2653,16 +2716,16 @@ namespace Groups
                                             }
                                             else if (ChkViewSchedulerTaskUniquePostPerGroup == false)
                                             {
-                                                if (VideoUrl.Contains("/photos/a"))
+                                                if (VideoUrl.Contains("/photos/"))
                                                 {
-                                                    IssendMessage = PostVideoUrlUpdated(grpurl, message, VideoUrl, ref  fbUser);
+                                                    IssendMessage = PostVideoUrlUpdatedNew(grpurl, message, VideoUrl, ref  fbUser);
                                                 }
                                                 else
                                                 {
                                                     IssendMessage = PostVideoUrl(grpurl, message, VideoUrl, ref  fbUser);
                                                 }
-                                               
-                                               
+
+
                                                 string GetPostUrl = string.Empty;
                                                 string Pagesource = globusHttpHelpr.getHtmlfromUrl(new Uri(grpurl));
                                                 if (IssendMessage)
@@ -2671,7 +2734,7 @@ namespace Groups
                                                     {
                                                         GetPostUrl = "pending approval.";
                                                     }
-                                                    else if (!Pagesource.Contains("<span class=\"_50f8 _50f7\">PINNED POST</span>")&&!Pagesource.Contains("post pending approval."))
+                                                    else if (!Pagesource.Contains("<span class=\"_50f8 _50f7\">PINNED POST</span>") && !Pagesource.Contains("post pending approval."))
                                                     {
                                                         string[] arr = System.Text.RegularExpressions.Regex.Split(Pagesource, "<span class=\"fsm fwn fcg\">");
                                                         GetPostUrl = "https://www.facebook.com" + Utils.getBetween(arr[1], "href=\"", "/\"><abbr title=\"").Replace("amp;", "").Replace("\"", "").Trim();
@@ -2693,7 +2756,7 @@ namespace Groups
                                                                         GetPostUrl = "https://www.facebook.com" + Utils.getBetween(arr_item, "href=\"", "\"><abbr");
                                                                         break;
                                                                     }
-                                                                    if (i==4)
+                                                                    if (i == 4)
                                                                     {
                                                                         break;
                                                                     }
@@ -2703,7 +2766,7 @@ namespace Groups
                                                                     GlobusLogHelper.log.Error("Error  >>>" + ex.StackTrace);
                                                                 }
                                                             }
-                                                            
+
                                                         }
                                                         catch (Exception ex)
                                                         {
@@ -3112,7 +3175,7 @@ namespace Groups
                                             if (chkCountinueProcessGroupCamapinScheduler == true)
                                             {
 
-                                                IssendMessage = SendingPicMsgToOwnGroup(grpurl, message, LstPicUrlsGroupCampaignManager, ref fbUser);
+                                                SendingPicMsgToOwnGroup(grpurl, message, LstPicUrlsGroupCampaignManager, ref fbUser);
 
                                                 string GetPostUrl = string.Empty;
                                                 string Pagesource = globusHttpHelpr.getHtmlfromUrl(new Uri(grpurl));
@@ -3199,10 +3262,10 @@ namespace Groups
                                                 if (ChkbGroupGrpRequestManagerMultiplePicPerGroup == true)
                                                 {
 
-                                                    IssendMessage = SendingPicMsgToOwnGroup(grpurl, message, LstPicUrlsGroupCampaignManager, ref fbUser);
+                                                    //IssendMessage = SendingPicMsgToOwnGroup(grpurl, message, LstPicUrlsGroupCampaignManager, ref fbUser);
 
-
-
+                                                    SendingPicMsgToOwnGroupNew(grpurl, LstMessageUrlsGroupCampaignManager, LstPicUrlsGroupCampaignManager, ref fbUser);
+                                                    IssendMessage = true;
                                                     //IssendMessage = SendingPicMsgToOwnGroup(grpurl, message, Picpath, ref fbUser);
 
                                                     string GetPostUrl = string.Empty;
@@ -3230,11 +3293,11 @@ namespace Groups
                                                                                 string[] arr11 = System.Text.RegularExpressions.Regex.Split(GetPostUrl, "<abbr");
                                                                                 if (arr11[0].Contains("facebook.com"))
                                                                                 {
-                                                                                    GetPostUrl = arr11[0].Replace("/\">",string.Empty);
+                                                                                    GetPostUrl = arr11[0].Replace("/\">", string.Empty);
                                                                                 }
                                                                                 else
                                                                                 {
-                                                                                    GetPostUrl = "https://www.facebook.com" + arr11[0].Replace("/\">", string.Empty); 
+                                                                                    GetPostUrl = "https://www.facebook.com" + arr11[0].Replace("/\">", string.Empty);
                                                                                 }
                                                                             }
                                                                             break;
@@ -3294,7 +3357,7 @@ namespace Groups
                                                     {
                                                         IssendMessage = SendingPicMsgToOwnGroup(grpurl, message, Picpath, ref fbUser);
                                                     }
-                                                      string GetPostUrl = string.Empty;
+                                                    string GetPostUrl = string.Empty;
 
 
 
@@ -3442,7 +3505,7 @@ namespace Groups
                                             }
                                             else
                                             {
-                                                GlobusLogHelper.log.Info("Unable to post on : " + grpurl + " With User "+fbUser.username);
+                                                GlobusLogHelper.log.Info("Unable to post on : " + grpurl + " With User " + fbUser.username);
                                                 GlobusLogHelper.log.Debug("Unable to post on : " + grpurl + " With User " + fbUser.username);
                                                 // GlobusLogHelper.log.Info("You have been temporarily blocked from performing this action." + grpurl);
                                                 // GlobusLogHelper.log.Debug("You have been temporarily blocked from performing this action." + grpurl);
@@ -3461,7 +3524,7 @@ namespace Groups
                                             try
                                             {
                                                 IssendMessage = SendingMsgToGroups(grpurl, message, ref fbUser);
-                                               
+
 
                                             }
                                             catch (Exception ex)
@@ -3532,7 +3595,7 @@ namespace Groups
                                             }
                                             else
                                             {
-                                                GlobusLogHelper.log.Info("Unable to post on : " + grpurl+" With Username "+fbUser.username);
+                                                GlobusLogHelper.log.Info("Unable to post on : " + grpurl + " With Username " + fbUser.username);
                                                 GlobusLogHelper.log.Debug("Unable to post on : " + grpurl + " With Username " + fbUser.username);
                                                 //GlobusLogHelper.log.Info("You have been temporarily blocked from performing this action." + grpurl);
                                                 //GlobusLogHelper.log.Debug("You have been temporarily blocked from performing this action." + grpurl);
@@ -3600,7 +3663,7 @@ namespace Groups
                                                         try
                                                         {
                                                             string CSVHeader = "UserAccount" + "," + "GroupUrl" + "," + "message" + "," + "FilePath" + "," + "PostUrl" + "," + "DateTime";
-                                                            string CSV_Content = username + "," + grpurl + "," + message.Replace(",",string.Empty) + "," + Picpath + "," + GetPostUrl + "," + DateTime.Now;
+                                                            string CSV_Content = username + "," + grpurl + "," + message.Replace(",", string.Empty) + "," + Picpath + "," + GetPostUrl + "," + DateTime.Now;
                                                             Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, GroupReportExprotFilePath);
                                                         }
                                                         catch (Exception ex)
@@ -3618,7 +3681,7 @@ namespace Groups
                                                     }
                                                     else
                                                     {
-                                                        if (VideoUrl.Contains("/photos/a"))
+                                                        if (VideoUrl.Contains("/photos"))
                                                         {
                                                             IssendMessage = PostVideoUrlUpdated(grpurl, message, VideoUrl, ref  fbUser);
                                                         }
@@ -3630,8 +3693,8 @@ namespace Groups
                                                         {
                                                             //IssendMessage = PostVideoUrlNew(grpurl, message, VideoUrlMsg, ref fbUser);
                                                         }
-                                                      
-                                                       
+
+
                                                         string Pagesource = globusHttpHelpr.getHtmlfromUrl(new Uri(grpurl));
                                                         if (IssendMessage)
                                                         {
@@ -3744,7 +3807,7 @@ namespace Groups
                                                 GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + username);
                                                 Thread.Sleep(delayInSeconds);
                                             }
-                                   
+
                                         }
                                         catch (Exception ex)
                                         {
@@ -4174,6 +4237,11 @@ namespace Groups
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
 
+                if (Globals.CheckLicenseManager == "fdfreetrial")
+                {
+                    msg = msg + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+                }
+
                 // For DB
 
                 DataSet ds = new DataSet();
@@ -4284,7 +4352,13 @@ namespace Groups
 
         public bool SendingPicMsgToOwnGroup(string targeturl, string message, string Pic, ref FacebookUser fbUser)
         {
-           
+            //FrmDominator objFrmDominator = new FrmDominator();
+            // bool checkGroupCompaignReport = objFrmDominator.GroupCompaignReport();
+
+            if (Globals.CheckLicenseManager == "fdfreetrial")
+            {
+                message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+            }
             try
             {
                 int tempCountMain = 0;
@@ -4438,10 +4512,13 @@ namespace Groups
                     if (!ReturnPicstatus && tempCountMain <= 1)
                     {
                         goto startAgainMain;
+
                     }
 
                     if (ReturnPicstatus)
                     {
+
+                        GlobusLogHelper.log.Info("Image  :" + imagePath + " with Message :" + message + " Uploaded On Group :" + targeturl);
                         return true;
                     }
                     else
@@ -4461,7 +4538,13 @@ namespace Groups
 
         public bool SendingPicMsgToOwnGroupAsEdited(string targeturl, string message, string Pic, ref FacebookUser fbUser)
         {
-            
+            //FrmDominator objFrmDominator = new FrmDominator();
+            // bool checkGroupCompaignReport = objFrmDominator.GroupCompaignReport();
+
+            if (Globals.CheckLicenseManager == "fdfreetrial")
+            {
+                message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+            }
             try
             {
                 int tempCountMain = 0;
@@ -4612,7 +4695,7 @@ namespace Groups
                         delay = new Random().Next(minDelayGroupManager, maxDelayGroupManager);
                     }
                     catch { };
-                    ReturnPicstatus = HttpHelper.AddaPictureForEditMessage(ref HttpHelper, username, password, imagePath, proxyAddress, proxyPort, proxyUsername, proxyPassword, targeturl, message, ref status, intermediatePostResponse, xhpc_targetid, xhpc_composerid, message, fb_dtsg, __user, pgSrc_FanPageSearch, ref tempCountMain,delay);
+                    ReturnPicstatus = HttpHelper.AddaPictureForEditMessage(ref HttpHelper, username, password, imagePath, proxyAddress, proxyPort, proxyUsername, proxyPassword, targeturl, message, ref status, intermediatePostResponse, xhpc_targetid, xhpc_composerid, message, fb_dtsg, __user, pgSrc_FanPageSearch, ref tempCountMain, delay);
 
 
 
@@ -4641,16 +4724,22 @@ namespace Groups
 
         }
 
-        public bool SendingPicMsgToOwnGroup(string targeturl, string message, List<string> lstpic, ref FacebookUser fbUser)
+        public void SendingPicMsgToOwnGroup(string targeturl, string message, List<string> lstpic, ref FacebookUser fbUser)
         {
 
-         
+            if (Globals.CheckLicenseManager == "fdfreetrial")
+            {
+                message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message. please buy it.";
+
+            }
+            //FrmDominator objFrmDominator = new FrmDominator();
+            // bool checkGroupCompaignReport = objFrmDominator.GroupCompaignReport();
             try
             {
                 int tempCountMain = 0;
             startAgainMain:
 
-              
+
                 string username = fbUser.username;
                 string password = fbUser.password;
 
@@ -4669,7 +4758,8 @@ namespace Groups
 
                 string __user = "";
                 string fb_dtsg = "";
-
+                string imp_id = string.Empty;
+                string Session_Id = string.Empty;
                 string pgSrc_FanPageSearch = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
 
                 if (pgSrc_FanPageSearch.Contains("uiIconText _51z7"))
@@ -4690,9 +4780,19 @@ namespace Groups
                     xhpc_targetid = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "xhpc_targetid");
                     try
                     {
+                        imp_id = Utils.getBetween(pgSrc_FanPageSearch, "\"imp_id\":\"", "\"");
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+
+                    string responseresult = string.Empty;
+                    try
+                    {
                         string Dialogposturl = string.Empty;
                         string DialogPostData = string.Empty;
-                        string responseresult = string.Empty;
+
                         try
                         {
                             Dialogposturl = faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerPostAjaxDialogPostUrl;
@@ -4713,86 +4813,140 @@ namespace Groups
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
+                    string QN_VAl = "8aeecef740bea2aa487026676d2b2bd8";
+
                     try
                     {
-                        string getresponse = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerGetAjaxMentionBootStrapUrl + xhpc_targetid + "&neighbor=" + xhpc_targetid + "&membership_group_id=" + xhpc_targetid + "&set_subtext=true&__user=" + __user + "&__a=1"));
-                        if (string.IsNullOrEmpty(getresponse))
-                        {
-                            try
-                            {
-                                getresponse = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerGetAjaxMentionBootStrapUrl + xhpc_targetid + "&neighbor=" + xhpc_targetid + "&membership_group_id=" + xhpc_targetid + "&set_subtext=true&__user=" + __user + "&__a=1"));
+                        QN_VAl = Utils.getBetween(responseresult, "qn\":\"", "\"");
 
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                    try
+                    {
+                        Session_Id = Utils.getBetween(responseresult, "\"session_id\":", "}");
+                        if (string.IsNullOrEmpty(Session_Id))
+                        {
+                            Session_Id = Utils.getBetween(responseresult, "session_id=", "&");
                         }
                     }
                     catch (Exception ex)
                     {
-                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
                     }
-
-
-                    string _rev = GlobusHttpHelper.getBetween(pgSrc_FanPageSearch, "svn_rev", ",");
-                    _rev = _rev.Replace("\":", string.Empty);
-
-
-
-                    #region Intermediate Post - Waterfall
+                    int i = 0;
+                    foreach (string imgItem in lstpic)
                     {
-                        string intermediatePostData1 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=cameraicon&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=cameraicon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + __user + "&__a=1&__dyn=7n8a9EAMNpGu5k9UmAEyKepFomhEK49oKiWFamiFo&__req=1n&__rev=" + _rev + "&ttstamp=265816710110410481103";
-                        string intermediatePostURL1 = "https://www.facebook.com/ajax/composerx/attachment/media/chooser/?composerurihash=1";
+                        string UploadPicSatus = string.Empty;
+                        string PhotoFbID = string.Empty;
+                        string Message = string.Empty;
+                        if (LstMessageUrlsGroupCampaignManager.Count > 0)
+                        {
+                            try
+                            {
+                                Message = LstMessageUrlsGroupCampaignManager[i];
+                            }
+                            catch (Exception ex)
+                            {
+                                Message = LstMessageUrlsGroupCampaignManager[new Random().Next(0, LstMessageUrlsGroupCampaignManager.Count - 1)];
+                            }
+                        }
+                        try
+                        {
+                            NameValueCollection nvc1 = new NameValueCollection();
+                            nvc1.Add("fb_dtsg", fb_dtsg);
+                            nvc1.Add("source", "8");
+                            nvc1.Add("profile_id", __user);
+                            nvc1.Add("grid_id", "u_i_2");
+                            nvc1.Add("upload_id", "1024");
+                            nvc1.Add("qn", QN_VAl);
+                            nvc1.Add("farr", "" + imgItem + "<:><:><:>image/jpeg");
+                            nvc1.Add("upload_id", "1024");
+                            //"0", "" + pics + "<:><:><:>image/jpeg"
+                            UploadPicSatus = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&image_height=100&image_width=100&letterbox=0&av=" + __user + "&qn=" + QN_VAl + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2lm9o-t2u5bHaEWCueyp9Esx6iWF3oyupFLHwxBxCbzES2N6y8-bxu3fzob8kxjy9UvkwydCxt7gjz_AKuEOqUlzU&__req=p&fb_dtsg=AQFjCTqy0CL_&ttstamp=2658170106678411312148677695&__rev=1863904", targeturl, nvc1, "upload_id", "farr");
 
-                        string intermediatePostResponse1 = HttpHelper.postFormData(new Uri(intermediatePostURL1), intermediatePostData1);
+                        }
+                        catch (Exception ex)
+                        {
+                        }
+                        try
+                        {
+                            PhotoFbID = Utils.getBetween(UploadPicSatus, "\"photoFBID\":\"", "\"");
+                        }
+                        catch (Exception ex)
+                        {
+                        }
+                        if (!string.IsNullOrEmpty(UploadPicSatus) && !string.IsNullOrEmpty(PhotoFbID))
+                        {
+                            try
+                            {
+                                NameValueCollection nvc1 = new NameValueCollection();
+                                nvc1.Add("composer_session_id", "aeff508d-a276-4447-9504-889913e11ef1");
+                                nvc1.Add("fb_dtsg", fb_dtsg);
+                                nvc1.Add("xhpc_context", "profile");
+                                nvc1.Add("xhpc_ismeta", "1");
+                                nvc1.Add("xhpc_timeline", string.Empty);
+                                nvc1.Add("xhpc_composerid", "u_0_1q");
+                                nvc1.Add("xhpc_targetid", xhpc_targetid);
+                                nvc1.Add("xhpc_publish_type", "1");
+                                nvc1.Add("clp", "{\"cl_impid\":\"" + imp_id + "\",\"clearcounter\":0,\"elementid\":\"u_0_1x\",\"version\":\"x\",\"parent_fbid\":" + xhpc_targetid + "}");
+                                nvc1.Add("xhpc_message_text", Message);
+                                nvc1.Add("xhpc_message", Message);
+                                nvc1.Add("composer_unpublished_photo[]", PhotoFbID);
+                                nvc1.Add("composer_has_crop[" + PhotoFbID + "]", string.Empty);
+                                nvc1.Add("composer_has_filter[" + PhotoFbID + "]", string.Empty);
+                                nvc1.Add("album_type", "128");
+                                nvc1.Add("is_file_form", "1");
+                                nvc1.Add("oid", string.Empty);
+                                nvc1.Add("qn", QN_VAl);
+                                nvc1.Add("application", "composer");
+                                nvc1.Add("is_explicit_place", string.Empty);
+                                nvc1.Add("composertags_place", string.Empty);
+                                nvc1.Add("composertags_place_name", string.Empty);
+                                nvc1.Add("tagger_session_id", Session_Id);
+                                nvc1.Add("action_type_id[]", string.Empty);
+                                nvc1.Add("object_str[]", string.Empty);
+                                nvc1.Add("object_id[]", string.Empty);
+                                nvc1.Add("hide_object_attachment", "0");
+                                nvc1.Add("og_suggestion_mechanism", string.Empty);
+                                nvc1.Add("og_suggestion_logging_data", string.Empty);
+                                nvc1.Add("icon_id", string.Empty);
+                                nvc1.Add("composertags_city", string.Empty);
+                                nvc1.Add("disable_location_sharing", "false");
+                                nvc1.Add("composer_predicted_city", string.Empty);
+
+                                UploadPicSatus = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/media/upload/photos/composer/?av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2lm9o-t2u5bHaEWCueyp9Esx6iWF3oyupFLHwxBxCbzES2N6y8-bxu3fzob8kxjy9UvkwydCxt7gjz_AKuEOqUlzU&__req=11&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170106678411312148677695&__rev=1863904", targeturl, nvc1, "composer_predicted_city", string.Empty);
+                                if (UploadPicSatus.Contains("photo_fbid"))
+                                {
+                                    ReturnPicstatus = true;
+                                    GlobusLogHelper.log.Info("Image  :" + imgItem + " with Message :" + Message + " Uploaded On Group :" + targeturl);
+                                }
+                                else
+                                {
+                                    ReturnPicstatus = false;
+                                }
+                                //
+                                try
+                                {
+                                    int delayInSeconds = Utils.GenerateRandom(minDelayGroupRequestManager * 1000, maxDelayGroupRequestManager * 1000);
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
+
+                            }
+                            catch (Exception ex)
+                            {
+                            }
+                        }
                     }
-
-                    #endregion
-                    #region Intermediate Post - Waterfall
-                    {
-                        string intermediatePostData2 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=cameraicon&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=cameraicon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + __user + "&__a=1&__dyn=7n88Oq9ccmqDxl2u5Fa8HzCqm5Aqbx2mbAKGiBAGm&__req=1o&__rev=" + _rev + "&ttstamp=265816710110410481103";
-                        string intermediatePostURL2 = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?composerurihash=2";
-
-                        string intermediatePostResponse2 = HttpHelper.postFormData(new Uri(intermediatePostURL2), intermediatePostData2);
-                    }
-
-                    #endregion
-
-                    #region Intermediate Post - Waterfall
-
-                    string intermediatePostData = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=cameraicon&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=mainprivacywidget&loaded_components[7]=cameraicon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + __user + "&__a=1&__dyn=7n88Oq9ccmqDxl2u5Fa8HzCqm5Aqbx2mbAKGiBAGm&__req=1p&__rev=" + _rev + "&ttstamp=265816710110410481103";
-                    string intermediatePostURL = "https://www.facebook.com/ajax/composerx/attachment/video/upload/?composerurihash=3";
-
-                    string intermediatePostResponse = HttpHelper.postFormData(new Uri(intermediatePostURL), intermediatePostData);
-
-                    string value_qn = GlobusHttpHelper.ParseJson(intermediatePostResponse, "waterfallID");
-
-                    #endregion
-
-                    #region Intermediate Post - Waterfall commentedCode
-
-                    //string intermediatePostData = "fb_dtsg=" + fb_dtsg + "&composerid=u_0_u&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=cameraicon&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=cameraicon&loaded_components[6]=mainprivacywidget&loaded_components[7]=withtaggericon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + __user + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=i&phstamp=16581688688747595501";
-                    //string intermediatePostURL = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?composerurihash=1";
-
-                    //string intermediatePostResponse = HttpHelper.postFormData(new Uri(intermediatePostURL), intermediatePostData);
-
-                    //string value_qn = GlobusHttpHelper.ParseJson(intermediatePostResponse, "waterfallID");
-
-                    #endregion
-
-
-                    string UploadPostUrl = faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerPostUploadPhotosPostUrl;
-
-                    string imagePath = string.Empty;
-
-
-                    //imagePath = Pic;
-                    // imagePath = lstpic;
-
-                    string status = string.Empty;
-
-                    ReturnPicstatus = HttpHelper.AddaPicture2(ref HttpHelper, username, password, lstpic, proxyAddress, proxyPort, proxyUsername, proxyPassword, targeturl, message, ref status, intermediatePostResponse, xhpc_targetid, xhpc_composerid, message, fb_dtsg, __user, pgSrc_FanPageSearch, ref tempCountMain);
+                    // ReturnPicstatus = HttpHelper.AddaPicture2(ref HttpHelper, username, password, lstpic, proxyAddress, proxyPort, proxyUsername, proxyPassword, targeturl, message, ref status, intermediatePostResponse, xhpc_targetid, xhpc_composerid, message, fb_dtsg, __user, pgSrc_FanPageSearch, ref tempCountMain);
                     //ReturnPicstatus = HttpHelper.AddaPicture(ref HttpHelper, username, password, lstpic, proxyAddress, proxyPort, proxyUsername, proxyPassword, targeturl, message, ref status, intermediatePostResponse, xhpc_targetid, xhpc_composerid, message, fb_dtsg, __user, pgSrc_FanPageSearch, ref tempCountMain);
 
                     if (!ReturnPicstatus && tempCountMain <= 1)
@@ -4800,14 +4954,7 @@ namespace Groups
                         goto startAgainMain;
                     }
 
-                    if (ReturnPicstatus)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+
                 }
                 else
                 {
@@ -4820,14 +4967,53 @@ namespace Groups
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
 
-            return false;
+
         }
+
+        public void SendingPicMsgToOwnGroupNew(string targeturl, List<string> messages, List<string> lstpic, ref FacebookUser fbUser)
+        {
+            messages.Shuffle();
+            lstpic.Shuffle();
+            for (int i = 0; i < lstpic.Count; i++)
+            {
+                string Message = string.Empty;
+                if (messages.Count > 0)
+                {
+                    try
+                    {
+                        Message = messages[i];
+                    }
+                    catch (Exception ex)
+                    {
+                        Message = messages[new Random().Next(0, messages.Count - 1)];
+                    }
+                }
+                string PicPath = string.Empty;
+                try
+                {
+                    PicPath = lstpic[i];
+                }
+                catch (Exception ex)
+                {
+                    PicPath = lstpic[new Random().Next(0, lstpic.Count - 1)];
+                }
+
+                SendingPicMsgToOwnGroup(targeturl, Message, PicPath, ref fbUser);
+
+            }
+        }
+
+
+
 
         public bool SendingMsgToGroups(string targeturl, string message, ref FacebookUser fbUser)
         {
             try
             {
-               
+                if (Globals.CheckLicenseManager == "fdfreetrial")
+                {
+                    message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+                }
 
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
                 string msg = string.Empty;
@@ -4907,12 +5093,12 @@ namespace Groups
                             _rev = _rev.Replace("\":", string.Empty);
 
 
-                   
-                            string postdata = "fb_dtsg=" + fb_dtsg + "&postfromfull=true&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_fbx=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_message_text=" + MESSAGE + "&xhpc_message=" + MESSAGE + "&is_explicit_place=&composertags_place=&composertags_place_name=&composer_session_id=" + composer_session_id + "&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + __user + "&__a=1&phstamp=1658165781016912151427";
 
+                            string postdata = "fb_dtsg=" + fb_dtsg + "&postfromfull=true&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_fbx=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_message_text=" + MESSAGE + "&xhpc_message=" + MESSAGE + "&is_explicit_place=&composertags_place=&composertags_place_name=&composer_session_id=" + composer_session_id + "&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + __user + "&__a=1&phstamp=1658165781016912151427";
+                            postdata = "composer_session_id=96fb21f6-d344-473a-a852-5f73deee7d16&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%223dfa8b31%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_y%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + MESSAGE + "&xhpc_message=" + MESSAGE + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1435591978&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + __user + "&__a=1&__dyn=7AmajEyl2lm9o-t2u5bGya4Au7pEsx6iWF3oyut9LHwxBxCbzES2N6y8-bxu3fzob8iUkUyu4EOy28yiq5QtxabLVbDGcw&__req=q&ttstamp=26581698777545666112668874&__rev=1810373";
                             //  postdata = "composer_session_id=62c93be7-17d8-4f1b-b2aa-036f326a8734&fb_dtsg=AQCAABsi&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=u_jsonp_5_c&xhpc_targetid=139180732957326&clp=%7B%22cl_impid%22%3A%220a090d8f%22%2C%22clearcounter%22%3A1%2C%22elementid%22%3A%22u_jsonp_5_r%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A139180732957326%7D&xhpc_message_text=****Great%20Gift%20****%2024K%20Gold%20foil%20playing%20cards%20%2C%20comes%20with%20authentication%20certificate.%20%C2%A319.99%20each%20with%20free%20deliver%20%2C%20payment%20on%20deliver%20once%20you%20have%20checked%20and%20you%20are%20happy%20with%20the%20item.%20Comes%20well%20presented%20in%20a%20mahogany%20%20solid%20box.%20Any%20question%20please%20message%20me%20%2Clook%20at%20image%20for%20more%20detail%20on%20how%20the%20item%20looks.&xhpc_message=****Great%20Gift%20****%2024K%20Gold%20foil%20playing%20cards%20%2C%20comes%20with%20authentication%20certificate.%20%C2%A319.99%20each%20with%20free%20deliver%20%2C%20payment%20on%20deliver%20once%20you%20have%20checked%20and%20you%20are%20happy%20with%20the%20item.%20Comes%20well%20presented%20in%20a%20mahogany%20%20solid%20box.%20Any%20question%20please%20message%20me%20%2Clook%20at%20image%20for%20more%20detail%20on%20how%20the%20item%20looks.&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1388385131&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=100007423262870&__a=1&__dyn=7n8a9EAMNpGu5k9UmAEyKepFomhEK49oKiWFamiFo&__req=t&__rev=1062230&ttstamp=2658167656566115105";
 
-                            string posturl = faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerPostUpdateStatusUrl;
+                            string posturl = faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerPostUpdateStatusUrl + "?av=" + __user;
 
                             string Response = string.Empty;
                             try
@@ -4945,8 +5131,8 @@ namespace Groups
                                     string PostedUrl = string.Empty;
                                     if (Response.Contains("\"permalink") && Response.Contains("commentcount"))
                                     {
-                                   
-                                        PostedUrl = Utils.getBetween(Response, "\"permalink", "commentcount").Replace("\\", string.Empty).Replace("\":\"", string.Empty).Replace("\",\"",string.Empty);
+
+                                        PostedUrl = Utils.getBetween(Response, "permalink\":\"", "\"").Replace("\\", string.Empty).Replace("\":\"", string.Empty).Replace("\",\"", string.Empty);
                                         PostedUrl = "https://www.facebook.com" + PostedUrl;
                                         Status = "Posted";
                                     }
@@ -4968,8 +5154,8 @@ namespace Groups
 
                                     try
                                     {
-                                        string CSVHeader = "UserAccount" + "," + "GroupUrl" + "," + "message" + "," + "PostedUrl" + ","+"Status"+"," + "DateTime";
-                                        string CSV_Content = fbUser.username + "," + targeturl + "," + message + "," + PostedUrl + ","+Status +","+DateTime.Now;
+                                        string CSVHeader = "UserAccount" + "," + "GroupUrl" + "," + "message" + "," + "PostedUrl" + "," + "Status" + "," + "DateTime";
+                                        string CSV_Content = fbUser.username + "," + targeturl + "," + message + "," + PostedUrl + "," + Status + "," + DateTime.Now;
                                         Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, GroupReportExprotFilePath);
                                     }
                                     catch (Exception ex)
@@ -5011,7 +5197,11 @@ namespace Groups
         {
             try
             {
-             
+
+                if (Globals.CheckLicenseManager == "fdfreetrial")
+                {
+                    message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+                }
 
 
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
@@ -5128,7 +5318,11 @@ namespace Groups
         public bool PostVideoUrl(string targeturl, string message, string VideoUrl, ref FacebookUser fbUser)
         {
 
-          
+            if (Globals.CheckLicenseManager == "fdfreetrial")
+            {
+                message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+            }
+
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
             {
@@ -5159,7 +5353,7 @@ namespace Groups
                 {
 
                     string strFanPageURL = targeturl;
-                    string Parent_FbId=string.Empty;
+                    string Parent_FbId = string.Empty;
                     try
                     {
                         Parent_FbId = Utils.getBetween(strFanPageURL + "@@", "/groups/", "@@");
@@ -5173,7 +5367,7 @@ namespace Groups
                         }
                     }
                     catch { };
-                    
+
 
                     string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(strFanPageURL));
                     {
@@ -5185,7 +5379,7 @@ namespace Groups
                                 string profile_id = Utils.getBetween(strPageSource, "group_id=", "\"");
                                 Parent_FbId = profile_id.Replace("value=", string.Empty).Replace(" ", string.Empty).Trim();
                             }
-                            
+
                         }
                         catch { };
 
@@ -5203,12 +5397,12 @@ namespace Groups
 
                         xhpc_message_text = VideoUrl;
                         xhpc_message = message + "      " + xhpc_message_text;
-                        string xhpc_message_textPostData=string.Empty;
+                        string xhpc_message_textPostData = string.Empty;
                         try
                         {
-                           
+
                             xhpc_message_text = Uri.EscapeDataString(xhpc_message);
-                            xhpc_message_textPostData=xhpc_message_text;
+                            xhpc_message_textPostData = xhpc_message_text;
                             if (VideoUrl.Contains("/photos/a"))
                             {
                                 xhpc_message_text = Uri.EscapeDataString(xhpc_message).Replace("%2F", "%252F").Replace("%3F", "%253F");
@@ -5224,7 +5418,7 @@ namespace Groups
                             UserId = GlobusHttpHelper.ParseJson(strPageSource, "user");
                         }
                         string strAjaxRequest1 = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerGetAjaxEmiEndPhpUrl + UserId + "&__a=1"));
-                        
+
                         //NewPostData Create by ajay 10/02/2015
 
                         //string AjaxGetUrl = "https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url="+Uri.EscapeDataString(VideoUrl)+"&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&av="+UserId+"&composerurihash=3";
@@ -5235,7 +5429,7 @@ namespace Groups
 
 
                         string composer_session_idSource = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerGetAjaxMetacomposerStatusUrl + UserId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1"));
-                       
+
                         if (string.IsNullOrEmpty(composer_session_idSource))
                         {
                             composer_session_idSource = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerGetAjaxMetacomposerStatusUrl + UserId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UserId + "&__a=1"));
@@ -5283,7 +5477,7 @@ namespace Groups
                             composer_session_id = (composer_session_idSource.Substring(composer_session_idSource.IndexOf("composer_session_id"), composer_session_idSource.IndexOf("/>", composer_session_idSource.IndexOf("composer_session_id")) - composer_session_idSource.IndexOf("composer_session_id")).Replace("composer_session_id", string.Empty).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
 
                         }
-                     
+
                         string appid = string.Empty;
 
                         string Responsed = string.Empty;
@@ -5294,20 +5488,20 @@ namespace Groups
                             string jhj = string.Empty;
                             string kkk = string.Empty;
                             string PostData = string.Empty;
-                            string FirstResponse=string.Empty;
+                            string FirstResponse = string.Empty;
                             appid = Utils.getBetween(strPageSource, "appid=", "&");
                             try
                             {
 
                                 string Urll = "https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url=" + Uri.EscapeDataString(VideoUrl) + "&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&__av=" + UserId + "&composerurihash=2";
-                                string PostData11="fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=prompt&loaded_components[7]=mainprivacywidget&loaded_components[8]=ogtaggericon&loaded_components[9]=withtaggericon&loaded_components[10]=placetaggericon&loaded_components[11]=maininput&loaded_components[12]=withtagger&loaded_components[13]=placetagger&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=ogtagger&loaded_components[19]=citysharericon&loaded_components[20]=cameraicon&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgSGGeqrWo8popyUWdBUgDyQqV8KVo&__req=b&ttstamp=265817197118828082100727676&__rev=1392897";
+                                string PostData11 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=prompt&loaded_components[7]=mainprivacywidget&loaded_components[8]=ogtaggericon&loaded_components[9]=withtaggericon&loaded_components[10]=placetaggericon&loaded_components[11]=maininput&loaded_components[12]=withtagger&loaded_components[13]=placetagger&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=ogtagger&loaded_components[19]=citysharericon&loaded_components[20]=cameraicon&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgSGGeqrWo8popyUWdBUgDyQqV8KVo&__req=b&ttstamp=265817197118828082100727676&__rev=1392897";
                                 FirstResponse = HttpHelper.postFormData(new Uri(Urll), PostData11);
                             }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error(ex.StackTrace);
                             }
-                            string attachment_params = Utils.getBetween(FirstResponse, "attachment[params][0]\\\" value=\\\"","\\\"");
+                            string attachment_params = Utils.getBetween(FirstResponse, "attachment[params][0]\\\" value=\\\"", "\\\"");
                             string attachment_params_urlInfo_canonical = Utils.getBetween(FirstResponse, "[params][urlInfo][canonical]\\\" value=\\\"", "\\\"").Replace("\\", "");
                             string attachment_params_urlInfo_final = Utils.getBetween(FirstResponse, "attachment[params][urlInfo][final]\\\" value=\\\"", "\\\"").Replace("\\", "");
                             string attachment_params_urlInfo_user = Utils.getBetween(FirstResponse, "attachment[params][urlInfo][user]\\\" value=\\\"", "\\\"").Replace("\\", "");
@@ -5333,11 +5527,15 @@ namespace Groups
                             }
                             if (string.IsNullOrEmpty(attachment_params_images0))
                             {
-                              string[] arr111=  System.Text.RegularExpressions.Regex.Split(FirstResponse,"attachment[params][images][0]");
+                                string[] arr111 = System.Text.RegularExpressions.Regex.Split(FirstResponse, "attachment[params][images][0]");
                             }
-                         
+
                             string attachment_params_medium = Utils.getBetween(FirstResponse, "attachment[params][medium]\\\" value=\\\"", "\\\"").Replace("\\", "");
                             string attachment_params_url = Utils.getBetween(FirstResponse, "attachment[params][url]\\\" value=\\\"", "\\\"").Replace("\\", "");
+                            attachment_params_images0 = Utils.getBetween(FirstResponse, "attachment[params][images][0]\\\" value=\\\"", "\\\"").Replace("\\", "");
+                            string attachment_params_ranked_images_images_1 = Utils.getBetween(FirstResponse, "attachment[params][ranked_images][images][1]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
+                            string attachment_params_ranked_images_images_2 = Utils.getBetween(FirstResponse, "attachment[params][ranked_images][images][2]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
+                            string attachment_params_ranked_images_images_3 = Utils.getBetween(FirstResponse, "attachment[params][ranked_images][images][3]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#", string.Empty);
                             string attachment_params_video0_type = Utils.getBetween(FirstResponse, "attachment[params][video][0][type]\\\" value=\\\"", "\\\"").Replace("\\", "");
                             string attachment_params_video0_src = Utils.getBetween(FirstResponse, "attachment[params][video][0][src]\\\" value=\\\"", "\\\"").Replace("\\", "");
                             string attachment_params_video0_width = Utils.getBetween(FirstResponse, "attachment[params][video][0][width]\\\" value=\\\"", "\\\"").Replace("\\", "");
@@ -5361,7 +5559,38 @@ namespace Groups
                             string link_metrics_images_cap = Utils.getBetween(FirstResponse, "link_metrics[images_cap]\\\" value=\\\"", "\\\"").Replace("\\", "");
                             string link_metrics_images_type = Utils.getBetween(FirstResponse, "link_metrics[images_type]\\\" value=\\\"", "\\\"").Replace("\\", "");
                             //string FinalResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=fee06a9d-c617-4071-8ed3-e308f966370a&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DAtbJaKNmbJs&xhpc_message=" + Uri.EscapeDataString(VideoUrl) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409651262&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897");
-                                
+                            if (!useOriginalMessage)
+                            {
+                                int index = 0;
+                                foreach (string item in LstVideoUrlsGroupCampaignManager)
+                                {
+                                    if (VideoUrl.Equals(item))
+                                    {
+                                        break;
+                                    }
+                                    index++;
+                                }
+                                attachment_params_title = lstWallPostURLsTitles[index];
+                                attachment_params_summary = lstWallPostURLsSummaries[index];
+                                if (!string.IsNullOrEmpty(attachment_params_ranked_images_images_3))
+                                {
+                                    attachment_params_images0 = attachment_params_ranked_images_images_3;
+                                }
+                                else
+                                {
+                                    if (!string.IsNullOrEmpty(attachment_params_ranked_images_images_2))
+                                    {
+                                        attachment_params_images0 = attachment_params_ranked_images_images_2;
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrEmpty(attachment_params_ranked_images_images_1))
+                                        {
+                                            attachment_params_images0 = attachment_params_ranked_images_images_1;
+                                        }
+                                    }
+                                }
+                            }
                             try
                             {
                                 if (VideoUrl.Contains("http:"))
@@ -5452,7 +5681,7 @@ namespace Groups
                                 }
 
                             }
-                            appid = Utils.getBetween(Responsed,"app_id\\\" value=\\\"", "\\\"");
+                            appid = Utils.getBetween(Responsed, "app_id\\\" value=\\\"", "\\\"");
                             Dictionary<string, string> dicNameValue = new Dictionary<string, string>();
                             if (Responsed.Contains("name=") && Responsed.Contains("value="))
                             {
@@ -5556,21 +5785,21 @@ namespace Groups
 
 
                             string attachment_params1 = string.Empty;
-                                string attachment_params0=string.Empty;
+                            string attachment_params0 = string.Empty;
 
-                                try
+                            try
+                            {
+                                attachment_params1 = Utils.getBetween(FirstResponse, "attachment[params][1]", "/>").Replace("value=", "").Replace("\"", "").Replace("\\ \\", "").Trim();
+                                attachment_params0 = Utils.getBetween(FirstResponse, "attachment[params][0]", "/>").Replace("value=", "").Replace("\"", "").Replace("\\ \\", "").Trim();
+                                if (string.IsNullOrEmpty(attachment_params1))
                                 {
-                                    attachment_params1 = Utils.getBetween(FirstResponse, "attachment[params][1]", "/>").Replace("value=", "").Replace("\"", "").Replace("\\ \\","").Trim();
-                                    attachment_params0 = Utils.getBetween(FirstResponse, "attachment[params][0]", "/>").Replace("value=", "").Replace("\"", "").Replace("\\ \\", "").Trim();
-                                    if (string.IsNullOrEmpty(attachment_params1))
-                                    {
-                                         attachment_params0 = Utils.getBetween(FirstResponse,"attachment[params][global_share_id]","/>").Replace("value=", "").Replace("\"", "").Replace("\\ \\", "").Trim();
-                                    }
+                                    attachment_params0 = Utils.getBetween(FirstResponse, "attachment[params][global_share_id]", "/>").Replace("value=", "").Replace("\"", "").Replace("\\ \\", "").Trim();
                                 }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
                             partPostData = partPostData.Replace(" ", "+");
 
                             string resp = string.Empty;
@@ -5607,11 +5836,11 @@ namespace Groups
                                             {
                                                 resp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22e2d79f89%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_3_y%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + Uri.EscapeDataString(message + "    :    " + VideoUrl) + "&xhpc_message=" + Uri.EscapeDataString(message + "   :    " + VideoUrl) + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[type]=" + attachment_type + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409910176&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgyiGGeqrWo8popyUWumnx2ubhHAyXBxi&__req=1g&ttstamp=2658171748611875701028211799&__rev=1400559");
                                             }
-                                       
-                                         }
-                                    catch { };
+
+                                        }
+                                        catch { };
                                     }
-                                  
+
                                 }
                                 catch (Exception ex)
                                 {
@@ -5669,8 +5898,8 @@ namespace Groups
 
                                                 try
                                                 {
-                                               
-                                                resp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + Uri.EscapeDataString(message) + "&xhpc_message=" + Uri.EscapeDataString(message) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409651262&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897");
+
+                                                    resp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22df2130f0%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_2_t%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + Uri.EscapeDataString(message) + "&xhpc_message=" + Uri.EscapeDataString(message) + "&aktion=post&app_id=" + appid + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(attachment_params_urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(attachment_params_urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(attachment_params_urlInfo_user) + "&attachment[params][favicon]=" + Uri.EscapeDataString(attachment_params_favicon) + "&attachment[params][title]=" + Uri.EscapeDataString(attachment_params_title) + "&attachment[params][summary]=" + Uri.EscapeDataString(attachment_params_summary) + "&attachment[params][images][0]=" + Uri.EscapeDataString(attachment_params_images0) + "&attachment[params][medium]=" + Uri.EscapeDataString(attachment_params_medium) + "&attachment[params][url]=" + Uri.EscapeDataString(attachment_params_url) + "&attachment[params][video][0][type]=" + Uri.EscapeDataString(attachment_params_video0_type) + "&attachment[params][video][0][src]=" + Uri.EscapeDataString(attachment_params_video0_src) + "&attachment[params][video][0][width]=" + attachment_params_video0_width + "&attachment[params][video][0][height]=" + attachment_params_video0_height + "&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(attachment_params_video0_secure_url) + "&attachment[type]=" + attachment_type + "&link_metrics[source]=" + link_metrics_source + "&link_metrics[domain]=" + link_metrics_domain + "&link_metrics[base_domain]=" + link_metrics_base_domain + "&link_metrics[title_len]=" + link_metrics_title_len + "&link_metrics[summary_len]=" + link_metrics_summary_len + "&link_metrics[min_dimensions][0]=" + link_metrics_min_dimensions0 + "&link_metrics[min_dimensions][1]=" + link_metrics_min_dimensions1 + "&link_metrics[images_with_dimensions]=" + link_metrics_images_with_dimensions + "&link_metrics[images_pending]=" + link_metrics_images_pending + "&link_metrics[images_fetched]=" + link_metrics_images_fetched + "&link_metrics[image_dimensions][0]=" + link_metrics_image_dimensions0 + "&link_metrics[image_dimensions][1]=" + link_metrics_image_dimensions1 + "&link_metrics[images_selected]=" + link_metrics_images_selected + "&link_metrics[images_considered]=" + link_metrics_images_considered + "&link_metrics[images_cap]=" + link_metrics_images_cap + "&link_metrics[images_type]=" + link_metrics_images_type + "&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=1&composer_metrics[images_loaded]=1&composer_metrics[images_shown]=1&composer_metrics[load_duration]=55&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409651262&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECQqbx2mbAKGiyGGEVFLO0xBxC9V8CdBUgDyQqVaybBg&__req=f&ttstamp=26581721151189910057824974119&__rev=1392897");
                                                 }
                                                 catch { };
                                             }
@@ -5679,8 +5908,8 @@ namespace Groups
                                                 try
                                                 {
 
-                                              
-                                                resp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22e2d79f89%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_3_y%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + Uri.EscapeDataString(message) + "&xhpc_message=" + Uri.EscapeDataString(message) + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[type]=" + attachment_type + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409910176&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgyiGGeqrWo8popyUWumnx2ubhHAyXBxi&__req=1g&ttstamp=2658171748611875701028211799&__rev=1400559");
+
+                                                    resp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?__av=" + UserId), "composer_session_id=&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22e2d79f89%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_3_y%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + Uri.EscapeDataString(message) + "&xhpc_message=" + Uri.EscapeDataString(message) + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[type]=" + attachment_type + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1409910176&action_type_id[0]=&object_str[0]=&object_id[0]=&og_location_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=" + composer_predicted_city + "&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgyiGGeqrWo8popyUWumnx2ubhHAyXBxi&__req=1g&ttstamp=2658171748611875701028211799&__rev=1400559");
                                                 }
                                                 catch { };
                                             }
@@ -5689,11 +5918,11 @@ namespace Groups
                                                 try
                                                 {
 
-                                               
-                                                string SecondPostUrl = "https://www.facebook.com/ajax/updatestatus.php?av=" + UserId;
 
-                                                string SecondPostData = "composer_session_id=" + composer_session_id + "&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_composerid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22aeeb80e9%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1l%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A1377865092436016%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[params][1]=1073741915&attachment[type]=2&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1417760932&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyKAEWCueyp9Esx6iWF3pqzCC-C26m4VoKezpUgDyQqUkBBzEy6Kdy8-&__req=g&ttstamp=265817177997910611967866779&__rev=1520211";
-                                                string secondRespoce = HttpHelper.postFormData(new Uri(SecondPostUrl), SecondPostData);
+                                                    string SecondPostUrl = "https://www.facebook.com/ajax/updatestatus.php?av=" + UserId;
+
+                                                    string SecondPostData = "composer_session_id=" + composer_session_id + "&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_composerid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22aeeb80e9%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1l%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A1377865092436016%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[params][1]=1073741915&attachment[type]=2&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1417760932&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyKAEWCueyp9Esx6iWF3pqzCC-C26m4VoKezpUgDyQqUkBBzEy6Kdy8-&__req=g&ttstamp=265817177997910611967866779&__rev=1520211";
+                                                    string secondRespoce = HttpHelper.postFormData(new Uri(SecondPostUrl), SecondPostData);
                                                 }
                                                 catch { };
                                             }
@@ -5751,10 +5980,14 @@ namespace Groups
             return false;
         }
 
-        public bool PostVideoUrlUpdated(string targeturl, string message, string VideoUrl, ref FacebookUser fbUser)
+        public bool PostVideoUrlUpdatedNew(string targeturl, string message, string VideoUrl, ref FacebookUser fbUser)
         {
 
-          
+
+            if (Globals.CheckLicenseManager == "fdfreetrial")
+            {
+                message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+            }
 
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
@@ -5769,13 +6002,13 @@ namespace Groups
                 string xhpc_ismeta = "";
                 string xhpc_message_text = "";
                 string xhpc_message = "";
-             
+
                 string composer_predicted_city = "";
-             
-              
+
+
                 string UserId = "";
                 {
-              
+
 
                     string strFanPageURL = targeturl;
                     string Parent_FbId = string.Empty;
@@ -5832,6 +6065,12 @@ namespace Groups
                             {
                                 xhpc_message_text = Uri.EscapeDataString(xhpc_message).Replace("%2F", "%252F").Replace("%3F", "%253F");
                             }
+
+                            if (ChkbGroupViewSchedulerTaskRemoveUrl)
+                            {
+                                xhpc_message = Uri.EscapeDataString(message);
+                                xhpc_message_text = Uri.EscapeDataString(message);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -5842,7 +6081,181 @@ namespace Groups
                         {
                             UserId = GlobusHttpHelper.ParseJson(strPageSource, "user");
                         }
-                       
+
+                        #region MyRegion
+                        if (VideoUrl.Contains("/photos/a"))
+                        {
+
+                        }
+
+                        #endregion
+
+
+
+                        string appid = string.Empty;
+
+                        string Responsed = string.Empty;
+                        try
+                        {
+                            string ss = string.Empty;
+                            string VUrl = string.Empty;
+                            string jhj = string.Empty;
+                            string kkk = string.Empty;
+                            string PostData = string.Empty;
+                            string FirstResponse = string.Empty;
+                            appid = Utils.getBetween(strPageSource, "appid=", "&");
+                            try
+                            {
+
+                                string Urll = "https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url=" + Uri.EscapeDataString(VideoUrl) + "&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&__av=" + UserId + "&composerurihash=2";
+                                string PostData11 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=prompt&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=ogtaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=prompt&loaded_components[7]=mainprivacywidget&loaded_components[8]=ogtaggericon&loaded_components[9]=withtaggericon&loaded_components[10]=placetaggericon&loaded_components[11]=maininput&loaded_components[12]=withtagger&loaded_components[13]=placetagger&loaded_components[14]=explicitplaceinput&loaded_components[15]=hiddenplaceinput&loaded_components[16]=placenameinput&loaded_components[17]=hiddensessionid&loaded_components[18]=ogtagger&loaded_components[19]=citysharericon&loaded_components[20]=cameraicon&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7n8anEAMBlynzpQ9UoHFaeFDzECiq78hAKGgSGGeqrWo8popyUWdBUgDyQqV8KVo&__req=b&ttstamp=265817197118828082100727676&__rev=1392897";
+                                FirstResponse = HttpHelper.postFormData(new Uri(Urll), PostData11);
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error(ex.StackTrace);
+                            }
+                            string attachment_params = Utils.getBetween(FirstResponse, "attachment[params][0]\\\" value=\\\"", "\\\"");
+                            string attachment_params1 = Utils.getBetween(FirstResponse, "attachment[params][1]\\\" value=\\\"", "\\\"");
+                            string attachment_params_urlInfo_canonical = Utils.getBetween(FirstResponse, "[params][urlInfo][canonical]\\\" value=\\\"", "\\\"").Replace("\\", "");
+                            string attachment_params_urlInfo_final = Utils.getBetween(FirstResponse, "attachment[params][urlInfo][final]\\\" value=\\\"", "\\\"").Replace("\\", "");
+                            string attachment_params_urlInfo_user = Utils.getBetween(FirstResponse, "attachment[params][urlInfo][user]\\\" value=\\\"", "\\\"").Replace("\\", "");
+                            string attachment_params_favicon = Utils.getBetween(FirstResponse, "attachment[params][favicon]\\\" value=\\\"", "\\\"").Replace("\\", "");
+                            string attachment_params_title = Utils.getBetween(FirstResponse, "attachment[params][title]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#x2018;", "").Replace("&#x2013;", "").Replace("&#x2019;", "");
+                            string attachment_params_summary = Utils.getBetween(FirstResponse, "attachment[params][summary]\\\" value=\\\"", "\\\"").Replace("\\", "");
+
+
+                            string FinalPostData = "composer_session_id=76193f4e-8396-4c81-9e91-589707ae3e9e&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=" + Uri.EscapeDataString("{\"cl_impid\":\"c58950da\",\"clearcounter\":0,\"elementid\":\"u_0_28\",\"version\":\"x\",\"parent_fbid\":" + Parent_FbId + "}") + "&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params + "&attachment[params][1]=" + attachment_params1 + "&attachment[type]=2&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1433507306&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7AmajEyl2lm9o-t2u5bGya4Au7pEsx6iWF3oyut9LHwxBxCbzES2N6y8-bxu3fzob8iUkUyF8iza88y99EnGlxabLV8&__req=p&ttstamp=26581698472527877708911785&__rev=1770939";
+                            string FinalPostResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId), FinalPostData);
+
+
+                            if (!FinalPostResp.Contains("Error") || FinalPostResp.Contains("jsmods"))
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+
+
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            return false;
+                        }
+                    }
+                }
+
+            }
+
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                return false;
+            }
+
+
+
+
+        }
+
+        public bool PostVideoUrlUpdated(string targeturl, string message, string VideoUrl, ref FacebookUser fbUser)
+        {
+
+            if (Globals.CheckLicenseManager == "fdfreetrial")
+            {
+                message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+            }
+
+            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+            try
+            {
+                string composer_session_id = "";
+                string fb_dtsg = "";
+                string xhpc_composerid = "";
+                string xhpc_targetid = "";
+                string xhpc_context = "";
+                string xhpc_fbx = "";
+                string xhpc_timeline = "";
+                string xhpc_ismeta = "";
+                string xhpc_message_text = "";
+                string xhpc_message = "";
+
+                string composer_predicted_city = "";
+
+
+                string UserId = "";
+                {
+
+
+                    string strFanPageURL = targeturl;
+                    string Parent_FbId = string.Empty;
+                    try
+                    {
+                        Parent_FbId = Utils.getBetween(strFanPageURL + "@@", "/groups/", "@@");
+                        if (Utils.IsNumeric(Parent_FbId))
+                        {
+
+                        }
+                        else
+                        {
+                            Parent_FbId = string.Empty;
+                        }
+                    }
+                    catch { };
+
+
+                    string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(strFanPageURL));
+                    {
+
+                        try
+                        {
+                            if (string.IsNullOrEmpty(Parent_FbId))
+                            {
+                                string profile_id = Utils.getBetween(strPageSource, "group_id=", "\"");
+                                Parent_FbId = profile_id.Replace("value=", string.Empty).Replace(" ", string.Empty).Trim();
+                            }
+
+                        }
+                        catch { };
+
+                        UserId = GlobusHttpHelper.Get_UserID(strPageSource);
+
+                        fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
+
+                        xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_composerid");
+                        xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "composerid");
+                        xhpc_targetid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_targetid");
+                        xhpc_context = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
+                        xhpc_fbx = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_fbx");
+                        xhpc_timeline = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_timeline");
+                        xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
+
+                        xhpc_message_text = VideoUrl;
+                        xhpc_message = message + "      " + xhpc_message_text;
+                        string xhpc_message_textPostData = string.Empty;
+                        try
+                        {
+
+                            xhpc_message_text = Uri.EscapeDataString(xhpc_message);
+                            xhpc_message_textPostData = xhpc_message_text;
+                            if (VideoUrl.Contains("/photos"))
+                            {
+                                xhpc_message_text = Uri.EscapeDataString(xhpc_message).Replace("%2F", "%252F").Replace("%3F", "%253F");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+
+                        if (string.IsNullOrEmpty(UserId))
+                        {
+                            UserId = GlobusHttpHelper.ParseJson(strPageSource, "user");
+                        }
+
                         #region MyRegion
                         if (VideoUrl.Contains("/photos/a"))
                         {
@@ -5862,7 +6275,7 @@ namespace Groups
 
                         #endregion
 
-                     
+
 
                         string appid = string.Empty;
 
@@ -5895,7 +6308,7 @@ namespace Groups
                             string attachment_params_title = Utils.getBetween(FirstResponse, "attachment[params][title]\\\" value=\\\"", "\\\"").Replace("\\", "").Replace("&#x2018;", "").Replace("&#x2013;", "").Replace("&#x2019;", "");
                             string attachment_params_summary = Utils.getBetween(FirstResponse, "attachment[params][summary]\\\" value=\\\"", "\\\"").Replace("\\", "");
 
-                           
+
 
                             string[] arr = System.Text.RegularExpressions.Regex.Split(FirstResponse, "scaledImageFitWidth");
                             string attachment_params_images0 = string.Empty;
@@ -6154,7 +6567,7 @@ namespace Groups
                             {
                                 try
                                 {
-                                    if (VideoUrl.Contains("/photos/a"))
+                                    if (VideoUrl.Contains("/photos"))
                                     {
                                         string post22 = "composer_session_id=84cd7817-e432-4489-900b-12d430d715e1&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22e7f25be2%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_8_x%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + xhpc_message_textPostData + "&xhpc_message=" + xhpc_message_textPostData + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params0 + "&attachment[params][1]=" + attachment_params1 + "&attachment[type]=2&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1418017995&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=aJioFuy9k9loAESt2uu4aWiAy4DBzECQqbx2mbAKBiGtbHz6C_8Ey5poji-FeiWG8ADyFrF6ApvyHjpbQdy9EjVFEyfCw&__req=18&ttstamp=26581708270659590517310648&__rev=1522031";
                                         string UrlPost = "https://www.facebook.com/ajax/updatestatus.php?av=" + UserId;
@@ -6209,12 +6622,12 @@ namespace Groups
 
                                 try
                                 {
-                                    if (VideoUrl.Contains("/photos/a"))
+                                    if (VideoUrl.Contains("/photos"))
                                     {
                                         try
                                         {
 
-                                          //  string PostDataFinal = "composer_session_id=ce6350f1-f5ac-4554-ba92-9bc0ccf7254b&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%227f13514b%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_6_11%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + Parent_FbId + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=2309869772&attachment[params][0]=1513882618900229&attachment[params][1]=1073741843&attachment[type]=2&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1424339363&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=107970219231827&nctr[_mod]=pagelet_group_composer&__user=100001006024349&__a=1&__dyn=aJioznEyl2lm9adDgDDzbHaF8x9VoW9J6yUgByVblkGGhbHBCqrYyy8lBxdbWAVbGFQiuaBKAqhBUFJdHLhVpqCGuaCV8yfCwFx2iicVGw&__req=18&ttstamp=265817190115801009974104114664997115&__rev=1606715";
+                                            //  string PostDataFinal = "composer_session_id=ce6350f1-f5ac-4554-ba92-9bc0ccf7254b&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%227f13514b%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_jsonp_6_11%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + Parent_FbId + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=2309869772&attachment[params][0]=1513882618900229&attachment[params][1]=1073741843&attachment[type]=2&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1424339363&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=107970219231827&nctr[_mod]=pagelet_group_composer&__user=100001006024349&__a=1&__dyn=aJioznEyl2lm9adDgDDzbHaF8x9VoW9J6yUgByVblkGGhbHBCqrYyy8lBxdbWAVbGFQiuaBKAqhBUFJdHLhVpqCGuaCV8yfCwFx2iicVGw&__req=18&ttstamp=265817190115801009974104114664997115&__rev=1606715";
 
                                             string post22 = "composer_session_id=86f5e57b-0319-4c5d-a581-fb313b2ccb9d&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%2231d42652%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1j%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + Parent_FbId + "%7D&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message_text + "&aktion=post&app_id=" + appid + "&attachment[params][0]=" + attachment_params0 + "&attachment[params][1]=" + attachment_params1 + "&attachment[type]=2&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1418037348&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=109237889094394&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyKAEWCueyp9Esx6iWF3pqzCC-C26m4XUKezpUgDyQqUkBBzEy6Kdy8-&__req=h&ttstamp=265816995851139912186556697&__rev=1522031";
                                             string UrlPost = "https://www.facebook.com/ajax/updatestatus.php?av=" + UserId;
@@ -6325,7 +6738,7 @@ namespace Groups
         }
 
         public bool PostVideoUrlNew(string targeturl, string message, string VideoUrl, ref FacebookUser fbUser)
-         {
+        {
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             string messageId = string.Empty;
             try
@@ -6340,7 +6753,7 @@ namespace Groups
                 string xhpc_ismeta = "";
                 string xhpc_message_text = "";
                 string xhpc_message = "";
-              
+
                 string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
 
                 xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_composerid");
@@ -6350,12 +6763,12 @@ namespace Groups
                 xhpc_fbx = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_fbx");
                 xhpc_timeline = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_timeline");
                 xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
-                
+
                 UserId = GlobusHttpHelper.Get_UserID(strPageSource);
                 fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
-                string scrapperUrl = "https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url="+Uri.EscapeDataString(Uri.EscapeDataString(VideoUrl))+"&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&av="+UserId+"&composerurihash=2";
+                string scrapperUrl = "https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url=" + Uri.EscapeDataString(Uri.EscapeDataString(VideoUrl)) + "&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&av=" + UserId + "&composerurihash=2";
 
-                string scrapPostData = "fb_dtsg="+fb_dtsg+"&composerid="+xhpc_composerid+"&targetid="+xhpc_targetid+"&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=ogtaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=mainprivacywidget&loaded_components[6]=ogtaggericon&loaded_components[7]=withtaggericon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&loaded_components[10]=placetagger&loaded_components[11]=explicitplaceinput&loaded_components[12]=hiddenplaceinput&loaded_components[13]=placenameinput&loaded_components[14]=hiddensessionid&loaded_components[15]=ogtagger&loaded_components[16]=withtagger&loaded_components[17]=citysharericon&loaded_components[18]=cameraicon&nctr[_mod]=pagelet_group_composer&__user="+UserId+"&__a=1&__dyn=7nmanEyl2lm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8popyUW5ogDyQqUkBBzEy6Kdy8-&__req=e&ttstamp=265816974739950120779711755&__rev=1559767";
+                string scrapPostData = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=ogtaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=mainprivacywidget&loaded_components[6]=ogtaggericon&loaded_components[7]=withtaggericon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&loaded_components[10]=placetagger&loaded_components[11]=explicitplaceinput&loaded_components[12]=hiddenplaceinput&loaded_components[13]=placenameinput&loaded_components[14]=hiddensessionid&loaded_components[15]=ogtagger&loaded_components[16]=withtagger&loaded_components[17]=citysharericon&loaded_components[18]=cameraicon&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8popyUW5ogDyQqUkBBzEy6Kdy8-&__req=e&ttstamp=265816974739950120779711755&__rev=1559767";
 
                 string scrapResp = HttpHelper.postFormData(new Uri(scrapperUrl), scrapPostData);
 
@@ -6366,7 +6779,7 @@ namespace Groups
                 //If url is of video url
                 if (!string.IsNullOrEmpty(FinalPostData))
                 {
-                    string faviconVal =string.Empty;
+                    string faviconVal = string.Empty;
                     string summary = string.Empty;
                     string Title = string.Empty;
                     string rankedImage = string.Empty;
@@ -6388,51 +6801,51 @@ namespace Groups
                     string metaTagMap31 = string.Empty;
                     string metaTagMap32 = string.Empty;
                     string metaTagMap33 = string.Empty;
-                   
-                    string ipaddress=string.Empty;
-                    faviconVal= Utils.getBetween(scrapResp, "name=\\\"attachment[params][favicon]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    Title = Utils.getBetween(scrapResp, "attachment[params][title]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    rankedImage = Utils.getBetween(scrapResp, "[ranked_images][images][0]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    thumbNailImg = Utils.getBetween(scrapResp, "attachment[params][images][0]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    summary = Utils.getBetween(scrapResp, "attachment[params][summary]\\\" value=\\\"", "\" \\/>").Replace("\\",string.Empty);
-                    share_id = Utils.getBetween(scrapResp, "share_id=", "\\\"").Replace("\\",string.Empty);
-                    metaTagMap=Utils.getBetween(scrapResp,"[metaTagMap][1][content]\\\" value=\\\"","\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap2 = Utils.getBetween(scrapResp, "[metaTagMap][2][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap8 = Utils.getBetween(scrapResp, "[metaTagMap][8][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap11 = Utils.getBetween(scrapResp, "[metaTagMap][11][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
+
+                    string ipaddress = string.Empty;
+                    faviconVal = Utils.getBetween(scrapResp, "name=\\\"attachment[params][favicon]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    Title = Utils.getBetween(scrapResp, "attachment[params][title]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    rankedImage = Utils.getBetween(scrapResp, "[ranked_images][images][0]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    thumbNailImg = Utils.getBetween(scrapResp, "attachment[params][images][0]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    summary = Utils.getBetween(scrapResp, "attachment[params][summary]\\\" value=\\\"", "\" \\/>").Replace("\\", string.Empty);
+                    share_id = Utils.getBetween(scrapResp, "share_id=", "\\\"").Replace("\\", string.Empty);
+                    metaTagMap = Utils.getBetween(scrapResp, "[metaTagMap][1][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap2 = Utils.getBetween(scrapResp, "[metaTagMap][2][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap8 = Utils.getBetween(scrapResp, "[metaTagMap][8][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap11 = Utils.getBetween(scrapResp, "[metaTagMap][11][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
                     metaTagMap22 = Utils.getBetween(scrapResp, "[metaTagMap][22][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
                     metaTagMap23 = Utils.getBetween(scrapResp, "[metaTagMap][23][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
                     metaTagMap24 = Utils.getBetween(scrapResp, "[metaTagMap][24][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
-                    metaTagMap25 = Utils.getBetween(scrapResp, "[metaTagMap][25][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap26 = Utils.getBetween(scrapResp, "[metaTagMap][26][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap27 = Utils.getBetween(scrapResp, "[metaTagMap][27][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap28 = Utils.getBetween(scrapResp, "[metaTagMap][28][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap29 = Utils.getBetween(scrapResp, "[metaTagMap][29][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
-                    metaTagMap30 = Utils.getBetween(scrapResp, "[metaTagMap][30][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\",string.Empty);
+                    metaTagMap25 = Utils.getBetween(scrapResp, "[metaTagMap][25][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap26 = Utils.getBetween(scrapResp, "[metaTagMap][26][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap27 = Utils.getBetween(scrapResp, "[metaTagMap][27][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap28 = Utils.getBetween(scrapResp, "[metaTagMap][28][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap29 = Utils.getBetween(scrapResp, "[metaTagMap][29][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
+                    metaTagMap30 = Utils.getBetween(scrapResp, "[metaTagMap][30][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
                     metaTagMap31 = Utils.getBetween(scrapResp, "[metaTagMap][31][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
                     metaTagMap32 = Utils.getBetween(scrapResp, "[metaTagMap][32][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
                     metaTagMap33 = Utils.getBetween(scrapResp, "[metaTagMap][33][content]\\\" value=\\\"", "\\\" \\/>").Replace("\\", string.Empty);
-                    ipaddress=Utils.getBetween(scrapResp,"attachment[params][domain_ip]\\\" value=\\\"","\\\" \\/>");
+                    ipaddress = Utils.getBetween(scrapResp, "attachment[params][domain_ip]\\\" value=\\\"", "\\\" \\/>");
 
 
                     string veryFinalPostData = "composer_session_id=b257b049-667b-4e67-a2c4-71ad68ffe884&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22d3e4e3f4%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1k%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + Uri.EscapeDataString(VideoUrl) + "&xhpc_message=" + Uri.EscapeDataString(VideoUrl) + "&aktion=post&app_id=" + AppID + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][log][1407766252]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][responseCode]=200&attachment[params][favicon]=" + Uri.EscapeDataString(faviconVal) + "&attachment[params][external_author_id]=26weekplan&attachment[params][title]=" + Uri.EscapeDataString(Title) + "&attachment[params][summary]=" + Uri.EscapeDataString(summary) + "&attachment[params][content_removed]=&attachment[params][images][0]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][ranked_images][images][0]=" + Uri.EscapeDataString(rankedImage) + " &attachment[params][ranked_images][ranking_model_version]=10&attachment[params][image_info][0][url]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][image_info][0][width]=1920&attachment[params][image_info][0][height]=1080&attachment[params][image_info][0][face_centers][0][x]=43.611&attachment[params][image_info][0][face_centers][0][y]=26.667&attachment[params][image_info][0][xray][overlaid_text]=0.0696&attachment[params][image_info][0][xray][synthetic]=0.0145&attachment[params][video_info][duration]=5179&attachment[params][video_info][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][video_info][error_code]=403&attachment[params][video_info][error_message]=Daily%20Limit%20Exceeded&attachment[params][medium]=103&attachment[params][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][time_scraped]=1421150812&attachment[params][cache_hit]=1&attachment[params][global_share_id]=" + share_id + "&attachment[params][was_recent]=&attachment[params][metaTagMap][0][http-equiv]=content-type&attachment[params][metaTagMap][0][content]=text%2Fhtml%3B%20charset%3Dutf-8&attachment[params][metaTagMap][1][name]=title&attachment[params][metaTagMap][1][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][2][name]=description&attachment[params][metaTagMap][2][content]=http%3A%2F%2Fwww.26weekplan.com%2F%20The%204%20Phases%20of%20Digital%20Marketing%20is%20the%20framework%20behind%20the%2026-Week%20Digital%20Marketing%20Plan%20-%20a%20step-by-step%20online%20marketing%20pla...&attachment[params][metaTagMap][3][name]=keywords&attachment[params][metaTagMap][3][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][4][property]=og%3Asite_name&attachment[params][metaTagMap][4][content]=YouTube&attachment[params][metaTagMap][5][property]=og%3Aurl&attachment[params][metaTagMap][5][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][6][property]=og%3Atitle&attachment[params][metaTagMap][6][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][7][property]=og%3Aimage&attachment[params][metaTagMap][7][content]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][metaTagMap][8][property]=og%3Adescription&attachment[params][metaTagMap][8][content]=" + Uri.EscapeDataString(metaTagMap8) + "&attachment[params][metaTagMap][9][property]=al%3Aios%3Aapp_store_id&attachment[params][metaTagMap][9][content]=544007664&attachment[params][metaTagMap][10][property]=al%3Aios%3Aapp_name&attachment[params][metaTagMap][10][content]=YouTube&attachment[params][metaTagMap][11][property]=al%3Aios%3Aurl&attachment[params][metaTagMap][11][content]=" + Uri.EscapeDataString(metaTagMap11) + "&attachment[params][metaTagMap][12][property]=al%3Aandroid%3Aurl&attachment[params][metaTagMap][12][content]=" + Uri.EscapeDataString(VideoUrl) + "%26feature%3Dapplinks&attachment[params][metaTagMap][13][property]=al%3Aandroid%3Aapp_name&attachment[params][metaTagMap][13][content]=YouTube&attachment[params][metaTagMap][14][property]=al%3Aandroid%3Apackage&attachment[params][metaTagMap][14][content]=com.google.android.youtube&attachment[params][metaTagMap][15][property]=al%3Aweb%3Aurl&attachment[params][metaTagMap][15][content]=" + Uri.EscapeDataString(VideoUrl) + "%26feature%3Dapplinks&attachment[params][metaTagMap][16][property]=og%3Atype&attachment[params][metaTagMap][16][content]=video&attachment[params][metaTagMap][17][property]=og%3Avideo&attachment[params][metaTagMap][17][content]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][18][property]=og%3Avideo%3Asecure_url&attachment[params][metaTagMap][18][content]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][19][property]=og%3Avideo%3Atype&attachment[params][metaTagMap][19][content]=application%2Fx-shockwave-flash&attachment[params][metaTagMap][20][property]=og%3Avideo%3Awidth&attachment[params][metaTagMap][20][content]=1280&attachment[params][metaTagMap][21][property]=og%3Avideo%3Aheight&attachment[params][metaTagMap][21][content]=720&attachment[params][metaTagMap][22][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][22][content]=" + Uri.EscapeDataString(metaTagMap22) + "&attachment[params][metaTagMap][23][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][23][content]=" + Uri.EscapeDataString(metaTagMap23) + "&attachment[params][metaTagMap][24][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][24][content]=" + Uri.EscapeDataString(metaTagMap24) + "&attachment[params][metaTagMap][25][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][25][content]=" + Uri.EscapeDataString(metaTagMap25) + "&attachment[params][metaTagMap][26][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][26][content]=" + Uri.EscapeDataString(metaTagMap26) + "&attachment[params][metaTagMap][27][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][27][content]=" + Uri.EscapeDataString(metaTagMap27) + "&attachment[params][metaTagMap][28][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][28][content]=seminar&attachment[params][metaTagMap][29][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][29][content]=" + Uri.EscapeDataString(metaTagMap29) + "&attachment[params][metaTagMap][30][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][30][content]=" + Uri.EscapeDataString(metaTagMap30) + "&attachment[params][metaTagMap][31][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][31][content]=" + Uri.EscapeDataString(metaTagMap31) + "&attachment[params][metaTagMap][32][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][32][content]=" + Uri.EscapeDataString(metaTagMap32) + "&attachment[params][metaTagMap][33][property]=fb%3Aapp_id&attachment[params][metaTagMap][33][content]=" + Uri.EscapeDataString(metaTagMap33) + "&attachment[params][metaTagMap][34][name]=twitter%3Acard&attachment[params][metaTagMap][34][content]=player&attachment[params][metaTagMap][35][name]=twitter%3Asite&attachment[params][metaTagMap][35][content]=%40youtube&attachment[params][metaTagMap][36][name]=twitter%3Aurl&attachment[params][metaTagMap][36][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][37][name]=twitter%3Atitle&attachment[params][metaTagMap][37][content]=" + Uri.EscapeDataString(metaTagMap2) + "&attachment[params][metaTagMap][38][name]=twitter%3Adescription&attachment[params][metaTagMap][38][content]=" + Uri.EscapeDataString(metaTagMap8) + "&attachment[params][metaTagMap][39][name]=twitter%3Aimage&attachment[params][metaTagMap][39][content]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][metaTagMap][40][name]=twitter%3Aapp%3Aname%3Aiphone&attachment[params][metaTagMap][40][content]=YouTube&attachment[params][metaTagMap][41][name]=twitter%3Aapp%3Aid%3Aiphone&attachment[params][metaTagMap][41][content]=544007664&attachment[params][metaTagMap][42][name]=twitter%3Aapp%3Aname%3Aipad&attachment[params][metaTagMap][42][content]=YouTube&attachment[params][metaTagMap][43][name]=twitter%3Aapp%3Aid%3Aipad&attachment[params][metaTagMap][43][content]=544007664&attachment[params][metaTagMap][44][name]=twitter%3Aapp%3Aurl%3Aiphone&attachment[params][metaTagMap][44][content]=vnd.youtube%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Dj7ChQkZ5mSA%26feature%3Dapplinks&attachment[params][metaTagMap][45][name]=twitter%3Aapp%3Aurl%3Aipad&attachment[params][metaTagMap][45][content]=" + Uri.EscapeDataString(metaTagMap11) + "&attachment[params][metaTagMap][46][name]=twitter%3Aapp%3Aname%3Agoogleplay&attachment[params][metaTagMap][46][content]=YouTube&attachment[params][metaTagMap][47][name]=twitter%3Aapp%3Aid%3Agoogleplay&attachment[params][metaTagMap][47][content]=com.google.android.youtube&attachment[params][metaTagMap][48][name]=twitter%3Aapp%3Aurl%3Agoogleplay&attachment[params][metaTagMap][48][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][49][name]=twitter%3Aplayer&attachment[params][metaTagMap][49][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][50][name]=twitter%3Aplayer%3Awidth&attachment[params][metaTagMap][50][content]=1280&attachment[params][metaTagMap][51][name]=twitter%3Aplayer%3Aheight&attachment[params][metaTagMap][51][content]=720&attachment[params][og_info][properties][0][0]=fb%3Aapp_id&attachment[params][og_info][properties][0][1]=87741124305&attachment[params][redirectPath][0][status]=og%3Aurl&attachment[params][redirectPath][0][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][redirectPath][0][ip]=" + ipaddress + "&attachment[params][video][0][type]=application%2Fx-shockwave-flash&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][video][0][width]=1280&attachment[params][video][0][height]=720&attachment[params][video][0][src]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][ttl]=604800&attachment[params][error]=1&attachment[type]=100&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1421151032&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8popyUW5ogDyQqUkBBzEy6Kdy8-&__req=h&ttstamp=2658172668275106571151028949&__rev=1559767";
-                    veryFinalPostData = "composer_session_id=b257b049-667b-4e67-a2c4-71ad68ffe884&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22d3e4e3f4%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1k%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text="+message+"&xhpc_message="+message+"&aktion=post&app_id=" + AppID + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][log][1407766252]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][responseCode]=200&attachment[params][favicon]=" + Uri.EscapeDataString(faviconVal) + "&attachment[params][external_author_id]=26weekplan&attachment[params][title]=" + Uri.EscapeDataString(Title) + "&attachment[params][summary]=" + Uri.EscapeDataString(summary) + "&attachment[params][content_removed]=&attachment[params][images][0]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][ranked_images][images][0]=" + Uri.EscapeDataString(rankedImage) + " &attachment[params][ranked_images][ranking_model_version]=10&attachment[params][image_info][0][url]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][image_info][0][width]=1920&attachment[params][image_info][0][height]=1080&attachment[params][image_info][0][face_centers][0][x]=43.611&attachment[params][image_info][0][face_centers][0][y]=26.667&attachment[params][image_info][0][xray][overlaid_text]=0.0696&attachment[params][image_info][0][xray][synthetic]=0.0145&attachment[params][video_info][duration]=5179&attachment[params][video_info][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][video_info][error_code]=403&attachment[params][video_info][error_message]=Daily%20Limit%20Exceeded&attachment[params][medium]=103&attachment[params][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][time_scraped]=1421150812&attachment[params][cache_hit]=1&attachment[params][global_share_id]=" + share_id + "&attachment[params][was_recent]=&attachment[params][metaTagMap][0][http-equiv]=content-type&attachment[params][metaTagMap][0][content]=text%2Fhtml%3B%20charset%3Dutf-8&attachment[params][metaTagMap][1][name]=title&attachment[params][metaTagMap][1][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][2][name]=description&attachment[params][metaTagMap][2][content]=http%3A%2F%2Fwww.26weekplan.com%2F%20The%204%20Phases%20of%20Digital%20Marketing%20is%20the%20framework%20behind%20the%2026-Week%20Digital%20Marketing%20Plan%20-%20a%20step-by-step%20online%20marketing%20pla...&attachment[params][metaTagMap][3][name]=keywords&attachment[params][metaTagMap][3][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][4][property]=og%3Asite_name&attachment[params][metaTagMap][4][content]=YouTube&attachment[params][metaTagMap][5][property]=og%3Aurl&attachment[params][metaTagMap][5][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][6][property]=og%3Atitle&attachment[params][metaTagMap][6][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][7][property]=og%3Aimage&attachment[params][metaTagMap][7][content]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][metaTagMap][8][property]=og%3Adescription&attachment[params][metaTagMap][8][content]=" + Uri.EscapeDataString(metaTagMap8) + "&attachment[params][metaTagMap][9][property]=al%3Aios%3Aapp_store_id&attachment[params][metaTagMap][9][content]=544007664&attachment[params][metaTagMap][10][property]=al%3Aios%3Aapp_name&attachment[params][metaTagMap][10][content]=YouTube&attachment[params][metaTagMap][11][property]=al%3Aios%3Aurl&attachment[params][metaTagMap][11][content]=" + Uri.EscapeDataString(metaTagMap11) + "&attachment[params][metaTagMap][12][property]=al%3Aandroid%3Aurl&attachment[params][metaTagMap][12][content]=" + Uri.EscapeDataString(VideoUrl) + "%26feature%3Dapplinks&attachment[params][metaTagMap][13][property]=al%3Aandroid%3Aapp_name&attachment[params][metaTagMap][13][content]=YouTube&attachment[params][metaTagMap][14][property]=al%3Aandroid%3Apackage&attachment[params][metaTagMap][14][content]=com.google.android.youtube&attachment[params][metaTagMap][15][property]=al%3Aweb%3Aurl&attachment[params][metaTagMap][15][content]=" + Uri.EscapeDataString(VideoUrl) + "%26feature%3Dapplinks&attachment[params][metaTagMap][16][property]=og%3Atype&attachment[params][metaTagMap][16][content]=video&attachment[params][metaTagMap][17][property]=og%3Avideo&attachment[params][metaTagMap][17][content]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][18][property]=og%3Avideo%3Asecure_url&attachment[params][metaTagMap][18][content]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][19][property]=og%3Avideo%3Atype&attachment[params][metaTagMap][19][content]=application%2Fx-shockwave-flash&attachment[params][metaTagMap][20][property]=og%3Avideo%3Awidth&attachment[params][metaTagMap][20][content]=1280&attachment[params][metaTagMap][21][property]=og%3Avideo%3Aheight&attachment[params][metaTagMap][21][content]=720&attachment[params][metaTagMap][22][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][22][content]=" + Uri.EscapeDataString(metaTagMap22) + "&attachment[params][metaTagMap][23][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][23][content]=" + Uri.EscapeDataString(metaTagMap23) + "&attachment[params][metaTagMap][24][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][24][content]=" + Uri.EscapeDataString(metaTagMap24) + "&attachment[params][metaTagMap][25][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][25][content]=" + Uri.EscapeDataString(metaTagMap25) + "&attachment[params][metaTagMap][26][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][26][content]=" + Uri.EscapeDataString(metaTagMap26) + "&attachment[params][metaTagMap][27][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][27][content]=" + Uri.EscapeDataString(metaTagMap27) + "&attachment[params][metaTagMap][28][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][28][content]=seminar&attachment[params][metaTagMap][29][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][29][content]=" + Uri.EscapeDataString(metaTagMap29) + "&attachment[params][metaTagMap][30][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][30][content]=" + Uri.EscapeDataString(metaTagMap30) + "&attachment[params][metaTagMap][31][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][31][content]=" + Uri.EscapeDataString(metaTagMap31) + "&attachment[params][metaTagMap][32][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][32][content]=" + Uri.EscapeDataString(metaTagMap32) + "&attachment[params][metaTagMap][33][property]=fb%3Aapp_id&attachment[params][metaTagMap][33][content]=" + Uri.EscapeDataString(metaTagMap33) + "&attachment[params][metaTagMap][34][name]=twitter%3Acard&attachment[params][metaTagMap][34][content]=player&attachment[params][metaTagMap][35][name]=twitter%3Asite&attachment[params][metaTagMap][35][content]=%40youtube&attachment[params][metaTagMap][36][name]=twitter%3Aurl&attachment[params][metaTagMap][36][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][37][name]=twitter%3Atitle&attachment[params][metaTagMap][37][content]=" + Uri.EscapeDataString(metaTagMap2) + "&attachment[params][metaTagMap][38][name]=twitter%3Adescription&attachment[params][metaTagMap][38][content]=" + Uri.EscapeDataString(metaTagMap8) + "&attachment[params][metaTagMap][39][name]=twitter%3Aimage&attachment[params][metaTagMap][39][content]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][metaTagMap][40][name]=twitter%3Aapp%3Aname%3Aiphone&attachment[params][metaTagMap][40][content]=YouTube&attachment[params][metaTagMap][41][name]=twitter%3Aapp%3Aid%3Aiphone&attachment[params][metaTagMap][41][content]=544007664&attachment[params][metaTagMap][42][name]=twitter%3Aapp%3Aname%3Aipad&attachment[params][metaTagMap][42][content]=YouTube&attachment[params][metaTagMap][43][name]=twitter%3Aapp%3Aid%3Aipad&attachment[params][metaTagMap][43][content]=544007664&attachment[params][metaTagMap][44][name]=twitter%3Aapp%3Aurl%3Aiphone&attachment[params][metaTagMap][44][content]=vnd.youtube%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Dj7ChQkZ5mSA%26feature%3Dapplinks&attachment[params][metaTagMap][45][name]=twitter%3Aapp%3Aurl%3Aipad&attachment[params][metaTagMap][45][content]=" + Uri.EscapeDataString(metaTagMap11) + "&attachment[params][metaTagMap][46][name]=twitter%3Aapp%3Aname%3Agoogleplay&attachment[params][metaTagMap][46][content]=YouTube&attachment[params][metaTagMap][47][name]=twitter%3Aapp%3Aid%3Agoogleplay&attachment[params][metaTagMap][47][content]=com.google.android.youtube&attachment[params][metaTagMap][48][name]=twitter%3Aapp%3Aurl%3Agoogleplay&attachment[params][metaTagMap][48][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][49][name]=twitter%3Aplayer&attachment[params][metaTagMap][49][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][50][name]=twitter%3Aplayer%3Awidth&attachment[params][metaTagMap][50][content]=1280&attachment[params][metaTagMap][51][name]=twitter%3Aplayer%3Aheight&attachment[params][metaTagMap][51][content]=720&attachment[params][og_info][properties][0][0]=fb%3Aapp_id&attachment[params][og_info][properties][0][1]=87741124305&attachment[params][redirectPath][0][status]=og%3Aurl&attachment[params][redirectPath][0][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][redirectPath][0][ip]=" + ipaddress + "&attachment[params][video][0][type]=application%2Fx-shockwave-flash&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][video][0][width]=1280&attachment[params][video][0][height]=720&attachment[params][video][0][src]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][ttl]=604800&attachment[params][error]=1&attachment[type]=100&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1421151032&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8popyUW5ogDyQqUkBBzEy6Kdy8-&__req=h&ttstamp=2658172668275106571151028949&__rev=1559767";
+                    veryFinalPostData = "composer_session_id=b257b049-667b-4e67-a2c4-71ad68ffe884&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22d3e4e3f4%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1k%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + message + "&xhpc_message=" + message + "&aktion=post&app_id=" + AppID + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][urlInfo][log][1407766252]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][responseCode]=200&attachment[params][favicon]=" + Uri.EscapeDataString(faviconVal) + "&attachment[params][external_author_id]=26weekplan&attachment[params][title]=" + Uri.EscapeDataString(Title) + "&attachment[params][summary]=" + Uri.EscapeDataString(summary) + "&attachment[params][content_removed]=&attachment[params][images][0]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][ranked_images][images][0]=" + Uri.EscapeDataString(rankedImage) + " &attachment[params][ranked_images][ranking_model_version]=10&attachment[params][image_info][0][url]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][image_info][0][width]=1920&attachment[params][image_info][0][height]=1080&attachment[params][image_info][0][face_centers][0][x]=43.611&attachment[params][image_info][0][face_centers][0][y]=26.667&attachment[params][image_info][0][xray][overlaid_text]=0.0696&attachment[params][image_info][0][xray][synthetic]=0.0145&attachment[params][video_info][duration]=5179&attachment[params][video_info][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][video_info][error_code]=403&attachment[params][video_info][error_message]=Daily%20Limit%20Exceeded&attachment[params][medium]=103&attachment[params][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][time_scraped]=1421150812&attachment[params][cache_hit]=1&attachment[params][global_share_id]=" + share_id + "&attachment[params][was_recent]=&attachment[params][metaTagMap][0][http-equiv]=content-type&attachment[params][metaTagMap][0][content]=text%2Fhtml%3B%20charset%3Dutf-8&attachment[params][metaTagMap][1][name]=title&attachment[params][metaTagMap][1][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][2][name]=description&attachment[params][metaTagMap][2][content]=http%3A%2F%2Fwww.26weekplan.com%2F%20The%204%20Phases%20of%20Digital%20Marketing%20is%20the%20framework%20behind%20the%2026-Week%20Digital%20Marketing%20Plan%20-%20a%20step-by-step%20online%20marketing%20pla...&attachment[params][metaTagMap][3][name]=keywords&attachment[params][metaTagMap][3][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][4][property]=og%3Asite_name&attachment[params][metaTagMap][4][content]=YouTube&attachment[params][metaTagMap][5][property]=og%3Aurl&attachment[params][metaTagMap][5][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][6][property]=og%3Atitle&attachment[params][metaTagMap][6][content]=" + Uri.EscapeDataString(metaTagMap) + "&attachment[params][metaTagMap][7][property]=og%3Aimage&attachment[params][metaTagMap][7][content]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][metaTagMap][8][property]=og%3Adescription&attachment[params][metaTagMap][8][content]=" + Uri.EscapeDataString(metaTagMap8) + "&attachment[params][metaTagMap][9][property]=al%3Aios%3Aapp_store_id&attachment[params][metaTagMap][9][content]=544007664&attachment[params][metaTagMap][10][property]=al%3Aios%3Aapp_name&attachment[params][metaTagMap][10][content]=YouTube&attachment[params][metaTagMap][11][property]=al%3Aios%3Aurl&attachment[params][metaTagMap][11][content]=" + Uri.EscapeDataString(metaTagMap11) + "&attachment[params][metaTagMap][12][property]=al%3Aandroid%3Aurl&attachment[params][metaTagMap][12][content]=" + Uri.EscapeDataString(VideoUrl) + "%26feature%3Dapplinks&attachment[params][metaTagMap][13][property]=al%3Aandroid%3Aapp_name&attachment[params][metaTagMap][13][content]=YouTube&attachment[params][metaTagMap][14][property]=al%3Aandroid%3Apackage&attachment[params][metaTagMap][14][content]=com.google.android.youtube&attachment[params][metaTagMap][15][property]=al%3Aweb%3Aurl&attachment[params][metaTagMap][15][content]=" + Uri.EscapeDataString(VideoUrl) + "%26feature%3Dapplinks&attachment[params][metaTagMap][16][property]=og%3Atype&attachment[params][metaTagMap][16][content]=video&attachment[params][metaTagMap][17][property]=og%3Avideo&attachment[params][metaTagMap][17][content]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][18][property]=og%3Avideo%3Asecure_url&attachment[params][metaTagMap][18][content]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][19][property]=og%3Avideo%3Atype&attachment[params][metaTagMap][19][content]=application%2Fx-shockwave-flash&attachment[params][metaTagMap][20][property]=og%3Avideo%3Awidth&attachment[params][metaTagMap][20][content]=1280&attachment[params][metaTagMap][21][property]=og%3Avideo%3Aheight&attachment[params][metaTagMap][21][content]=720&attachment[params][metaTagMap][22][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][22][content]=" + Uri.EscapeDataString(metaTagMap22) + "&attachment[params][metaTagMap][23][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][23][content]=" + Uri.EscapeDataString(metaTagMap23) + "&attachment[params][metaTagMap][24][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][24][content]=" + Uri.EscapeDataString(metaTagMap24) + "&attachment[params][metaTagMap][25][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][25][content]=" + Uri.EscapeDataString(metaTagMap25) + "&attachment[params][metaTagMap][26][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][26][content]=" + Uri.EscapeDataString(metaTagMap26) + "&attachment[params][metaTagMap][27][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][27][content]=" + Uri.EscapeDataString(metaTagMap27) + "&attachment[params][metaTagMap][28][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][28][content]=seminar&attachment[params][metaTagMap][29][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][29][content]=" + Uri.EscapeDataString(metaTagMap29) + "&attachment[params][metaTagMap][30][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][30][content]=" + Uri.EscapeDataString(metaTagMap30) + "&attachment[params][metaTagMap][31][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][31][content]=" + Uri.EscapeDataString(metaTagMap31) + "&attachment[params][metaTagMap][32][property]=og%3Avideo%3Atag&attachment[params][metaTagMap][32][content]=" + Uri.EscapeDataString(metaTagMap32) + "&attachment[params][metaTagMap][33][property]=fb%3Aapp_id&attachment[params][metaTagMap][33][content]=" + Uri.EscapeDataString(metaTagMap33) + "&attachment[params][metaTagMap][34][name]=twitter%3Acard&attachment[params][metaTagMap][34][content]=player&attachment[params][metaTagMap][35][name]=twitter%3Asite&attachment[params][metaTagMap][35][content]=%40youtube&attachment[params][metaTagMap][36][name]=twitter%3Aurl&attachment[params][metaTagMap][36][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][37][name]=twitter%3Atitle&attachment[params][metaTagMap][37][content]=" + Uri.EscapeDataString(metaTagMap2) + "&attachment[params][metaTagMap][38][name]=twitter%3Adescription&attachment[params][metaTagMap][38][content]=" + Uri.EscapeDataString(metaTagMap8) + "&attachment[params][metaTagMap][39][name]=twitter%3Aimage&attachment[params][metaTagMap][39][content]=" + Uri.EscapeDataString(thumbNailImg) + "&attachment[params][metaTagMap][40][name]=twitter%3Aapp%3Aname%3Aiphone&attachment[params][metaTagMap][40][content]=YouTube&attachment[params][metaTagMap][41][name]=twitter%3Aapp%3Aid%3Aiphone&attachment[params][metaTagMap][41][content]=544007664&attachment[params][metaTagMap][42][name]=twitter%3Aapp%3Aname%3Aipad&attachment[params][metaTagMap][42][content]=YouTube&attachment[params][metaTagMap][43][name]=twitter%3Aapp%3Aid%3Aipad&attachment[params][metaTagMap][43][content]=544007664&attachment[params][metaTagMap][44][name]=twitter%3Aapp%3Aurl%3Aiphone&attachment[params][metaTagMap][44][content]=vnd.youtube%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Dj7ChQkZ5mSA%26feature%3Dapplinks&attachment[params][metaTagMap][45][name]=twitter%3Aapp%3Aurl%3Aipad&attachment[params][metaTagMap][45][content]=" + Uri.EscapeDataString(metaTagMap11) + "&attachment[params][metaTagMap][46][name]=twitter%3Aapp%3Aname%3Agoogleplay&attachment[params][metaTagMap][46][content]=YouTube&attachment[params][metaTagMap][47][name]=twitter%3Aapp%3Aid%3Agoogleplay&attachment[params][metaTagMap][47][content]=com.google.android.youtube&attachment[params][metaTagMap][48][name]=twitter%3Aapp%3Aurl%3Agoogleplay&attachment[params][metaTagMap][48][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][49][name]=twitter%3Aplayer&attachment[params][metaTagMap][49][content]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][metaTagMap][50][name]=twitter%3Aplayer%3Awidth&attachment[params][metaTagMap][50][content]=1280&attachment[params][metaTagMap][51][name]=twitter%3Aplayer%3Aheight&attachment[params][metaTagMap][51][content]=720&attachment[params][og_info][properties][0][0]=fb%3Aapp_id&attachment[params][og_info][properties][0][1]=87741124305&attachment[params][redirectPath][0][status]=og%3Aurl&attachment[params][redirectPath][0][url]=" + Uri.EscapeDataString(VideoUrl) + "&attachment[params][redirectPath][0][ip]=" + ipaddress + "&attachment[params][video][0][type]=application%2Fx-shockwave-flash&attachment[params][video][0][secure_url]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][video][0][width]=1280&attachment[params][video][0][height]=720&attachment[params][video][0][src]=" + Uri.EscapeDataString(VideoUrl) + "%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][ttl]=604800&attachment[params][error]=1&attachment[type]=100&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1421151032&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8popyUW5ogDyQqUkBBzEy6Kdy8-&__req=h&ttstamp=2658172668275106571151028949&__rev=1559767";
                     try
                     {
-                        string finalResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId + ""),veryFinalPostData);
+                        string finalResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId + ""), veryFinalPostData);
                         messageId = Utils.getBetween(finalResp, "message_id=", "&story_dom_id");
                     }
                     catch (Exception ex)
                     { };
 
-                   
+
                 }
 
                 if (string.IsNullOrEmpty(messageId))
                 {
-                    string attachmentparams0=Utils.getBetween(scrapResp,"attachment[params][0]\\\" value=\\\"","\\\"" );
+                    string attachmentparams0 = Utils.getBetween(scrapResp, "attachment[params][0]\\\" value=\\\"", "\\\"");
 
-                    string PostDataForSimpleUrl = "composer_session_id=a8ddc097-fcf3-4654-87f7-d153ddc360c8&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22a9d7507f%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1r%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A1527082324241636%7D&xhpc_message_text=" + Uri.EscapeDataString(VideoUrl) + "&xhpc_message=" + Uri.EscapeDataString(VideoUrl) + "&aktion=post&app_id=" + AppID + "&attachment[params][0]="+attachmentparams0+"&attachment[type]=6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1422860846&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=114759761873412&nctr[_mod]=pagelet_group_composer&__user="+UserId+"&__a=1&__dyn=7nmanEyl2lm9udDgDxyG8EihUtCxO4pbGAdBGfirWo8popyUW5ogDyQqUkBBzEy78S8zU46&__req=f&ttstamp=2658172538657771057510767100&__rev=1583304";
+                    string PostDataForSimpleUrl = "composer_session_id=a8ddc097-fcf3-4654-87f7-d153ddc360c8&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22a9d7507f%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1r%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A1527082324241636%7D&xhpc_message_text=" + Uri.EscapeDataString(VideoUrl) + "&xhpc_message=" + Uri.EscapeDataString(VideoUrl) + "&aktion=post&app_id=" + AppID + "&attachment[params][0]=" + attachmentparams0 + "&attachment[type]=6&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1422860846&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=114759761873412&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=7nmanEyl2lm9udDgDxyG8EihUtCxO4pbGAdBGfirWo8popyUW5ogDyQqUkBBzEy78S8zU46&__req=f&ttstamp=2658172538657771057510767100&__rev=1583304";
                     string finalResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + UserId + ""), PostDataForSimpleUrl);
                     messageId = Utils.getBetween(finalResp, "message_id=", "&story_dom_id");
                 }
@@ -6442,7 +6855,7 @@ namespace Groups
             {
                 GlobusLogHelper.log.Error(ex.Message);
             }
-          
+
             if (!string.IsNullOrEmpty(messageId))
             {
                 return true;
@@ -6456,7 +6869,10 @@ namespace Groups
         public bool PostVideoUrlasImage(string targeturl, string message, string VideoUrl, ref FacebookUser fbUser)
         {
 
-           
+            if (Globals.CheckLicenseManager == "fdfreetrial")
+            {
+                message = message + "\n\n\n\n Sent from FREE version of faceboardpro. To remove this message, please buy it.";
+            }
 
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
@@ -6504,13 +6920,13 @@ namespace Groups
                 xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
                 string composer_session_idSource = string.Empty;
                 xhpc_message_text = VideoUrl;
-               // xhpc_message = message + "      " + xhpc_message_text;
+                // xhpc_message = message + "      " + xhpc_message_text;
                 string xhpc_message_textPostData = string.Empty;
                 try
                 {
 
                     xhpc_message_text = Uri.EscapeDataString(xhpc_message_text);
-                   
+
                 }
                 catch (Exception ex)
                 {
@@ -6521,19 +6937,19 @@ namespace Groups
                 {
                     UserId = GlobusHttpHelper.ParseJson(strPageSource, "user");
                 }
-                //string strAjaxRequest1 = HttpHelper.getHtmlfromUrl(new Uri(FaceDominator.FBGlobals.Instance.GroupsGroupCampaignManagerGetAjaxEmiEndPhpUrl + UserId + "&__a=1"));
+                //string strAjaxRequest1 = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.GroupsGroupCampaignManagerGetAjaxEmiEndPhpUrl + UserId + "&__a=1"));
                 string imageUrl = string.Empty;
                 string imagePath = string.Empty;
                 try
                 {
                     string PostDataToScrap = "fb_dtsg=" + fb_dtsg + "&composerid=u_jsonp_2_o&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=ogtaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=maininput&loaded_components[6]=withtaggericon&loaded_components[7]=placetaggericon&loaded_components[8]=ogtaggericon&loaded_components[9]=mainprivacywidget&loaded_components[10]=placetagger&loaded_components[11]=explicitplaceinput&loaded_components[12]=hiddenplaceinput&loaded_components[13]=placenameinput&loaded_components[14]=hiddensessionid&loaded_components[15]=ogtagger&loaded_components[16]=withtagger&loaded_components[17]=citysharericon&loaded_components[18]=cameraicon&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=aJioznEyl2lm9adDgDDx2IGAy4DBzECQqbx2mbAJliGtbHz6C_8Ey5pokHWAVbGEyiuaBKAqhB-8rjpbQummFGx3CV8yfCw&__req=14&ttstamp=2658169541015279566510810872&__rev=1556013";
-                    composer_session_idSource = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url=" + xhpc_message_text + "&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&av=" + UserId + "&composerurihash=2"),PostDataToScrap);
+                    composer_session_idSource = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/composerx/attachment/link/scraper/?scrape_url=" + xhpc_message_text + "&remove_url=%2Fajax%2Fcomposerx%2Fattachment%2Fstatus%2F&attachment_class=_4j&av=" + UserId + "&composerurihash=2"), PostDataToScrap);
                     string[] imgData = Regex.Split(composer_session_idSource, "url");
                     foreach (string imgItem in imgData)
                     {
                         if (imgItem.Contains(".jpg"))
                         {
-                            imageUrl = Utils.getBetween(imgItem, "=", "&amp").Replace("\\u00253A", ":").Replace("\\u00252F","/");
+                            imageUrl = Utils.getBetween(imgItem, "=", "&amp").Replace("\\u00253A", ":").Replace("\\u00252F", "/");
                             break;
                         }
                     }
@@ -6542,25 +6958,25 @@ namespace Groups
                     {
                         WebClient webclient = new WebClient();
                         byte[] args = webclient.DownloadData(imageUrl);
-                        string imageName=imageUrl.Split('/')[imageUrl.Split('/').Length-1];
-                        File.WriteAllBytes("C:\\Facedominator\\Data\\" + "/" + imageName, args);
-                        imagePath="C:\\Facedominator\\Data\\" + "/" + imageName;
+                        string imageName = imageUrl.Split('/')[imageUrl.Split('/').Length - 1];
+                        File.WriteAllBytes("C:\\faceboardpro\\Data\\" + "/" + imageName, args);
+                        imagePath = "C:\\faceboardpro\\Data\\" + "/" + imageName;
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                  GlobusLogHelper.log.Error(ex.Message);
+                    GlobusLogHelper.log.Error(ex.Message);
                 }
-                
+
                 string waterfallID = string.Empty;
                 string upload_id = "1024";
                 string grid_id = string.Empty;
                 string album_type = string.Empty;
-                string clp = "{\"cl_impid\":\"2b17d4c5\",\"clearcounter\":0,\"elementid\":\""+xhpc_composerid+"\",\"version\":\"x\",\"parent_fbid\":"+xhpc_targetid+"}";
+                string clp = "{\"cl_impid\":\"2b17d4c5\",\"clearcounter\":0,\"elementid\":\"" + xhpc_composerid + "\",\"version\":\"x\",\"parent_fbid\":" + xhpc_targetid + "}";
                 string tagger_session_id = string.Empty;
                 if (!string.IsNullOrEmpty(composer_session_idSource))
                 {
-                    string composerurihash = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/composerx/attachment/media/upload/?av=" + UserId + "&composerurihash=3"), "fb_dtsg="+fb_dtsg+"&composerid=u_jsonp_5_o&targetid="+xhpc_targetid+"&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=ogtaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=maininput&loaded_components[6]=withtaggericon&loaded_components[7]=placetaggericon&loaded_components[8]=ogtaggericon&loaded_components[9]=mainprivacywidget&nctr[_mod]=pagelet_group_composer&__user="+UserId+"&__a=1&__dyn=aJioznEyl2qm9adDgDDx2IGAy4DBzECQqbx2mbAJliGtbHz6C_8Ey5pokHWAVbGEyiuaBKAqhB-8rjpbQummFGx3CV8yfCw&__req=11&ttstamp=265817265548750815410410071&__rev=1556013");
+                    string composerurihash = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/composerx/attachment/media/upload/?av=" + UserId + "&composerurihash=3"), "fb_dtsg=" + fb_dtsg + "&composerid=u_jsonp_5_o&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=ogtaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=maininput&loaded_components[6]=withtaggericon&loaded_components[7]=placetaggericon&loaded_components[8]=ogtaggericon&loaded_components[9]=mainprivacywidget&nctr[_mod]=pagelet_group_composer&__user=" + UserId + "&__a=1&__dyn=aJioznEyl2qm9adDgDDx2IGAy4DBzECQqbx2mbAJliGtbHz6C_8Ey5pokHWAVbGEyiuaBKAqhB-8rjpbQummFGx3CV8yfCw&__req=11&ttstamp=265817265548750815410410071&__rev=1556013");
                     waterfallID = Utils.getBetween(composerurihash, "waterfallID\":\"", "\"");
                     grid_id = Utils.getBetween(composerurihash, "grid_id\":\"", "\"");
                     album_type = Utils.getBetween(composerurihash, "=\\\"album_type\\\" value=\\\"", "\\\"");
@@ -6573,10 +6989,10 @@ namespace Groups
                     nvc.Add("grid_id", grid_id);
                     nvc.Add("qn", waterfallID);
                     nvc.Add("0", "" + imagePath + "<:><:><:>image/jpeg");
-                    nvc.Add("upload_id","1024");
+                    nvc.Add("upload_id", "1024");
                     string imgUploadResp = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&image_height=100&image_width=100&letterbox=0&av=" + UserId + "&qn=" + waterfallID + "&__user=" + UserId + "&__a=1&__dyn=aJioznEyl2lm9adDgDDx2IGAy4DBzECQqbx2mbAJliGtbHz6C_8Ey5pokHWAVbGEyiuaBKAqhB-8rjpbQummFGx3CV8yfCw&__req=19&fb_dtsg=" + fb_dtsg + "&ttstamp=265817265548750815410410071&__rev=1556013", targeturl, nvc, "upload_id", "0");
                     string fbid = string.Empty;
-                    fbid = Utils.getBetween(imgUploadResp, "fbid\":\"", "\"");       
+                    fbid = Utils.getBetween(imgUploadResp, "fbid\":\"", "\"");
                     NameValueCollection nvc1 = new NameValueCollection();
                     nvc1.Add("composer_session_id", composer_session_id);
                     nvc1.Add("fb_dtsg", fb_dtsg);
@@ -6584,35 +7000,35 @@ namespace Groups
                     nvc1.Add("grid_id", grid_id);
                     nvc1.Add("xhpc_ismeta", xhpc_ismeta);
                     nvc1.Add("xhpc_timeline", string.Empty);
-                    nvc1.Add("xhpc_composerid",xhpc_composerid);
+                    nvc1.Add("xhpc_composerid", xhpc_composerid);
                     nvc1.Add("xhpc_targetid", xhpc_targetid);
                     nvc1.Add("xhpc_publish_type", "1");
                     nvc1.Add("clp", clp);
-                    nvc1.Add("xhpc_message_text",Uri.UnescapeDataString(xhpc_message_text));
+                    nvc1.Add("xhpc_message_text", Uri.UnescapeDataString(xhpc_message_text));
                     nvc1.Add("xhpc_message", Uri.UnescapeDataString(xhpc_message_text));
-                    nvc1.Add("composer_unpublished_photo[]",fbid);
-                    nvc1.Add("album_type",album_type);
+                    nvc1.Add("composer_unpublished_photo[]", fbid);
+                    nvc1.Add("album_type", album_type);
                     nvc1.Add("is_file_form", "1");
                     nvc1.Add("oid", string.Empty);
                     nvc1.Add("qn", waterfallID);
                     nvc1.Add("application", "composer");
-                    nvc1.Add("is_explicit_place",string.Empty);
+                    nvc1.Add("is_explicit_place", string.Empty);
                     nvc1.Add("composertags_place", string.Empty);
                     nvc1.Add("composertags_place_name", string.Empty);
                     nvc1.Add("tagger_session_id", tagger_session_id);
                     nvc1.Add("action_type_id[]", string.Empty);
                     nvc1.Add("object_str[]", string.Empty);
                     nvc1.Add("object_id[]", string.Empty);
-                    nvc1.Add("hide_object_attachment","0");
-                    nvc1.Add("og_suggestion_mechanism",string.Empty);
+                    nvc1.Add("hide_object_attachment", "0");
+                    nvc1.Add("og_suggestion_mechanism", string.Empty);
                     nvc1.Add("og_suggestion_logging_data", string.Empty);
                     nvc1.Add("icon_id", string.Empty);
                     nvc1.Add("composertags_city", string.Empty);
                     nvc1.Add("disable_location_sharing", "false");
                     nvc1.Add("composer_predicted_city", string.Empty);
-                    string imgUploadResp1 = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/media/upload/photos/composer/?av=" + UserId + "&__user=" + UserId + "&__a=1&__dyn=aJioznEyl2lm9adDgDDx2IGAy4DBzECQqbx2mbAJliGtbHz6C_8Ey5pokHWAVbGEyiuaBKAqhB-8rjpbQummFGx3CV8yfCw&__req=1l&fb_dtsg=" + fb_dtsg + "&ttstamp=265817265548750815410410071&__rev=1556013", targeturl, nvc1, "composer_predicted_city",string.Empty);
-                                                                                
- 
+                    string imgUploadResp1 = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/media/upload/photos/composer/?av=" + UserId + "&__user=" + UserId + "&__a=1&__dyn=aJioznEyl2lm9adDgDDx2IGAy4DBzECQqbx2mbAJliGtbHz6C_8Ey5pokHWAVbGEyiuaBKAqhB-8rjpbQummFGx3CV8yfCw&__req=1l&fb_dtsg=" + fb_dtsg + "&ttstamp=265817265548750815410410071&__rev=1556013", targeturl, nvc1, "composer_predicted_city", string.Empty);
+
+
                 }
                 else
                 {
@@ -6624,7 +7040,7 @@ namespace Groups
             {
                 GlobusLogHelper.log.Error(ex.Message);
             }
-           
+
             return false;
         }
 
@@ -6635,7 +7051,7 @@ namespace Groups
             {
                 Dictionary<string, string> tempDic = new Dictionary<string, string>();
                 tempDic = dic;
-                
+
                 foreach (var item in tempDic)
                 {
                     try
@@ -6681,7 +7097,7 @@ namespace Groups
 
         public static int GroupRequestManagerNoOfGroupRequest = 10;
 
-      
+
 
 
         #endregion
@@ -6831,7 +7247,87 @@ namespace Groups
             }
 
         }
-      
+
+        public void StartCampaignGroupRequestManager()
+        {
+
+            try
+            {
+                lstThreadsGroupGroupRequstManager.Add(Thread.CurrentThread);
+                lstThreadsGroupGroupRequstManager.Distinct();
+                Thread.CurrentThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+            countThreadControllerGroupGroupRequstManager = 0;
+
+            // if (chkCountinueProcessGroupCamapinScheduler == true)           
+
+
+            try
+            {
+                int numberOfAccountPatch = 25;
+
+                if (NoOfThreadsGroupRequestManager > 0)
+                {
+                    numberOfAccountPatch = NoOfThreadsGroupRequestManager;
+                }
+
+                DataSet ds = DataBaseHandler.SelectQuery("select * from GroupCampaign", "GroupCampaign");
+                foreach (DataRow dr in ds.Tables[0].Rows)
+                {
+                    lock (lockrThreadControllerGroupRequstManager)
+                    {
+                        try
+                        {
+                            if (countThreadControllerGroupGroupRequstManager >= ds.Tables[0].Rows.Count)
+                            {
+                                Monitor.Wait(lockrThreadControllerGroupRequstManager);
+                            }
+
+                            string acc = dr[2].ToString();
+                            FacebookUser item = new FacebookUser();
+                            string GroupUrlFilePath = dr[4].ToString();
+
+                            FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                            if (item != null)
+                            {
+                                try
+                                {
+                                    Thread profilerThread = new Thread(StartGroupRequestCampaignMultithread);
+                                    profilerThread.Name = "workerThread_Profiler_" + acc;
+                                    profilerThread.IsBackground = true;
+                                    profilerThread.Start(new object[] { item, GroupUrlFilePath });
+                                    countThreadControllerGroupGroupRequstManager++;
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+                }
+
+
+
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+
+        }
+
         public void StartGroupRequesManagerMultithread(object parameters)
         {
             GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
@@ -6922,6 +7418,53 @@ namespace Groups
             }
         }
 
+        public void StartGroupRequestCampaignMultithread(object parameters)
+        {
+            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+            try
+            {
+                if (!isStopGroupGroupRequstManager)
+                {
+                    try
+                    {
+                        lstThreadsGroupGroupRequstManager.Add(Thread.CurrentThread);
+                        lstThreadsGroupGroupRequstManager.Distinct();
+                        Thread.CurrentThread.IsBackground = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                    Array paramsArray = new object[1];
+                    paramsArray = (Array)parameters;
+                    FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+                    objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+                    string GroupurlFilePath = (string)paramsArray.GetValue(1);
+                    if (!objFacebookUser.isloggedin)
+                    {
+                        Accounts.AccountManager objAccountManager = new AccountManager();
+                        objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                    }
+
+                    if (chkCountinueProcessGroupCamapinScheduler == true && objFacebookUser.isloggedin)
+                    {
+                        GroupRequestSendersForBrowseGroupNew(ref objFacebookUser, GroupurlFilePath);
+
+                        GlobusLogHelper.log.Info("Process Completed  " + objFacebookUser.username);
+                        GlobusLogHelper.log.Debug("Process Completed  " + objFacebookUser.username);
+                    }
+
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+
         public void GroupRequestSendersForBrowseGroup(ref GlobusHttpHelper objGlobusHttp, ref FacebookUser fbUser)
         {
 
@@ -6938,7 +7481,14 @@ namespace Groups
                 {
                     intProxyPort = int.Parse(proxyPort);
                 }
+                string fb_dtsg = "";
                 string PageSrcHome = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                fb_dtsg = GlobusHttpHelper.GetParamValue(PageSrcHome, "fb_dtsg");
+                if (string.IsNullOrEmpty(fb_dtsg))
+                {
+                    fb_dtsg = GlobusHttpHelper.ParseJson(PageSrcHome, "fb_dtsg");
+                }
                 string UserIdGrpMsg = string.Empty;
 
 
@@ -6946,6 +7496,7 @@ namespace Groups
 
                 int CountRequest = 0;
                 int TimeCounter = 0;
+                int RequestSentCounter = 0;
                 foreach (var Groupurl in LstGroupUrlsGroupRequestManager)
                 {
                     if (chkCountinueProcessGroupCamapinScheduler)
@@ -6981,18 +7532,14 @@ namespace Groups
                         string grpurl = Groupurl;
                         string strGroupUrl = grpurl;
                         string __user = "";
-                        string fb_dtsg = "";
+
                         string pgSrc_FanPageSearch = HttpHelper.getHtmlfromUrl(new Uri(strGroupUrl));
                         __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
                         if (string.IsNullOrEmpty(__user))
                         {
                             __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
                         }
-                        fb_dtsg = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "fb_dtsg");
-                        if (string.IsNullOrEmpty(fb_dtsg))
-                        {
-                            fb_dtsg = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "fb_dtsg");
-                        }
+
                         try
                         {
                             string currentstatus1 = string.Empty;
@@ -7067,11 +7614,11 @@ namespace Groups
                             if (findstatus.Contains("clearfix groupsJumpBarTop") && !findstatus.Contains("Join this group to see the discussion"))
                             {
 
-                                if ((findstatus.Contains("rel=\"async-post\">Join Group</a></li><li>")|| findstatus.Contains("role=\"button\">Join Group</a>")) && !findstatus.Contains(">Pending</span>"))
+                                if ((findstatus.Contains("rel=\"async-post\">Join Group</a></li><li>") || findstatus.Contains("role=\"button\">Join Group</a>")) && !findstatus.Contains(">Pending</span>"))
                                 {
                                     currentstatus = "Join Group";
                                 }
-                                else if (!findstatus.Contains("rel=\"async-post\">Join Group</a></li><li>") && findstatus.Contains(">Pending</span>") &&! findstatus.Contains ("Join this group to see the discussion"))
+                                else if (!findstatus.Contains("rel=\"async-post\">Join Group</a></li><li>") && findstatus.Contains(">Pending</span>") && !findstatus.Contains("Join this group to see the discussion"))
                                 {
                                     GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
                                     GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
@@ -7111,7 +7658,7 @@ namespace Groups
                                         {
                                             GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
                                             GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
-                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('"+GroupRequestCampaignName+"','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
+                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('" + GroupRequestCampaignName + "','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
                                             try
                                             {
                                                 string CSVHeader = "FbUser" + "," + "GroupURL";
@@ -7332,12 +7879,551 @@ namespace Groups
                                         }
                                         if (Responseofjoin.Contains("[\"goURI(") || Responseofjoin.Contains(aaaa) || Responseofjoin.Contains("redirectPageTo") || Responseofjoin.Contains(CheckStatus))
                                         {
-
-                                            GlobusLogHelper.log.Info("Request Sent to URL :" + grpurl + " with :" + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Request Sent to URL :" + grpurl + " with :" + fbUser.username);
+                                            RequestSentCounter++;
+                                            GlobusLogHelper.log.Info("" + RequestSentCounter + "]Request Sent to URL :" + grpurl + " with :" + fbUser.username);
+                                            GlobusLogHelper.log.Debug("" + RequestSentCounter + "]Request Sent to URL :" + grpurl + " with :" + fbUser.username);
                                             //string[] param={"Insert","",fbUser.username,Groupurl,"Sent"};
                                             //RaiseEventsgroupRequestUnique(param);
-                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('"+GroupRequestCampaignName+"','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
+                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('" + GroupRequestCampaignName + "','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
+
+                                            // objclsgrpmngr.UpdateGroupDictionaryData(languageselect, grpurl,Username);           
+                                            try
+                                            {
+                                                string CSVHeader = "FbUser" + "," + "GroupURL";
+                                                string CSV_Content = fbUser.username + "," + grpurl;
+
+                                                Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportLocationGroupRequest);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+                                if (currentstatus1.Contains("Notifications"))
+                                {
+                                    try
+                                    {
+                                        List<string> GroupType = HttpHelper.GetTextDataByTagAndAttributeName(findstatus1, "span", "fsm fcg");
+                                        groupType = GroupType[0];
+                                        crtstatus = "Joined";
+
+                                        // objclsgrpmngr.UpdateGroupDictionaryData(languageselect, grpurl);
+                                        //if (!skipalrea dySent)
+                                        {
+                                            GlobusLogHelper.log.Debug("Request Already Accepted On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Info("Request Already Accepted On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('" + GroupRequestCampaignName + "','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                }
+                                if (currentstatus1.Contains("Cancel Request"))
+                                {
+                                    try
+                                    {
+                                        List<string> GroupType = HttpHelper.GetTextDataByTagAndAttributeName(findstatus, "span", "fsm fcg");
+                                        groupType = GroupType[0];
+                                        crtstatus = "Request Already Sent";
+                                        // objclsgrpmngr.InsertGroupmanager(Username, grpurl, groupType, crtstatus);
+                                        // objclsgrpmngr.UpdateGroupDictionaryData(languageselect, grpurl);
+                                        // if (!skipalreadySent)
+                                        {
+                                            GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('" + GroupRequestCampaignName + "','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
+                                            try
+                                            {
+                                                string CSVHeader = "FbUser" + "," + "GroupURL";
+                                                string CSV_Content = fbUser.username + "," + grpurl;
+
+                                                Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportLocationGroupRequest);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                                if (currentstatus1.Contains("Create Group"))
+                                {
+                                    GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                    try
+                    {
+                        int delayInSeconds = Utils.GenerateRandom(minDelayGroupRequestManager * 1000, maxDelayGroupRequestManager * 1000);
+                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                        Thread.Sleep(delayInSeconds);
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+        }
+
+        public void GroupRequestSendersForBrowseGroupNew(ref FacebookUser fbUser, string GroupUrlFile)
+        {
+
+            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+            string CheckStatus = string.Empty;
+            try
+            {
+                string UNqgrpurl = string.Empty;
+                List<string> lsturll = new List<string>();
+                List<string> lsturllKeyword = new List<string>();
+                int intProxyPort = 80;
+                Regex IdCheck = new Regex("^[0-9]*$");
+                if (!string.IsNullOrEmpty(proxyPort) && IdCheck.IsMatch(proxyPort))
+                {
+                    intProxyPort = int.Parse(proxyPort);
+                }
+                string fb_dtsg = "";
+                string PageSrcHome = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+
+                fb_dtsg = GlobusHttpHelper.GetParamValue(PageSrcHome, "fb_dtsg");
+                if (string.IsNullOrEmpty(fb_dtsg))
+                {
+                    fb_dtsg = GlobusHttpHelper.ParseJson(PageSrcHome, "fb_dtsg");
+                }
+                string UserIdGrpMsg = string.Empty;
+
+
+                UserIdGrpMsg = GlobusHttpHelper.Get_UserID(PageSrcHome);
+
+                int CountRequest = 0;
+                int TimeCounter = 0;
+                int RequestSentCounter = 0;
+                LstGroupUrlsGroupRequestManager = new List<string>();
+                LstGroupUrlsGroupRequestManager = GlobusFileHelper.ReadFile(GroupUrlFile).Distinct().ToList();
+                foreach (var Groupurl in LstGroupUrlsGroupRequestManager)
+                {
+                    if (chkCountinueProcessGroupCamapinScheduler)
+                    {
+                        DataSet DS = DataBaseHandler.SelectQuery("Select * from GroupRequestUnique where CampaignName='" + GroupRequestCampaignName + "' and URL='" + Groupurl + "' and Account='" + fbUser.username + "'", "GroupRequestUnique");
+                        if (DS.Tables[0].Rows.Count > 0)
+                        {
+                            GlobusLogHelper.log.Debug("Group Request Already Sent To Url :" + Groupurl + " With User :" + fbUser.username + "");
+                            GlobusLogHelper.log.Info("Group Request Already Sent To Url :" + Groupurl + " With User :" + fbUser.username + "");
+
+                            continue;
+                        }
+                    }
+                    if (CountRequest >= GroupRequestManagerNoOfGroupRequest)
+                    {
+                        break;
+                    }
+                    CountRequest = CountRequest + 1;
+                    try
+                    {
+                        if (TimeCounter >= CheckGroupRequestManagerNoOfGroupsInBatch)
+                        {
+
+                            GlobusLogHelper.log.Debug("Pausing the process for : " + CheckGroupRequestManager_InterbalInMinuts + "  : Minutes");
+                            GlobusLogHelper.log.Info("Pausing the process for : " + CheckGroupRequestManager_InterbalInMinuts + "  : Minutes");
+
+                            TimeCounter = 0;
+
+                            Thread.Sleep(1 * 1000 * 60 * CheckGroupRequestManager_InterbalInMinuts);
+                            GlobusLogHelper.log.Debug("Process Continue ..");
+                            GlobusLogHelper.log.Info("Process Continue ..");
+                        }
+
+                        TimeCounter = TimeCounter + 1;
+
+                        string grpurl = Groupurl;
+                        string strGroupUrl = grpurl;
+                        string __user = "";
+
+                        string pgSrc_FanPageSearch = HttpHelper.getHtmlfromUrl(new Uri(strGroupUrl));
+                        __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
+                        if (string.IsNullOrEmpty(__user))
+                        {
+                            __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
+                        }
+
+                        try
+                        {
+                            string currentstatus1 = string.Empty;
+                            string aaaa = string.Empty;
+                            string groupType = string.Empty;
+                            string Userstatus = string.Empty;
+                            string currentstatus = string.Empty;
+                            string stradminlink = string.Empty;
+                            string findstatus = string.Empty;
+                            string findstatus1 = string.Empty;
+
+                            string postdataforjoin = string.Empty;
+                            string localstr = string.Empty;
+                            string Responseofjoin = string.Empty;
+                            findstatus = HttpHelper.getHtmlfromUrl(new Uri(grpurl));
+                            try
+                            {
+                                if (grpurl.Contains("http"))
+                                {
+                                    try
+                                    {
+                                        string[] grpurlArr = Regex.Split(grpurl, "https://");
+                                        string urlforFindingGroupType = grpurlArr[1] + "/members";
+                                        string memberurl = urlforFindingGroupType.Replace("//", "/");
+                                        memberurl = "https://" + memberurl;
+                                        findstatus1 = HttpHelper.getHtmlfromUrl(new Uri(memberurl));
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        string urlforFindingGroupType = grpurl + "/members";
+                                        string memberurl = urlforFindingGroupType.Replace("//", "/");
+                                        memberurl = memberurl.Replace("//", "/");
+                                        findstatus1 = HttpHelper.getHtmlfromUrl(new Uri(memberurl));
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                            try
+                            {
+                                int Counter = 0;
+                                string[] grpurlArr1 = Regex.Split(grpurl, "/");
+                                foreach (var grpurlArr_item in grpurlArr1)
+                                {
+                                    Counter++;
+                                }
+                                CheckStatus = grpurlArr1[Counter - 1];
+                                if (string.IsNullOrEmpty(CheckStatus))
+                                {
+                                    CheckStatus = grpurlArr1[Counter - 2];
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
+                            //  List<string> status3 = objGlobusHttpHelper.GetTextDataByTagAndAttributeName(findstatus, "span", "uiButtonText");
+                            if (findstatus.Contains("clearfix groupsJumpBarTop") && !findstatus.Contains("Join this group to see the discussion"))
+                            {
+
+                                if ((findstatus.Contains("rel=\"async-post\">Join Group</a></li><li>") || findstatus.Contains("role=\"button\">Join Group</a>")) && !findstatus.Contains(">Pending</span>"))
+                                {
+                                    currentstatus = "Join Group";
+                                }
+                                else if (!findstatus.Contains("rel=\"async-post\">Join Group</a></li><li>") && findstatus.Contains(">Pending</span>") && !findstatus.Contains("Join this group to see the discussion"))
+                                {
+                                    GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+
+                                    try
+                                    {
+                                        string CSVHeader = "FbUser" + "," + "GroupURL";
+                                        string CSV_Content = fbUser.username + "," + grpurl;
+
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportLocationGroupRequest);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                    try
+                                    {
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayGroupRequestManager * 1000, maxDelayGroupRequestManager * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                    continue;
+                                }
+
+                                string[] status12 = System.Text.RegularExpressions.Regex.Split(pgSrc_FanPageSearch, "_3-8_ img sp_10pEAcQb1gf sx_431dd2");
+                                if (status12.Count() == 1 && !pgSrc_FanPageSearch.Contains("Join this group to see the discussion") && !pgSrc_FanPageSearch.Contains("_42ft _4jy0 _4jy4 _4jy2 selected _51sy"))
+                                {
+                                    try
+                                    {
+                                        if (status12[0].Contains("status:pending-") && !status12[0].Contains(">Join group</a></li>") && !status12[0].Contains("Join Group</a></li>"))
+                                        {
+                                            GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                            GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
+                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('" + GroupRequestCampaignName + "','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
+                                            try
+                                            {
+                                                string CSVHeader = "FbUser" + "," + "GroupURL";
+                                                string CSV_Content = fbUser.username + "," + grpurl;
+
+                                                Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ExportLocationGroupRequest);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                            try
+                                            {
+                                                int delayInSeconds = Utils.GenerateRandom(minDelayGroupRequestManager * 1000, maxDelayGroupRequestManager * 1000);
+                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                                Thread.Sleep(delayInSeconds);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+
+                                            continue;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                }
+                                List<string> status = new List<string>();
+                                string[] status1 = null;
+
+                                try
+                                {
+                                    status1 = System.Text.RegularExpressions.Regex.Split(pgSrc_FanPageSearch, "clearfix groupsJumpBarTop");
+                                    status = HttpHelper.GetDataTag(status1[1], "a");
+                                }
+                                catch { };
+                                try
+                                {
+                                    foreach (var status_item in status)
+                                    {
+                                        if (status_item == "Join Group" || status_item == "Join group")
+                                        {
+                                            currentstatus = status_item;
+                                            break;
+                                        }
+                                        if (status_item == "Cancel Request" || status_item == "Cancel Request")
+                                        {
+                                            currentstatus = status_item;
+                                            break;
+                                        }
+                                    }
+                                }
+                                catch { };
+
+                                if (string.IsNullOrEmpty(currentstatus))
+                                {
+                                    if (status[0] == "Join Group" || status[0] == "Join group")
+                                    {
+                                        currentstatus = status[0];
+                                    }
+                                    else
+                                    {
+                                        try
+                                        {
+                                            if (status[2] == "Join Group" || status[2] == "Join group")
+                                            {
+                                                currentstatus = status[2];
+                                            }
+                                            else
+                                            {
+                                                try
+                                                {
+
+                                                    if (status[3] == "Join Group" || status[3] == "Join group")
+                                                    {
+                                                        currentstatus = status[3];
+                                                    }
+                                                    else
+                                                    {
+                                                        try
+                                                        {
+                                                            if (status[0] == "Cancel Request" || status[0] == "Cancel Request")
+                                                            {
+                                                                try
+                                                                {
+                                                                    currentstatus = status[0];
+                                                                }
+                                                                catch (Exception ex)
+                                                                {
+                                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                                }
+                                                            }
+                                                            currentstatus = Utils.getBetween(status1[1], "async-post\">", "</a>");
+                                                        }
+                                                        catch (Exception ex)
+                                                        {
+                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                        }
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                }
+                                /// currentstatus = status[2];
+                                for (int i = 0; i < status.Count; i++)
+                                {
+                                    if (currentstatus != string.Empty)
+                                    {
+                                        currentstatus1 = currentstatus;
+                                    }
+                                }
+                            }
+
+
+                            try
+                            {
+                                string crtstatus = "";
+                                if (string.IsNullOrEmpty(currentstatus))
+                                {
+                                    if (findstatus1.Contains("Join Group"))
+                                    {
+                                        currentstatus = "Join Group";
+                                    }
+                                }
+
+
+                                if (currentstatus.Contains("Join Group") || currentstatus1.Contains("Join group") || findstatus.Contains("Join Group") || findstatus.Contains("Join group"))
+                                {
+                                    try
+                                    {
+                                        List<string> GroupType = HttpHelper.GetTextDataByTagAndAttributeName(findstatus, "span", "fsm fcg");
+                                        try
+                                        {
+                                            groupType = GroupType[0];
+                                        }
+                                        catch { };
+
+                                        if (grpurl.Contains(FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookGroupUrl))                                                      //"https://www.facebook.com/groups/"
+                                        {
+                                            try
+                                            {
+                                                aaaa = grpurl.Replace(FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookGroupUrl, string.Empty).Replace("/", string.Empty);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            try
+                                            {
+                                                aaaa = grpurl.Replace(FBGlobals.Instance.fbhomeurl, string.Empty).Replace("/", string.Empty);                                            //"https://www.facebook.com/"
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                        try
+                                        {
+                                            stradminlink = findstatus.Substring(findstatus.IndexOf("group_id="), (findstatus.IndexOf("\"", findstatus.IndexOf("group_id=")) - findstatus.IndexOf("group_id="))).Replace("group_id=", string.Empty).Replace("\"", string.Empty).Trim();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                        aaaa = stradminlink;
+                                        // string postdataforjoin = "ref=group_jump_header&group_id=" + aaaa + "&fb_dtsg=" + fb_dtsg + "&__user=" + __user + "&phstamp=16581657884875010686";
+
+                                        try
+                                        {
+                                            postdataforjoin = "ref=group_jump_header&group_id=" + aaaa + "&__user=" + __user + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=9&fb_dtsg=" + fb_dtsg + "&__rev=1055839&ttstamp=265816690497512267";
+                                            localstr = FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookGroupUrl;                                                                         // "https://www.facebook.com/groups/"
+                                            Responseofjoin = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupGroupRequestManagerAjaxGroupsMembership), postdataforjoin, ref localstr);  //"https://www.facebook.com/ajax/groups/membership/r2j.php?__a=1"
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+
+                                        if (Responseofjoin.Contains("jghdj"))
+                                        {
+                                            try
+                                            {
+                                                postdataforjoin = "ref=group_jump_header&group_id=" + aaaa + "&__user=" + __user + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=9&fb_dtsg=" + fb_dtsg + "&__rev=1055839&ttstamp=265816690497512267";
+                                                localstr = FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookGroupUrl;                                                                         // "https://www.facebook.com/groups/"
+                                                Responseofjoin = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupGroupRequestManagerAjaxGroupsMembership), postdataforjoin, ref localstr);  //"https://www.facebook.com/ajax/groups/membership/r2j.php?__a=1"
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+
+
+                                        crtstatus = "Request Sent";
+                                        if (string.IsNullOrEmpty(Responseofjoin))
+                                        {
+                                            string reff = FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookGroupUrl + aaaa;                                                                     //  "https://www.facebook.com/groups/"
+                                            string strResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupGroupRequestManagerAjaxGroupsMembership), postdataforjoin, ref reff);    //"https://www.facebook.com/ajax/groups/membership/r2j.php?__a=1"
+
+                                        }
+                                        if (Responseofjoin.Contains("[\"goURI(") || Responseofjoin.Contains(aaaa) || Responseofjoin.Contains("redirectPageTo") || Responseofjoin.Contains(CheckStatus))
+                                        {
+                                            RequestSentCounter++;
+                                            GlobusLogHelper.log.Info("" + RequestSentCounter + "]Request Sent to URL :" + grpurl + " with :" + fbUser.username);
+                                            GlobusLogHelper.log.Debug("" + RequestSentCounter + "]Request Sent to URL :" + grpurl + " with :" + fbUser.username);
+                                            //string[] param={"Insert","",fbUser.username,Groupurl,"Sent"};
+                                            //RaiseEventsgroupRequestUnique(param);
+                                            DataBaseHandler.InsertQuery("Insert into GroupRequestUnique(CampaignName,URL,Account,Status) Values('" + GroupRequestCampaignName + "','" + Groupurl + "','" + fbUser.username + "','Sent')", "GroupRequestUnique");
 
                                             // objclsgrpmngr.UpdateGroupDictionaryData(languageselect, grpurl,Username);           
                                             try
@@ -7457,12 +8543,12 @@ namespace Groups
             //chkCountinueProcessGroupCamapinScheduler
 
 
-            
+
 
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             string CheckStatus = string.Empty;
 
-            int CountRequest=0;
+            int CountRequest = 0;
             try
             {
                 string UNqgrpurl = string.Empty;
@@ -7524,7 +8610,7 @@ namespace Groups
 
                     try
                     {
-                        
+
 
                         if (TimeCounter >= CheckGroupRequestManagerNoOfGroupsInBatch)
                         {
@@ -7626,7 +8712,7 @@ namespace Groups
                             try
                             {
                                 string crtstatus = "";
-                                if (findstatus.Contains("clearfix groupsJumpBarTop") && !findstatus.Contains("Join this group to see the discussion") ||findstatus.Contains("_42ft _4jy0 _4jy4 _4jy2 selected _51sy"))
+                                if (findstatus.Contains("clearfix groupsJumpBarTop") && !findstatus.Contains("Join this group to see the discussion") || findstatus.Contains("_42ft _4jy0 _4jy4 _4jy2 selected _51sy"))
                                 {
                                     try
                                     {
@@ -7637,9 +8723,9 @@ namespace Groups
                                         }
                                         catch (Exception ex)
                                         {
-                                           // GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            // GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
-                                      
+
 
                                         if (grpurl.Contains(FBGlobals.Instance.GroupsGroupCampaignManagerGetFaceBookGroupUrl))                                                      //"https://www.facebook.com/groups/"
                                         {
@@ -7709,7 +8795,7 @@ namespace Groups
                                         {
                                             GlobusLogHelper.log.Debug("Request Already Accepted On The URL : " + grpurl + " With UserName : " + fbUser.username);
                                             GlobusLogHelper.log.Info("Request Already Accepted On The URL : " + grpurl + " With UserName : " + fbUser.username);
-                                            }
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
@@ -7730,7 +8816,7 @@ namespace Groups
                                         {
                                             GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
                                             GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
-                                            
+
                                             try
                                             {
                                                 string CSVHeader = "FbUser" + "," + "GroupURL";
@@ -7753,7 +8839,7 @@ namespace Groups
                                 {
                                     GlobusLogHelper.log.Info("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Request Already Sent On The URL : " + grpurl + " With UserName : " + fbUser.username);
-                                    }
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -7896,7 +8982,7 @@ namespace Groups
 
                 }
 
-             
+
             }
             catch (Exception ex)
             {
@@ -7930,7 +9016,7 @@ namespace Groups
 
                         bool status = PostCommentsOnTargetedUrls(ref fbUser, LstGroup_DeleteCommentPostTargetedPostUrls_item);
 
-                        
+
                         if (status)
                         {
                             try
@@ -7957,7 +9043,7 @@ namespace Groups
                                 GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                 GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                 Thread.Sleep(delayInSeconds);
-                                
+
                             }
                             catch (Exception ex)
                             {
@@ -8114,12 +9200,12 @@ namespace Groups
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
-            string ft_ID=string.Empty;
+            string ft_ID = string.Empty;
             try
             {
                 group_id = Utils.getBetween(TargetedUrl, "/groups/", "/");
 
-               ft_ID= Utils.getBetween(TargetedUrl+"#****", "permalink/", "#****").Replace("/",string.Empty);
+                ft_ID = Utils.getBetween(TargetedUrl + "#****", "permalink/", "#****").Replace("/", string.Empty);
 
             }
             catch (Exception ex)
@@ -8133,7 +9219,7 @@ namespace Groups
             {
                 string PostData = "ft_ent_identifier=" + ft_ent_identifier + "&comment_text=.&source=2&client_id=1394434725267%3A2170302505&reply_fbid&parent_comment_id&rootid=" + rootid + "&clp=%7B%22cl_impid%22%3A%22db2bcca2%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22js_3%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + ft_ID + "%7D&attached_sticker_fbid=0&attached_photo_fbid=0&giftoccasion&ft[tn]=[]&ft[fbfeed_location]=3&nctr[_mod]=pagelet_group_mall&__user=" + __user + "&__a=1&__dyn=7n8a8gAMCBynzpQ9UoHaHyG8qeyp9Esx6iWF3qGEVF4WpU&__req=r&fb_dtsg=" + fb_dtsg + "&ttstamp=265816711673778372&__rev=1152671";
                 string PostUrl = FBGlobals.Instance.GroupPostAndDeleteCommentUrl;
-               // PostResponce = ObjHttpHelper.postFormDataProxy(new Uri(PostUrl), PostData,fbUser.proxyip,Convert.ToInt32(fbUser.proxyport),fbUser.proxyusername,fbUser.proxypassword);
+                // PostResponce = ObjHttpHelper.postFormDataProxy(new Uri(PostUrl), PostData,fbUser.proxyip,Convert.ToInt32(fbUser.proxyport),fbUser.proxyusername,fbUser.proxypassword);
                 PostResponce = ObjHttpHelper.postFormData(new Uri(PostUrl), PostData);
 
                 if (!PostResponce.Contains("browserArchitecture") || PostResponce.Contains("errorSummary"))
@@ -8148,8 +9234,8 @@ namespace Groups
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                   
-                }              
+
+                }
 
 
 
@@ -8181,9 +9267,9 @@ namespace Groups
 
             try
             {
-                string Comment = Utils.getBetween(PostResponce, "[{\"id", "\",\"fbid\"");
+                string Comment = Utils.getBetween(PostResponce, "body\":{\"text\":\"", "\"");
 
-                comment_id = Comment.Replace("\":\"", string.Empty);
+                comment_id = Utils.getBetween(PostResponce, "\"id\":\"", "\"");
 
             }
             catch (Exception ex)
@@ -8192,7 +9278,7 @@ namespace Groups
             }
             try
             {
-                comment_legacyid = Utils.getBetween(PostResponce, "legacyid\":", "\",\"body\"");
+                comment_legacyid = Utils.getBetween(PostResponce, "\"legacyid\":\"", "\"");
                 comment_legacyid = comment_legacyid.Replace("\"", string.Empty);
             }
             catch (Exception ex)
@@ -8202,7 +9288,7 @@ namespace Groups
 
             try
             {
-                client_id = Utils.getBetween(PostResponce, "clientid\":", "}]");
+                client_id = Utils.getBetween(PostResponce, "\"clientid\":\"", "\"");
                 client_id = client_id.Replace("\"", string.Empty).Replace(":", "%3A");
             }
             catch (Exception ex)
@@ -8213,7 +9299,7 @@ namespace Groups
             try
             {
 
-                ftId = Utils.getBetween(PostResponce, "clientid\":", "}]");
+                ftId = Utils.getBetween(PostResponce, "clientid\":\"", "\"").Replace(":", "%3A");
             }
             catch (Exception ex)
             {
@@ -8225,8 +9311,11 @@ namespace Groups
             try
             {
                 string PostDeletePostData = "comment_id=" + comment_id + "&comment_legacyid=" + comment_legacyid + "&ft_ent_identifier=" + ft_ent_identifier + "&one_click=false&source=0&client_id=" + client_id + "&ft[tn]=R]&ft[fbfeed_location]=2&ft[id]=" + ft_ent_identifier + "&ft[author]=" + __user + "&nctr[_mod]=pagelet_group_mall&__user=" + __user + "&__a=1&__dyn=7n8a9EAMCBynzpQ9UoHaHyG8qeyp9Esx6iWF3qGEVF4WpU&__req=5&fb_dtsg=" + fb_dtsg + "&ttstamp=265816711673778372&__rev=1152671";
+                PostDeletePostData = "comment_id=" + comment_id + "&comment_legacyid=" + comment_legacyid + "&ft_ent_identifier=" + ft_ent_identifier + "&one_click=false&source=2&client_id=" + client_id + "&&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7AmaAEyl2qm9o-t2u5bGya4Au7pEsx6iqAdy9VQC-K26m5-bzES2N6xybxu3fzob8iUkUgxacEwy8ACxuFA4EKUy&__req=i&fb_dtsg=" + fb_dtsg + "&ttstamp=26581694973529750991068584&__rev=1780108";
+                // PostDeletePostData = "comment_id=1037398446290529_1038239782873062&comment_legacyid=1038239782873062&ft_ent_identifier=1037398446290529&one_click=false&source=2&client_id=1437571823688%3A1728669548&&av=100009565844567&__user=100009565844567&__a=1&__dyn=7AmajEyl2qm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC-K26m6oKewWhEyfyUnwPUS2O58kUgx-y28Sq5Ux1efKiVWz9Hxmfw&__req=i&fb_dtsg=AQE8oUcWcfBK&ttstamp=265816956111859987991026675&__rev=1847084";
                 string PostDeleteUrl = FBGlobals.Instance.GroupPostAndDeleteAjaxufidelete_commentUrl;
-             //   string DeletePostResponce = ObjHttpHelper.postFormDataProxy(new Uri(PostDeleteUrl), PostDeletePostData, fbUser.proxyip, Convert.ToInt32(fbUser.proxyport), fbUser.proxyusername, fbUser.proxypassword);
+                PostDeleteUrl = "https://www.facebook.com/ufi/delete/comment/";
+                //   string DeletePostResponce = ObjHttpHelper.postFormDataProxy(new Uri(PostDeleteUrl), PostDeletePostData, fbUser.proxyip, Convert.ToInt32(fbUser.proxyport), fbUser.proxyusername, fbUser.proxypassword);
                 string DeletePostResponce = ObjHttpHelper.postFormData(new Uri(PostDeleteUrl), PostDeletePostData);
 
 
@@ -8296,7 +9385,7 @@ namespace Groups
 
         public static int minDelayGroupFansScraper = 10;
         public static int maxDelayGroupFansScraper = 20;
-       
+
 
         #endregion
 
@@ -8318,7 +9407,7 @@ namespace Groups
             {
                 int numberOfAccountPatch = 25;
 
-                
+
 
                 List<List<string>> list_listAccounts = new List<List<string>>();
                 if (FBGlobals.listAccounts.Count >= 1)
@@ -8423,7 +9512,7 @@ namespace Groups
                                 {
                                     StartGroupFansScraperProcess(ref objFacebookUser);
                                 }
-                               
+
                             }
                             else
                             {
@@ -8476,7 +9565,7 @@ namespace Groups
 
             GlobusLogHelper.log.Info("Please Wait process start " + " With UserName : " + fbUser.username);
 
-            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;           
+            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
             string pageSourceFb = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
             List<string> lstStoreUserInfo = new List<string>();
@@ -8495,7 +9584,7 @@ namespace Groups
             {
                 try
                 {
-                   // string _LstGroup_GroupFansScraperUrls_item = "https://www.facebook.com/groups/weareORGI/";
+                    // string _LstGroup_GroupFansScraperUrls_item = "https://www.facebook.com/groups/weareORGI/";
                     pageSourceFb = HttpHelper.getHtmlfromUrl(new Uri(LstGroup_GroupFansScraperUrls_item));
 
                     string[] Arr = System.Text.RegularExpressions.Regex.Split(pageSourceFb, "class=\"userContentWrapper");
@@ -8590,7 +9679,7 @@ namespace Groups
                         }
                     }
 
-                 
+
                     //pagination 
                     string ajaxpipe_token = Utils.getBetween(pageSourceFb, "ajaxpipe_token", "\",").Replace("\":\"", "");
                     string GroupId = Utils.getBetween(pageSourceFb, "group_id\":", ",\"").Replace("\":\"", "");
@@ -8716,17 +9805,17 @@ namespace Groups
                         }
                         // break While Loop
 
-                        if (PageSourceAjax.Contains("<div class=\"phm _64f\">End of results</div>") || string.IsNullOrEmpty(end_cursor))                        
+                        if (PageSourceAjax.Contains("<div class=\"phm _64f\">End of results</div>") || string.IsNullOrEmpty(end_cursor))
                         {
                             break;
                         }
                     }
                     //-------
                     List<string> tempList = new List<string>();
-                   int countNumberOfPost = 0;
-                   int countNumberOfComments = 0;
-                  string   UserIdmostActiveUser = string.Empty;
-                  string UserIdmostActiveUserForComments = string.Empty;
+                    int countNumberOfPost = 0;
+                    int countNumberOfComments = 0;
+                    string UserIdmostActiveUser = string.Empty;
+                    string UserIdmostActiveUserForComments = string.Empty;
                     foreach (var item in lstStoreUserInfo)
                     {
                         try
@@ -8735,10 +9824,10 @@ namespace Groups
                             {
                                 tempList.Add(item);
                                 var result = (from a in lstStoreUserInfo where a == item select a).ToList();
-                                
-                                  //if (result.Count >= countNumberOfPost)
-                                  {
-                                    UserIdmostActiveUser =(item);
+
+                                //if (result.Count >= countNumberOfPost)
+                                {
+                                    UserIdmostActiveUser = (item);
                                     if (lstOfCommentUserInfo.Contains(UserIdmostActiveUser))
                                     {
                                         try
@@ -8752,9 +9841,9 @@ namespace Groups
                                         }
                                     }
                                     countNumberOfPost = result.Count;
-                                  }
+                                }
 
-                                  insertDataInDatabase(GroupId, countNumberOfPost, countNumberOfComments, UserIdmostActiveUser);
+                                insertDataInDatabase(GroupId, countNumberOfPost, countNumberOfComments, UserIdmostActiveUser);
                             }
                         }
                         catch (Exception ex)
@@ -8763,7 +9852,7 @@ namespace Groups
                         }
                     }
 
-                   // insertDataInDatabase(GroupId, countNumberOfPost, countNumberOfComments, UserIdmostActiveUser);
+                    // insertDataInDatabase(GroupId, countNumberOfPost, countNumberOfComments, UserIdmostActiveUser);
 
                 }
                 catch (Exception ex)
@@ -8806,19 +9895,19 @@ namespace Groups
                     query = "update groupdetail.groupmember set GroupId=" + GroupId + " and NoOfPosts=" + countNumberOfPost + " and NoOfComments=" + countNumberOfComments + " where UserId=" + UserIdmostActiveUser + " and GroupId=" + GroupId + "";
                     int result11 = conn.Execute(query);
 
-                    GlobusLogHelper.log.Debug("Update data base "+"Most Active User Id : " + UserIdmostActiveUser + "Group Id : " + GroupId + "Count Number Of Post : " + countNumberOfPost + " Count Number Of Comments : " + countNumberOfComments);
+                    GlobusLogHelper.log.Debug("Update data base " + "Most Active User Id : " + UserIdmostActiveUser + "Group Id : " + GroupId + "Count Number Of Post : " + countNumberOfPost + " Count Number Of Comments : " + countNumberOfComments);
                     GlobusLogHelper.log.Info("Update data base " + "Most Active User Id : " + UserIdmostActiveUser + "Group Id : " + GroupId + "Count Number Of Post : " + countNumberOfPost + " Count Number Of Comments : " + countNumberOfComments);
                 }
 
 
                 //GlobusFileHelper.AppendStringToTextfileNewLineWithCarat("Error : urlstore() : urlstore --> " + ex.Message, ErrorLogPath);
             }
-        } 
+        }
 
         public static IEnumerable<dynamic> SelectUrlfromCompanyTable()
         {
             IEnumerable<dynamic> result = null;
-            
+
 
             return result;
         }
@@ -8827,7 +9916,7 @@ namespace Groups
         {
             string ConnectionString = "Host=127.0.0.1;User ID=root;Password=AVda_3902;persist security info=False;initial catalog=groupdetail;Pooling=false;";// @"SERVER=localhost;DATABASE=groupdetail;Uid=root;Pwd=password;";
             return ConnectionString;
-           // return "Host=127.0.0.1;User ID=root;Password=AVda_3902;persist security info=False;initial catalog=groupdetail;Pooling=false;";
+            // return "Host=127.0.0.1;User ID=root;Password=AVda_3902;persist security info=False;initial catalog=groupdetail;Pooling=false;";
         }
 
     }

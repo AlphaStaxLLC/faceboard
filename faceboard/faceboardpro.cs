@@ -172,35 +172,36 @@ namespace faceboardpro
            
             Brush background_brush = new SolidBrush(Color.FromArgb(226, 75, 22));
            
-            tabMain.TabPages.RemoveAt(11);     //Remove("tabPage7");
+            //tabMain.TabPages.RemoveAt(11);     //Remove("tabPage7");
            // tabFriends.TabPages.RemoveAt(2);
             tabGroup.TabPages.RemoveAt(5);
-            try
-            {
-                 // remove Account Creator Tab 
-                string tabToRemove = "tabPageAccounts";
-                for (int i = 0; i < tabMain.TabPages.Count; i++)
-                {
-                    if (tabMain.TabPages[i].Name.Equals(tabToRemove, StringComparison.OrdinalIgnoreCase))
-                    {
-                        //tabMain.TabPages.RemoveAt(i);
-                        tabAccounts.TabPages.Remove(tabAccounts.TabPages["tabPageAccountCreator"]);
-                        tabAccounts.TabPages.Remove(tabAccounts.TabPages["tabPageManageProfile"]);
-                       // tabAccounts.TabPages.Remove(tabAccounts.TabPages["tabPageAccountVerification"]);
-                        
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }
+            #region MyRegion
+            //try
+            //{
+            //     // remove Account Creator Tab 
+            //    string tabToRemove = "tabPageAccounts";
+            //    for (int i = 0; i < tabMain.TabPages.Count; i++)
+            //    {
+            //        if (tabMain.TabPages[i].Name.Equals(tabToRemove, StringComparison.OrdinalIgnoreCase))
+            //        {
+            //            //tabMain.TabPages.RemoveAt(i);
+            //            tabAccounts.TabPages.Remove(tabAccounts.TabPages["tabPageAccountCreator"]);
+            //            tabAccounts.TabPages.Remove(tabAccounts.TabPages["tabPageManageProfile"]);
+            //           // tabAccounts.TabPages.Remove(tabAccounts.TabPages["tabPageAccountVerification"]);
+
+            //            break;
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            //} 
+            #endregion
          
            
            
-            tabMain.SelectedTab = tabMain.TabPages["tabPageAccounts"];
-            tabAccounts.SelectedTab = tabAccounts.TabPages["tabPageManageAccounts"];
+          
 
             //Code to print Version in form title
 
@@ -227,6 +228,41 @@ namespace faceboardpro
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
+             
+                BindManageAccountsFilePath();
+
+                tabMain.SelectedTab = tabMain.TabPages["tabPageAccounts"];
+
+
+                tabAccounts.SelectedTab = tabAccounts.TabPages["tabPage17"];
+                tabAccounts.SelectedTab = tabAccounts.TabPages["tabPageManageAccounts"];
+
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    tabPagesPages.TabPages.Remove(tabPage1);
+                }));
+                //this.Invoke(new MethodInvoker(delegate
+                //{
+                //    tabScrapers.TabPages.Remove(tabPageCustomAudiencesScraper);
+                //}));
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    tabFriends.TabPages.Remove(tabPageMassFriendsAdder);
+                }));
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    tabMain.TabPages.Remove(tabPageEvents);
+                    //tabEvents.Hide();
+                }));
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    tabCampaigns.TabPages.Remove(tabPageCampaignProcess);
+                    //tabEvents.Hide();
+                }));
+
+
+
+
         }
 
         private void LoadFormMethod()
@@ -1882,13 +1918,13 @@ namespace faceboardpro
                 colUserName.ReadOnly = true;
                 DataColumn colPassword = new DataColumn("Password");
                 colPassword.ReadOnly = true;
-                DataColumn colProxyAddress = new DataColumn("ProxyAddress");
+                DataColumn colProxyAddress = new DataColumn("IPAddress");
                 colProxyAddress.ReadOnly = true;
-                DataColumn colProxyPort = new DataColumn("ProxyPort");
+                DataColumn colProxyPort = new DataColumn("IPPort");
                 colProxyPort.ReadOnly = true;
-                DataColumn colProxyUserName = new DataColumn("ProxyUserName");
+                DataColumn colProxyUserName = new DataColumn("IPUserName");
                 colProxyUserName.ReadOnly = true;
-                DataColumn colProxyPassword = new DataColumn("ProxyPassword");
+                DataColumn colProxyPassword = new DataColumn("IPPassword");
                 colProxyPassword.ReadOnly = true;
 
                 //dtCreatedAccount.Columns.Add(colUserName);
@@ -2117,7 +2153,7 @@ namespace faceboardpro
             {
                 lstLoadedEmails = GlobusFileHelper.ReadFile(emailFile);
                 lstLoadedEmails = lstLoadedEmails.Distinct().ToList();
-                if (faceboardpro.FBGlobals.Instance.isfreeversion || Globals.CheckLicenseManager == "fdfreetrial")
+                if (faceboardpro.FBGlobals.Instance.isfreeversion || Globals.CheckLicenseManager == "faceboardprofreetrial")
                 {
                     try
                     {
@@ -2186,7 +2222,7 @@ namespace faceboardpro
             {
                 lstLoadedFirstNames = GlobusFileHelper.ReadFile(emailFile);
                 lstLoadedFirstNames = lstLoadedFirstNames.Distinct().ToList();
-                if (faceboardpro.FBGlobals.Instance.isfreeversion || Globals.CheckLicenseManager == "fdfreetrial")
+                if (faceboardpro.FBGlobals.Instance.isfreeversion || Globals.CheckLicenseManager == "faceboardprofreetrial")
                 {
                     try
                     {
@@ -2703,8 +2739,8 @@ namespace faceboardpro
 
                     int maxThread = 25 * processorCount;
 
-                 //   int ThreadCount = Convert.ToInt32(txtAccounts_AccountCreator_Threads.Text);
-                   // if (ThreadCount == 0)
+                    int ThreadCount = Convert.ToInt32(txtFriends_RequestFriends_Threads.Text);
+                    if (ThreadCount == 0)
                     {
                         GlobusLogHelper.log.Info("Please Enter More than 0 thread ..");
                         GlobusLogHelper.log.Debug("Please Enter More than 0 thread ..");
@@ -3030,10 +3066,10 @@ namespace faceboardpro
 
                 dt.Columns.Add("UserName");
                 dt.Columns.Add("Password");
-                dt.Columns.Add("ProxyAddress");
-                dt.Columns.Add("ProxyPort");
-                dt.Columns.Add("ProxyUserName");
-                dt.Columns.Add("ProxyPassword");
+                dt.Columns.Add("IPAddress");
+                dt.Columns.Add("IPPort");
+                dt.Columns.Add("IPUserName");
+                dt.Columns.Add("IPPassword");
 
 
                 ds = new DataSet();
@@ -3055,7 +3091,7 @@ namespace faceboardpro
                 foreach (string item in templist)
                 {
 
-                    if (Globals.CheckLicenseManager == "fdfreetrial" && Counter==5)
+                    if (Globals.CheckLicenseManager == "faceboardprofreetrial" && Counter == 5)
                     {
                         break; 
                     }
@@ -3262,6 +3298,44 @@ namespace faceboardpro
                 {
                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                 }
+
+                try
+                {
+                    if (lstAccountsInGroupCampaignManager.Count > 0)
+                    {
+                        cmbPhotos_TagPhoto_Accounts.Items.Clear();
+                        foreach (string Account in lstAccountsInGroupCampaignManager)
+                        {
+                            try
+                            {
+                                string[] AccontArr = Account.Split(':');
+                                if (cmbPhotos_TagPhoto_Accounts.InvokeRequired)
+                                {
+                                    cmbPhotos_TagPhoto_Accounts.Invoke(new MethodInvoker(delegate
+                                    {
+                                        cmbPhotos_TagPhoto_Accounts.Items.Add(AccontArr[0]);
+                                    }));
+                                }
+                                else
+                                {
+                                    cmbPhotos_TagPhoto_Accounts.Items.Add(Account);
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+
                 #endregion
                 try
                 {
@@ -3446,7 +3520,7 @@ namespace faceboardpro
                         int counter = 0;
                         foreach (string item in templist)
                         {
-                            if (Globals.CheckLicenseManager == "fdfreetrial" && counter==5)
+                            if (Globals.CheckLicenseManager == "faceboardprofreetrial" && counter == 5)
                             {
                                 break;
                             }
@@ -4217,6 +4291,7 @@ namespace faceboardpro
                     {
                         if (PageManager.StartProcessUsingFanPageScraper == "Fans Scraper by Urls")
                         {
+                            PageManager.FanPageScraperUsingAccount = cmbScraper__fanscraper_Accounts.SelectedItem.ToString();
                             if (objPageManager.lstFanPageURLs.Count()==0)
                             {
                                  GlobusLogHelper.log.Info("Please Load Fans Urls !");
@@ -4651,13 +4726,17 @@ namespace faceboardpro
                     {
                         PageManager.queFanPageMessagesFanPageLiker.Enqueue(item);
                     }
-                    foreach (string item in objPageManager.lstFanPageUrlsFanPageLiker)
+                    foreach (string item in objPageManager.lstFanPageCommentsFanPageLiker)
                     {
-                        PageManager.queFanPageURLsFanPageLiker.Enqueue(item);
+                        PageManager.queFanPageCommentsFanPageLiker.Enqueue(item);
                     }
+                    //foreach (string item in objPageManager.lstFanPageUrlsFanPageLiker)
+                    //{
+                    //    PageManager.queFanPageURLsFanPageLiker.Enqueue(item);
+                    //}
                     foreach (string item in objPageManager.lstFreindsPagePostsLiker)
                     {
-                        PageManager.queueFriendsUrlFriendsPostLiker.Enqueue(item);                
+                        PageManager.queueFriendsUrlFriendsPostLiker.Enqueue(item);
                     }
                     try
                     {
@@ -4690,15 +4769,26 @@ namespace faceboardpro
                     {
                         PageManager.minDelayFanPageLiker = Convert.ToInt32(txtPage_FanPageLiker_DelayMin.Text);
                         PageManager.maxDelayFanPageLiker = Convert.ToInt32(txtPage_FanPageLiker_DelayMax.Text);
-                       
+
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
 
-                    Thread createProfileThread = new Thread(objPageManager.StartLikePage);
-                    createProfileThread.Start();
+                    // Thread createProfileThread = new Thread(objPageManager.StartLikePage);
+                    //createProfileThread.Start();
+
+                    if (PageManager.StartProcessUsingFanPageLiker == "Comment On Recent Post")
+                    {
+                        Thread createProfileThread = new Thread(objPageManager.PageCommentOnRescentPost);
+                        createProfileThread.Start();
+                    }
+                    else
+                    {
+                        Thread createProfileThread = new Thread(objPageManager.StartLikePage);
+                        createProfileThread.Start();
+                    }
                 }
                 else
                 {
@@ -6135,6 +6225,49 @@ namespace faceboardpro
             }
         }
 
+        private void btn_PhotoTag_LoadTargetedProfiles_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog ofd = new OpenFileDialog())
+                {
+
+                    ofd.Filter = "Text Files (*.txt)|*.txt";
+                    ofd.InitialDirectory = Application.StartupPath;
+                    if (ofd.ShowDialog() == DialogResult.OK)
+                    {
+                        DateTime sTime = DateTime.Now;
+
+
+
+                        List<string> lstTemp = new List<string>();
+
+
+                        lstTemp = GlobusFileHelper.ReadFile(ofd.FileName).Distinct().ToList();
+
+                        lblTaregettedPrfilesPath.Text = ofd.FileName;
+
+                        objPhotoManager.LstPhotoTaggingtargettedProfiles = lstTemp.Distinct().ToList();
+
+
+                        DateTime eTime = DateTime.Now;
+
+
+
+                        string timeSpan = (eTime - sTime).TotalSeconds.ToString();
+
+                        GlobusLogHelper.log.Info("Targeted Profiles Loaded : " + objPhotoManager.LstPhotoTaggingtargettedProfiles.Count + " In " + timeSpan + " Seconds");
+                        GlobusLogHelper.log.Debug("Targeted Profiles Loaded : " + objPhotoManager.LstPhotoTaggingtargettedProfiles.Count + " In " + timeSpan + " Seconds");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+
+        }
         private void btnPhotos_TagPhoto_Start_Click(object sender, EventArgs e)
         {
             try
@@ -15030,7 +15163,7 @@ namespace faceboardpro
                 {
                     try
                     {
-                        if (item.ProcessName.Contains("FD_LicensingManager"))
+                        if (item.ProcessName.Contains("faceboardpro_LicensingManager"))
                         {
                             item.Kill();
                         }
@@ -16291,7 +16424,7 @@ namespace faceboardpro
         private void FrmDominator_FormClosing(object sender, FormClosingEventArgs e)
         {
             DialogResult dialogresult = MessageBox.Show("Sure you want to exit faceboardpro App", "faceboardpro", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
+            
             if (dialogresult == DialogResult.Yes)
             {
                 //logic of close program
@@ -18110,7 +18243,293 @@ namespace faceboardpro
             }
             catch { } 
         }
+        #region coomennts on post Scheduler
+        string PostUrlsPath = string.Empty;
+        string CommentsPath = string.Empty;
+        string SelectedAccount = string.Empty;
+        CommentOnPostScheduler objCommentOnPost = new CommentOnPostScheduler();
+        private void btnCommentsOnPostLoadPostsUrls_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog ofd = new OpenFileDialog())
+                {
+
+                    ofd.Filter = "Text Files (*.txt)|*.txt";
+                    ofd.InitialDirectory = Application.StartupPath;
+                    if (ofd.ShowDialog() == DialogResult.OK)
+                    {
+                        DateTime sTime = DateTime.Now;
+
+                        lblCommentsOnPostPostsUrlCount.Text = ofd.FileName;
+                        PostUrlsPath = ofd.FileName;
+                        List<string> lstTemp = new List<string>();
+                        lstTemp = GlobusFileHelper.ReadFile(ofd.FileName);
+
+                        lstTemp = lstTemp.Distinct().ToList();
+
+
+
+                        DateTime eTime = DateTime.Now;
+
+                        string timeSpan = (eTime - sTime).TotalSeconds.ToString();
+
+
+
+
+
+                        GlobusLogHelper.log.Debug("Posts Url Loaded : " + lstTemp.Count + " In " + timeSpan + " Seconds");
+
+                        GlobusLogHelper.log.Info("Posts Url Loaded : " + lstTemp.Count + " In " + timeSpan + " Seconds");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+        }
+
+        private void btnCommentOnPostLoadComments_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog ofd = new OpenFileDialog())
+                {
+
+                    ofd.Filter = "Text Files (*.txt)|*.txt";
+                    ofd.InitialDirectory = Application.StartupPath;
+                    if (ofd.ShowDialog() == DialogResult.OK)
+                    {
+                        DateTime sTime = DateTime.Now;
+
+                        lblCommentOnPostCommentsCount.Text = ofd.FileName;
+                        CommentsPath = ofd.FileName;
+                        List<string> lstTemp = new List<string>();
+                        lstTemp = GlobusFileHelper.ReadFile(ofd.FileName);
+
+                        lstTemp = lstTemp.Distinct().ToList();
+
+
+
+                        DateTime eTime = DateTime.Now;
+
+                        string timeSpan = (eTime - sTime).TotalSeconds.ToString();
+
+
+
+                        GlobusLogHelper.log.Debug("Comments Loaded : " + lstTemp.Count + " In " + timeSpan + " Seconds");
+
+                        GlobusLogHelper.log.Info("Comments Loaded : " + lstTemp.Count + " In " + timeSpan + " Seconds");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+
+        }
+
+
+        private void btnCommentOnPostSaveCampaign_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(PostUrlsPath))
+            {
+                GlobusLogHelper.log.Info("Please Upload Posts Url");
+                return;
+            }
+            if (string.IsNullOrEmpty(CommentsPath))
+            {
+                GlobusLogHelper.log.Info("Please Upload Comments");
+                return;
+            }
+            try
+            {
+                cmbCommentsOnPostSelectAccount.Invoke(new MethodInvoker(delegate
+                {
+                    SelectedAccount = cmbCommentsOnPostSelectAccount.SelectedItem.ToString();
+
+                }));
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.Message);
+            }
+            if (string.IsNullOrEmpty(SelectedAccount))
+            {
+                GlobusLogHelper.log.Info("Please Select Account");
+                return;
+            }
+            DataBaseHandler.InsertQuery("insert into CommentToPostScheduler (PostUrlsFilePath,CommentsFilePath,FbAccount) values('" + PostUrlsPath + "','" + CommentsPath + "','" + SelectedAccount + "')", "CommentToPostScheduler");
+            GlobusLogHelper.log.Info("Schedule Save To Database");
+            refreshPostCommentScheduler();
+        }
+
+        public void refreshPostCommentScheduler()
+        {
+            try
+            {
+                DataSet Ds = DataBaseHandler.SelectQuery("select * from CommentToPostScheduler", "CommentToPostScheduler");
+                dgvCommentsOnPost.DataSource = Ds.Tables[0];
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.Message);
+            }
+        }
+
+
+        private void btnCommentOnPostStartScheduler_Click(object sender, EventArgs e)
+        {
+
+            try
+            {
+                objCommentOnPost.minDelaypostCommenter = int.Parse(txtCommentOnPostMinDelay.Text);
+                objCommentOnPost.maxDelaypostCommenter = int.Parse(txtCommentOnPostMaxDelay.Text);
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Info("Please Fill Valid Delay");
+            }
+            try
+            {
+                Thread thStart = new Thread(StartCommenteScheduler);
+                thStart.IsBackground = true;
+                thStart.Start();
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.Message);
+            }
+
+
+        }
+        private void StartCommenteScheduler()
+        {
+            try
+            {
+                DataSet Ds = DataBaseHandler.SelectQuery("select * from CommentToPostScheduler", "CommentToPostScheduler");
+                if (Ds.Tables.Count > 0)
+                {
+                    string AccountDetails = string.Empty;
+                    string PostUrlFilePath = string.Empty;
+                    string PostCommentsPath = string.Empty;
+                    CommentOnPostScheduler objScheduler = new CommentOnPostScheduler();
+
+                    int i = 1;
+                    foreach (DataRow dr in Ds.Tables[0].Rows)
+                    {
+                        GlobusHttpHelper objHttp = new GlobusHttpHelper();
+                        PostUrlFilePath = dr[1].ToString();
+                        PostCommentsPath = dr[2].ToString();
+                        AccountDetails = dr[3].ToString();
+                        FacebookUser objNewUser = new FacebookUser();
+                        objNewUser.username = AccountDetails.Split(':')[0];
+                        objNewUser.password = AccountDetails.Split(':')[1];
+                        objNewUser.globusHttpHelper = objHttp;
+                        objScheduler.CommentonPostSchedulerStart(new object[] { objNewUser, PostUrlFilePath, PostCommentsPath });
+                        GlobusLogHelper.log.Info("Task: " + i + " Completed");
+                        i++;
+                    }
+                }
+                else
+                {
+                    GlobusLogHelper.log.Info("Datagrid is Empty");
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.Message);
+            }
+
+        }
+
+        private void btnCommentOnPostClearGrid_Click(object sender, EventArgs e)
+        {
+            DataSet Ds = DataBaseHandler.SelectQuery("select * from CommentToPostScheduler", "CommentToPostScheduler");
+            if (Ds.Tables.Count > 0)
+            {
+                string AccountDetails = string.Empty;
+                string PostUrlFilePath = string.Empty;
+                string PostCommentsPath = string.Empty;
+                CommentOnPostScheduler objScheduler = new CommentOnPostScheduler();
+
+                foreach (DataRow dr in Ds.Tables[0].Rows)
+                {
+                    try
+                    {
+                        GlobusHttpHelper objHttp = new GlobusHttpHelper();
+                        PostUrlFilePath = dr[1].ToString();
+                        PostCommentsPath = dr[2].ToString();
+                        AccountDetails = dr[3].ToString();
+                        DataBaseHandler.DeleteQuery("delete from CommentToPostScheduler where PostUrlsFilePath='" + PostUrlFilePath + "'", "CommentToPostScheduler");
+                        refreshPostCommentScheduler();
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.Message);
+                    }
+                }
+            }
+            else
+            {
+                GlobusLogHelper.log.Info("Datagrid is Empty");
+            }
+        }
+
+
+
+        private void btnCommentOnPostStop_Click(object sender, EventArgs e)
+        {
+
+            try
+            {
+                objCommentOnPost.isStopCommenting = true;
+
+                List<Thread> lstTemp = new List<Thread>();
+                lstTemp = objCommentOnPost.lstThredPostCommenting.Distinct().ToList();
+
+                foreach (Thread item in lstTemp)
+                {
+                    try
+                    {
+                        item.Abort();
+                        objCommentOnPost.lstThredPostCommenting.Remove(item);
+                    }
+                    catch (Exception ex)
+                    {
+                        //Thread.ResetAbort();
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+            GlobusLogHelper.log.Info("Process Stopped !");
+            GlobusLogHelper.log.Debug("Process Stopped !");
+
+        }
+
+        #endregion
+
+       
+
+       
+
         
+
+      
+
+        
+      
+
     }
 
     #region Support Functions for various UI

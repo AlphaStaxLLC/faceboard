@@ -109,8 +109,8 @@ namespace Proxies
                         }
                         else
                         {
-                            GlobusLogHelper.log.Info("Proxy Is Not In Correct Format : " + proxyDetailsTemp);
-                            GlobusLogHelper.log.Debug("Proxy Is Not In Correct Format : " + proxyDetailsTemp);
+                            GlobusLogHelper.log.Info("IP Is Not In Correct Format : " + proxyDetailsTemp);
+                            GlobusLogHelper.log.Debug("IP Is Not In Correct Format : " + proxyDetailsTemp);
 
                             
                         }
@@ -144,13 +144,13 @@ namespace Proxies
                         {
                             string commaSeparatedData = proxyIPAddress + "," + proxyPort + "," + proxyUserName + "," + proxyProxyPassword + "," + proxyCheckingURL+","+"Working";
 
-                            string CSVHeader = "proxyIPAddress" + "," + "proxyPort" + "," + "proxyUserName" + ", " + "proxyProxyPassword" + "," + "proxyCheckingURL"+ "," +"ProxyStatus";
+                            string CSVHeader = "IPAddress" + "," + "IPPort" + "," + "IPUserName" + ", " + "IPPassword" + "," + "IPCheckingURL"+ "," +"IPStatus";
 
                             Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, commaSeparatedData, ExportFilePathProxies);
 
-                            GlobusLogHelper.log.Info("Proxy Saved IN CSV File");
+                            GlobusLogHelper.log.Info("IP Saved IN CSV File");
 
-                            GlobusLogHelper.log.Debug("Proxy Info Saved In CSV");
+                            GlobusLogHelper.log.Debug("IP Info Saved In CSV");
                         }
                         catch (Exception ex)
                         {
@@ -164,21 +164,21 @@ namespace Proxies
                     {
                         string commaSeparatedData = proxyIPAddress + "," + proxyPort + "," + proxyUserName + "," + proxyProxyPassword + "," + proxyCheckingURL + "," + "NonWorking";
 
-                        string CSVHeader = "proxyIPAddress" + "," + "proxyPort" + "," + "proxyUserName" + ", " + "proxyProxyPassword" + "," + "proxyCheckingURL" + "," + "ProxyStatus";
+                        string CSVHeader = "IPAddress" + "," + "IPPort" + "," + "IPUserName" + ", " + "IPPassword" + "," + "IPCheckingURL" + "," + "IPStatus";
 
                         Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, commaSeparatedData, ExportFilePathProxies);
 
-                        GlobusLogHelper.log.Info("Proxy Saved IN CSV File");
+                        GlobusLogHelper.log.Info("IP Saved IN CSV File");
 
-                        GlobusLogHelper.log.Debug("Proxy Info Saved In CSV");
+                        GlobusLogHelper.log.Debug("IP Info Saved In CSV");
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                    
-                    GlobusLogHelper.log.Info("Proxy Is Not Working : " + proxyDetailsTemp);
-                    GlobusLogHelper.log.Debug("Proxy Is Not Working : " + proxyDetailsTemp);
+
+                    GlobusLogHelper.log.Info("IP Is Not Working : " + proxyDetailsTemp);
+                    GlobusLogHelper.log.Debug("IP Is Not Working : " + proxyDetailsTemp);
                 }
 
 

@@ -14,7 +14,7 @@ namespace Search
 {
     public class SearchScraper
     {
-        
+
         public BaseLib.Events SearchScraperEvent = null;
 
         #region Global Variables For Search Scraper
@@ -28,8 +28,8 @@ namespace Search
 
         public string SearchGroup_Membership = string.Empty;
         public string SearchGroup_Privacy = string.Empty;
-        public string SearchGroup_About = string.Empty; 
-        public string SearchGroup_Name = string.Empty; 
+        public string SearchGroup_About = string.Empty;
+        public string SearchGroup_Name = string.Empty;
 
 
         #endregion
@@ -65,7 +65,7 @@ namespace Search
             }
             catch (Exception ex)
             {
-               // GlobusLogHelper.log.Error(ex.StackTrace);
+                // GlobusLogHelper.log.Error(ex.StackTrace);
             }
         }
 
@@ -180,7 +180,7 @@ namespace Search
                                 //Login Process
 
                                 Accounts.AccountManager objAccountManager = new AccountManager();
-                                //objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                                objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
                             }
 
                             if (objFacebookUser.isloggedin)
@@ -211,8 +211,8 @@ namespace Search
             {
                 try
                 {
-                 
-                  //  if (!isStopSearchScraper)
+
+                    //  if (!isStopSearchScraper)
                     {
                         lock (lockrThreadControllerSearchScraper)
                         {
@@ -263,40 +263,40 @@ namespace Search
                     string AjaxResponse = AjaxPostForSearch(Response, Response, ref fbUser);
 
 
-                   // string AjaxResponse = AjaxPostForSearch("", Response, ref FBuser);
+                    // string AjaxResponse = AjaxPostForSearch("", Response, ref FBuser);
 
                     while (!string.IsNullOrEmpty(AjaxResponse))
                     {
                         //if (Pagecounter < MaxItreation)
                         //{
-                            string[] SerachList2 = System.Text.RegularExpressions.Regex.Split(AjaxResponse, "clearfix _zw");
-                            if (GlobalExistCounter > 99)
-                            {
-                                Console.WriteLine("Page response not give the data for more time,so we skip the scraping process");
-                                break;
-                            }
+                        string[] SerachList2 = System.Text.RegularExpressions.Regex.Split(AjaxResponse, "clearfix _zw");
+                        if (GlobalExistCounter > 99)
+                        {
+                            Console.WriteLine("Page response not give the data for more time,so we skip the scraping process");
+                            break;
+                        }
 
-                            foreach (string item in SerachList2)
+                        foreach (string item in SerachList2)
+                        {
+                            try
                             {
-                                try
+                                if (!item.Contains("<!DOCTYPE html>"))
                                 {
-                                    if (!item.Contains("<!DOCTYPE html>"))
+                                    if (GlobalExistCounter < 100)
                                     {
-                                        if (GlobalExistCounter < 100)
-                                        {
-                                            DataParserAjax(AjaxResponse, ref fbUser);
-                                        }
-                                        else
-                                        {
-                                            break;
-                                        }
+                                        DataParserAjax(AjaxResponse, ref fbUser);
+                                    }
+                                    else
+                                    {
+                                        break;
                                     }
                                 }
-                                catch { };
                             }
-                      
-                            AjaxResponse = AjaxPostForSearch(AjaxResponse, Response, ref fbUser);
-                            Pagecounter = Pagecounter + 1;
+                            catch { };
+                        }
+
+                        AjaxResponse = AjaxPostForSearch(AjaxResponse, Response, ref fbUser);
+                        Pagecounter = Pagecounter + 1;
                     }
 
                 }
@@ -332,9 +332,9 @@ namespace Search
                     string FirstPgaeName = string.Empty;
                     string SecondPgaeName = string.Empty;
                     string otherPgaeName = string.Empty;
-               
-                
-                  
+
+
+
                     string PageTitle = string.Empty;
                     string PageTitleLink = string.Empty;
 
@@ -346,7 +346,7 @@ namespace Search
                     string FirstPgaeNameLink = string.Empty;
                     string SecondPgaeNameLink = string.Empty;
                     string otherPgaeNameLink = string.Empty;
-              
+
                     string likerData = string.Empty;
                     string SecondlikerData = string.Empty;
                     string ThirdlikerData = string.Empty;
@@ -354,7 +354,7 @@ namespace Search
                     string AboutData = string.Empty;
                     string AboutDataLink = string.Empty;
 
-                 
+
                     bool MemberPage = false;
 
                     string[] DataList = System.Text.RegularExpressions.Regex.Split(Response, "<div class=\"");
@@ -418,12 +418,12 @@ namespace Search
                         #endregion
 
                         # region Members
-                        if (item2.Contains("members") && item2.Count()<150 && MemberPage == false)
+                        if (item2.Contains("members") && item2.Count() < 150 && MemberPage == false)
                         {
                             MemberPage = true;
                             try
                             {
-                                string MemberData = GetSbstringData(item2, "\">", "<").Replace("members","").Replace(",","");
+                                string MemberData = GetSbstringData(item2, "\">", "<").Replace("members", "").Replace(",", "");
                                 memberCount = MemberData;
                             }
                             catch { };
@@ -438,7 +438,7 @@ namespace Search
                         #endregion
 
                         #region Friendslink
-                       #endregion
+                        #endregion
 
                     }
 
@@ -451,7 +451,7 @@ namespace Search
 
                         // Username = PageTitle + " : " + PageTitleLink;
                     }
-                
+
 
                     string Likes = string.Empty;
                     if (!string.IsNullOrEmpty(FirstPgaeName))
@@ -504,8 +504,8 @@ namespace Search
                 catch { };
 
 
-            
-        }
+
+            }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
@@ -730,7 +730,7 @@ namespace Search
             }
 
             GlobusHttpHelper objGlobusHttpHelper = FBuser.globusHttpHelper;
-            
+
             try
             {
                 ViewData = GetFieldForPostData(CompleteResponse, "\"view\"");
@@ -766,7 +766,7 @@ namespace Search
                 ads_at_end = GetFieldForPostData2(Responce, "\"ads_at_end\"");
 
                 //rev
-               string rev = GetFieldForPostData3(Responce, "rev\"");
+                string rev = GetFieldForPostData3(Responce, "rev\"");
 
                 //Userid = GetFieldForPostData(Responce, "\"uid\"");
 
@@ -782,7 +782,7 @@ namespace Search
 
                 string PostData = "data={\"view\":\"" + ViewData + "\",\"encoded_query\":\"" + Encoded_query + "\",\"encoded_title\":\"" + Encoded_title + "\",\"ref\":\"" + Ref + "\",\"logger_source\":\"" + Logger_source + "\",\"typeahead_sid\":" + Typeahead_sid + "\"\",\"tl_log\":" + "false" + ",\"impression_id\":\"" + Impression_id + "\",\"filter_ids\":{" + Filter_ids + "},\"experience_type\":\"" + Experience_type + "\",\"exclude_ids\":[],\"cursor\":\"" + Cursor + "\",\"ads_at_end\":true}";
 
-                string AjaxPostUrl = (Uri.EscapeDataString(PostData)).Replace("data%3D", "data=") + "&__user=" + Userid + "&__a=1&__dyn=7n8ahyj35zoSt2u5KKAHyG85oCi8w&__req=" + ReqcounterValue + "&__rev="+rev;
+                string AjaxPostUrl = (Uri.EscapeDataString(PostData)).Replace("data%3D", "data=") + "&__user=" + Userid + "&__a=1&__dyn=7n8ahyj35zoSt2u5KKAHyG85oCi8w&__req=" + ReqcounterValue + "&__rev=" + rev;
 
                 string AjaxData = "https://www.facebook.com/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?" + AjaxPostUrl;
 
@@ -807,7 +807,7 @@ namespace Search
             }
             return AjaxResponse;
         }
-   
+
         public static string GetFieldForPostData(string Responce, string FilterFiled)
         {
             string Data = string.Empty;
@@ -949,6 +949,6 @@ namespace Search
         }
 
         public List<string> SearchUserSearchSearchKeyword = new List<string>();
-       
+
     }
 }

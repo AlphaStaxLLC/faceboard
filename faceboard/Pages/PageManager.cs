@@ -14,6 +14,7 @@ using System.Collections;
 using System.Collections.Specialized;
 using Globussoft;
 using Scrapers;
+using System.Web;
 
 
 namespace Pages
@@ -77,7 +78,7 @@ namespace Pages
             get;
             set;
         }
-       
+
 
         public int NoOfThreadsFanPageInviter
         {
@@ -147,7 +148,7 @@ namespace Pages
 
         public void StartGetExtractIds()
         {
-           
+
             try
             {
                 if (StartProcessUsingFanPageScraper == "Fans Scraper by Urls")
@@ -170,17 +171,17 @@ namespace Pages
         }
 
         public void StartGetExtractIdsNew()
-        {         
+        {
 
-           
+
             try
             {
                 if (StartProcessUsingFanPageScraper == "Fans Scraper by Urls")
                 {
                     //Extract();
                     ExtractNew();
-                    GlobusLogHelper.log.Debug("Fans Scraper Process completed.");
-                    GlobusLogHelper.log.Info("Fans Scraper Process completed.");
+                    //GlobusLogHelper.log.Debug("Fans Scraper Process completed.");
+                    // GlobusLogHelper.log.Info("Fans Scraper Process completed.");
                 }
                 else if (StartProcessUsingFanPageScraper == "Fan Page Scraper  ")
                 {
@@ -206,7 +207,7 @@ namespace Pages
 
         public void FanPageScraper()
         {
-            
+
             try
             {
                 int numberOfAccountPatch = 25;
@@ -218,7 +219,7 @@ namespace Pages
 
                 List<List<string>> list_listAccounts = new List<List<string>>();
                 if (FBGlobals.listAccounts.Count >= 1)
-                {                 
+                {
 
                     list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
 
@@ -260,7 +261,7 @@ namespace Pages
                                                 countThreadControllerWallPoster++;
                                                 break;
                                             }
-                                        }                                       
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
@@ -333,9 +334,10 @@ namespace Pages
                                         //Thread ObjCrawlFanpage = new Thread(CrawlFanpage);
                                         //ObjCrawlFanpage.Start(new object[] { objFacebookUser, item_lstFanPageKeywords });
 
-                                       // Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
+                                        // Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
                                         ThreadPool.SetMaxThreads(10, 5);
-                                        ThreadPool.QueueUserWorkItem(new WaitCallback(CrawlFanpage), (new object[] { objFacebookUser, item_lstFanPageKeywords }));                                        
+                                        //  ThreadPool.QueueUserWorkItem(new WaitCallback(CrawlFanpage), (new object[] { objFacebookUser, item_lstFanPageKeywords }));                                        
+                                        ThreadPool.QueueUserWorkItem(new WaitCallback(CrawlFanpageNew), (new object[] { objFacebookUser, item_lstFanPageKeywords }));
 
                                         //CrawlFanpage(ref objFacebookUser, item_lstFanPageKeywords);
                                     }
@@ -350,7 +352,7 @@ namespace Pages
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }    
+                            }
                         }
                         else
                         {
@@ -367,14 +369,14 @@ namespace Pages
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }           
+            }
         }
 
 
-      //public void CrawlFanpage(ref FacebookUser fbUser, string lk)
+        //public void CrawlFanpage(ref FacebookUser fbUser, string lk)
         public void CrawlFanpage(object obj)
         {
-             string lk =string.Empty;
+            string lk = string.Empty;
             try
             {
                 lstFanPageScraperThreads.Add(Thread.CurrentThread);
@@ -390,26 +392,26 @@ namespace Pages
             paramsArray = (Array)obj;
 
             FacebookUser fbUser = (FacebookUser)paramsArray.GetValue(0);
-             lk = (string)paramsArray.GetValue(1).ToString();
-           // List<string> arr = (List<string>)paramsArray.GetValue(1);
-           // string lk = arr[0];
+            lk = (string)paramsArray.GetValue(1).ToString();
+            // List<string> arr = (List<string>)paramsArray.GetValue(1);
+            // string lk = arr[0];
             try
             {
-                GlobusHttpHelper chilkatHttpHelper =fbUser.globusHttpHelper;
+                GlobusHttpHelper chilkatHttpHelper = fbUser.globusHttpHelper;
                 string lkey = lk;
                 string SearchUrl = FBGlobals.Instance.pageManagerFanPageScraperSearchResultUrl + lk;                         //"http://www.facebook.com/search/results.php?q="
 
                 string PgSrcKeywordSearch = chilkatHttpHelper.getHtmlfromUrl(new Uri(SearchUrl));
-                
-                  string UserId=GlobusHttpHelper.GetParamValue(PgSrcKeywordSearch, "user");
+
+                string UserId = GlobusHttpHelper.GetParamValue(PgSrcKeywordSearch, "user");
                 if (string.IsNullOrEmpty(UserId))
                 {
                     UserId = GlobusHttpHelper.ParseJson(PgSrcKeywordSearch, "user");
                 }
 
-                 List<string> lstKeywordid1 =PostOnPageWallFacebooker(lkey,ref fbUser );
-                
-               // List<string> lstKeywordid = Extractkeywordid(ref fbUser, lkey,UserId);
+                List<string> lstKeywordid1 = PostOnPageWallFacebooker(lkey, ref fbUser);
+
+                // List<string> lstKeywordid = Extractkeywordid(ref fbUser, lkey,UserId);
                 string[] MessageLink = System.Text.RegularExpressions.Regex.Split(PgSrcKeywordSearch, "instant_search_title fsl fwb fcb");
 
                 List<string> listurl = new List<string>();
@@ -472,32 +474,42 @@ namespace Pages
                 Dictionary<string, string> CheckDupliCats = new Dictionary<string, string>();
                 foreach (string lstKeywordiditem in lstKeywordid1)
                 {
+                    string FanpageUrl = string.Empty;
+                    if (lstKeywordiditem.Contains("http://www.facebook.com/"))
+                    {
+                        FanpageUrl = lstKeywordiditem;
+                    }
+                    else
+                    {
+                        FanpageUrl = "http://www.facebook.com/" + lstKeywordiditem;
+                    }
 
-                    string strcategoryurl = chilkatHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + lstKeywordiditem));   
-                
+                    string FanpageSrc = chilkatHttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));
+                    string strcategoryurl = chilkatHttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbgraphUrl + lstKeywordiditem));
+
                     try
                     {
-                        if (strcategoryurl.Contains("category\":") && strcategoryurl.Contains("name\":"))
+                        // if (strcategoryurl.Contains("category\":") && strcategoryurl.Contains("name\":"))
                         {
                             string Link = string.Empty;
                             string category = string.Empty;
                             string name = string.Empty;
                             string FanPageLikeCount = string.Empty;
-                            try
-                            {
-                                JObject jdata = JObject.Parse(strcategoryurl);
-                                Link = jdata["link"].ToString().Replace("\"",string.Empty);
-                                category = jdata["category"].ToString().Replace("\"", string.Empty);
-                                name = jdata["name"].ToString().Replace("\"", string.Empty);
-                                FanPageLikeCount = jdata["likes"].ToString().Replace("\"", string.Empty);
-                              
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error(ex.Message);
-                            }
+                            //try
+                            //{
+                            //    JObject jdata = JObject.Parse(strcategoryurl);
+                            //    Link = jdata["link"].ToString().Replace("\"",string.Empty);
+                            //    category = jdata["category"].ToString().Replace("\"", string.Empty);
+                            //    name = jdata["name"].ToString().Replace("\"", string.Empty);
+                            //    FanPageLikeCount = jdata["likes"].ToString().Replace("\"", string.Empty);
 
-                         
+                            //}
+                            //catch (Exception ex)
+                            //{
+                            //    GlobusLogHelper.log.Error(ex.Message);
+                            //}
+
+
 
                             /*string fanpagecat = strcategoryurl.Substring(strcategoryurl.IndexOf("category\":")).Replace("category\":", string.Empty);
                             string fanpagename = strcategoryurl.Substring(strcategoryurl.IndexOf("name\":")).Replace("name\":", string.Empty);
@@ -509,7 +521,7 @@ namespace Pages
                             string fpageurl = fanpageurlArr[1].Replace("\"", string.Empty);
                             listfanpageurl.Add(fpageurl);
                             string fpname = fanpagenameArr[1].Replace("\"", string.Empty);
-                            string fanpName = fpname.Trim().Replace(" ", string.Empty);   */                        
+                            string fanpName = fpname.Trim().Replace(" ", string.Empty);   */
 
                             if (!string.IsNullOrEmpty(ScrapersExprotFilePath))
                             {
@@ -518,20 +530,20 @@ namespace Pages
                                 string Fpagekeyword = string.Empty;
                                 string fpagecategoryname = string.Empty;
                                 string fpagename = string.Empty;
-                                Fanpurl = Link; //fpageurl;
+                                Fanpurl = chilkatHttpHelper.responseURI.ToString();
                                 Fpagekeyword = lk;
-                                fpagecategoryname = category; //fpcategoryname;
-                                fpagename = name.Replace(","," ").Replace("\\",string.Empty);   // fpname;
+                                fpagecategoryname = Utils.getBetween(FanpageSrc, "<div class=\"_58gj fsxxl fwn fcw\">", "</div>");
+                                fpagename = Utils.getBetween(FanpageSrc, "<title id=\"pageTitle\">", "</title>");  // fpname;
                                 if (string.IsNullOrEmpty(FanPageLikeCount))
                                 {
-                                      string GetPageSOurce = string.Empty;
+                                    string GetPageSOurce = string.Empty;
                                     if (string.IsNullOrEmpty(FanPageLikeCount))
                                     {
-                                         GetPageSOurce = chilkatHttpHelper.getHtmlfromUrl(new Uri(Link));
+                                        GetPageSOurce = chilkatHttpHelper.getHtmlfromUrl(new Uri(Link));
                                     }
-                                    FanPageLikeCount = Utils.getBetween(GetPageSOurce, "<div class=\"_2fb2\">", "</div></a>").Replace(" people like this",string.Empty).Replace(",",string.Empty);  
+                                    FanPageLikeCount = Utils.getBetween(FanpageSrc, "<div class=\"_75e\" id=\"u_0_g\">", "</div>");
                                 }
-                                string CSVHeader = "Keyword" + "," + "FanpageUrl" + ", " + "FanpageCategoryName" + "," + "FanPageName"+"," +"LikeCount";
+                                string CSVHeader = "Keyword" + "," + "FanpageUrl" + ", " + "FanpageCategoryName" + "," + "FanPageName" + "," + "LikeCount";
                                 string CSV_Content = Fpagekeyword + "," + Fanpurl + ", " + fpagecategoryname + "," + fpagename + "," + FanPageLikeCount;
                                 try
                                 {
@@ -648,8 +660,502 @@ namespace Pages
             }
         }
 
+        public void CrawlFanpageNew(object obj)
+        {
+            bool isDiffrentSearch = false;
+            string lk = string.Empty;
+            try
+            {
+                lstFanPageScraperThreads.Add(Thread.CurrentThread);
+                lstFanPageScraperThreads.Distinct();
+                Thread.CurrentThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
 
-        public List<string> Extractkeywordid(ref FacebookUser fbUser, string lkey,string userid)
+            Array paramsArray = new object[1];
+            paramsArray = (Array)obj;
+
+            FacebookUser fbUser = (FacebookUser)paramsArray.GetValue(0);
+            lk = (string)paramsArray.GetValue(1).ToString();
+            try
+            {
+                List<string> lstPageIds = FindTheFanPagesByKeyword(lk, ref fbUser);
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+
+            /* try
+             {
+                 GlobusHttpHelper chilkatHttpHelper = fbUser.globusHttpHelper;
+                 string lkey = lk;
+                 string SearchUrl = FBGlobals.Instance.pageManagerFanPageScraperSearchResultUrl + lk;                         //"http://www.facebook.com/search/results.php?q="
+
+                 string PgSrcKeywordSearch = chilkatHttpHelper.getHtmlfromUrl(new Uri(SearchUrl));
+                 string AjaxifyUrl = Utils.getBetween(PgSrcKeywordSearch, "pam uiBoxLightblue uiMorePagerPrimary\" rel=\"ajaxify\" href=\"", "\"").Replace("amp;", string.Empty);
+
+                 if (string.IsNullOrEmpty(AjaxifyUrl))
+                 {
+                     isDiffrentSearch = true;
+
+                     PgSrcKeywordSearch = chilkatHttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/search/str/funny/keywords_pages?"));                    
+                     string PagiNationData = Utils.getBetween(PgSrcKeywordSearch,"\"view\":\"list\",\"encoded_query\":\"","},null]],[\"ViewableImpressionTracking");
+                     string CursorValue = Utils.getBetween(PgSrcKeywordSearch, "pageletComplete\",[],[{", ",\"display_params\":[]");
+                     AjaxifyUrl = "/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=%7B%22view%22%3A%22list%22%2C%22encoded_query%22%3A%22" + Uri.EscapeDataString(PagiNationData) + "%2C" + Uri.EscapeDataString(CursorValue) + "%7D";
+                 }
+
+                 List<string> lstFanpageUrl = new List<string>();
+                 string[] splitsSearchPage = Regex.Split(PgSrcKeywordSearch, "_8o _8s lfloat _ohe\" href="); 
+                 string UserId = GlobusHttpHelper.GetParamValue(PgSrcKeywordSearch, "user");
+
+                 GlobusLogHelper.log.Debug("Scraping Fanpage Url");
+                 GlobusLogHelper.log.Info("Scraping Fanpage Url");
+               
+
+                 foreach (var item in splitsSearchPage)
+                 {
+                     string Href = Utils.getBetween(item, "\"", "\"");
+                     if (Href.Contains("https://www.facebook.com/"))
+                     {
+                         GlobusLogHelper.log.Info("Scraped FanPage Url :"+Href);
+                         lstFanpageUrl.Add(Href);
+                        // ScrapeFanPageInfo(Href, ref fbUser, lk);
+                     }
+                 }
+
+                    if (string.IsNullOrEmpty(UserId))
+                 {
+                     UserId = GlobusHttpHelper.ParseJson(PgSrcKeywordSearch, "user");
+                 }
+               
+                
+                
+                 string searchResultURl = "https://www.facebook.com" + AjaxifyUrl + "&__user=" + UserId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xN6yUgByVbGAEGt7DirZo8popyui9zob4q8zUK5Uc-dwIxbxjy9A8GqcEwy8ACxt7oiyXSiVWz9E&__req=o&__rev=1814596";
+                
+
+                 while (true)
+                 {
+                     string AjaxiFyResult = chilkatHttpHelper.getHtmlfromUrl(new Uri(searchResultURl));
+                     string AjaxRequest = string.Empty;
+                     if (isDiffrentSearch)
+                     {
+                         try
+                         {
+                             AjaxiFyResult = HttpUtility.HtmlDecode(AjaxiFyResult);
+                             AjaxiFyResult = AjaxiFyResult.Replace("\\\\\\\\\\\\", "\\");
+                             AjaxiFyResult = AjaxiFyResult.Replace("\\\\", string.Empty);
+
+                             string PagiNationData = Utils.getBetween(AjaxiFyResult, "{\"data\":\"{\"view\":\"list\",\"encoded_query\":\"", ",\"cursor\"");
+                             string RefPath=Utils.getBetween(PagiNationData,"ref_path\":\"","\"");
+                             string RefPath1 = RefPath.Replace("\\", string.Empty);
+                             PagiNationData = PagiNationData.Replace(RefPath, RefPath1);
+                            
+                             string CursorValue = Utils.getBetween(AjaxiFyResult, "pageletComplete\",[],[{", ",\"display_params\":[]");
+                             AjaxRequest = "/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=%7B%22view%22%3A%22list%22%2C%22encoded_query%22%3A%22" + Uri.EscapeDataString(PagiNationData);
+                             AjaxRequest = "/ajax/pagelet/generic.php/BrowseScrollingSetPagelet?data=%7B%22view%22%3A%22list%22%2C%22encoded_query%22%3A%22" + Uri.EscapeDataString(PagiNationData) + "%2C" + Uri.EscapeDataString(CursorValue) + "%7D";
+
+                             searchResultURl = "https://www.facebook.com" + AjaxRequest + "&__user=" + UserId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xN6yUgByVbGAEGt7DirZo8popyui9zob4q8zUK5Uc-dwIxbxjy9A8GqcEwy8ACxt7oiyXSiVWz9E&__req=2l&__rev=1814596";
+                            
+                             //AjaxiFyResult = chilkatHttpHelper.getHtmlfromUrl(new Uri(searchResultURl));
+
+                             //AjaxiFyResult = AjaxiFyResult.Replace("\\", string.Empty);
+                             //AjaxiFyResult = AjaxiFyResult.Replace("&quot;", "&");
+                             //AjaxiFyResult = AjaxiFyResult.Replace("&:&", "=");
+                             //AjaxiFyResult = AjaxiFyResult.Replace("&,&", "&");
+
+
+                             splitsSearchPage = Regex.Split(AjaxiFyResult, "href=");
+                             foreach (var item in splitsSearchPage)
+                             {
+                                 string temp = item.Replace("\\", string.Empty);
+                                 string Href = Utils.getBetween(temp, "\"", "\"");
+                                 if (Href.Contains("https://www.facebook.com/"))
+                                 {
+                                     GlobusLogHelper.log.Info("Scraped FanPage Url :" + Href);
+                                     lstFanpageUrl.Add(Href);
+                                     ScrapeFanPageInfo(Href, ref fbUser, lk);
+                                 }
+
+                             }
+
+
+                         }
+                         catch (Exception ex)
+                         { 
+                         }
+                     }
+                     else
+                     {
+                         try
+                         {
+                             AjaxiFyResult = AjaxiFyResult.Replace("\\", string.Empty);
+                             AjaxiFyResult = AjaxiFyResult.Replace("&quot;", "&");
+                             AjaxiFyResult = AjaxiFyResult.Replace("&:&", "=");
+                             AjaxiFyResult = AjaxiFyResult.Replace("&,&", "&");
+                             AjaxRequest = Utils.getBetween(AjaxiFyResult, "pam uiBoxLightblue uiMorePagerPrimary\" rel=\"ajaxify\" href=\"", "\"");
+                             AjaxRequest = AjaxRequest.Replace("&amp;", "&").Replace("u00252C", ",");
+                             AjaxRequest = AjaxRequest.Replace(",", "%2C");
+                             //AjaxRequest = Uri.EscapeDataString(AjaxRequest);
+                             searchResultURl = "https://www.facebook.com" + AjaxRequest + "&__user=" + UserId + "&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xN6yUgByVbGAEGt7DirZo8popyui9zob4q8zUK5Uc-dwIxbxjy9A8GqcEwy8ACxt7oiyXSiVWz9E&__req=2l&__rev=1814596";
+                             //  searchResultURl = "https://www.facebook.com/search/results/more/?q=funny&offset=50&type=all&init=quick&sid=5f705779641e388fe38e987a66472cf2&ents=123240871029367%2C691181861014052%2C573031789435462%2C1386421804964507%2C466827793493239%2C17614953850%2C1481161945431889%2C491750840875537%2C840814859341142%2C46372532485&__user=100000249549462&__a=1&__dyn=7Am8RW8BgCBymfDgDxiWEyx97xN6yUgByVbGAEGt7DirZo8popyui9zob4q8zUK5Uc-dwIxbxjy9A8GqcEwy8ACxt7oiyXSiVWz9E&__req=2l&__rev=1814596";
+                            // AjaxiFyResult = chilkatHttpHelper.getHtmlfromUrl(new Uri(searchResultURl));
+
+                             AjaxiFyResult = AjaxiFyResult.Replace("\\", string.Empty);
+                             AjaxiFyResult = AjaxiFyResult.Replace("&quot;", "&");
+                             AjaxiFyResult = AjaxiFyResult.Replace("&:&", "=");
+                             AjaxiFyResult = AjaxiFyResult.Replace("&,&", "&");
+
+
+                             splitsSearchPage = Regex.Split(AjaxiFyResult, "_8o _8s lfloat _ohe\" href=");
+                             foreach (var item in splitsSearchPage)
+                             {
+                                 string Href = Utils.getBetween(item, "\"", "\"");
+                                 if (Href.Contains("https://www.facebook.com/"))
+                                 {
+                                     GlobusLogHelper.log.Info("Scraped FanPage Url :" + Href);
+                                     lstFanpageUrl.Add(Href);
+                                     ScrapeFanPageInfo(Href, ref fbUser, lk);
+                                 }
+
+                             }
+
+                         }
+                         catch (Exception ex)
+                         { 
+                         }
+                    
+                     }    
+
+                  
+                     if (string.IsNullOrEmpty(AjaxiFyResult))
+                     {
+                         GlobusLogHelper.log.Debug("Task Is Completed with  :" + lk + " Keyword");
+                         GlobusLogHelper.log.Info("Task Is Completed with  :" + lk + " Keyword");
+                         break;
+                     }
+                    
+                  
+                   
+                     lstFanpageUrl = lstFanpageUrl.Distinct().ToList();
+                
+                 } 
+               
+                
+
+             }
+             catch (Exception ex)
+             {
+                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+             }*/
+        }
+
+
+        public List<string> FindTheFanPagesByKeyword(string Keyword, ref FacebookUser fbUser)
+        {
+            List<string> FanPageUrls = new List<string>();
+
+
+            List<string> list = new List<string>();
+
+            int intProxyPort = 80;
+
+            if (!string.IsNullOrEmpty(fbUser.proxyport))
+            {
+                intProxyPort = int.Parse(fbUser.proxyport);
+            }
+
+            try
+            {
+                #region Post variable
+
+                string fbpage_id = string.Empty;
+                string __user = string.Empty;
+                //Keyword="sachin";
+
+                #endregion
+
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+
+                GlobusLogHelper.log.Debug("Searching Fan Page Using keyword: " + Keyword);
+                GlobusLogHelper.log.Info("Searching Fan Page Using keyword: " + Keyword);
+
+                string pgSrc_FanPageSearch = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/search/results/?q=" + Keyword + "&type=pages"));
+
+                __user = GlobusHttpHelper.GetParamValue(pgSrc_FanPageSearch, "user");
+                if (string.IsNullOrEmpty(__user))
+                {
+                    __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
+                }
+                string AjaxRequest = "";
+
+                try
+                {
+                    AjaxRequest = GlobusHttpHelper.getBetween(pgSrc_FanPageSearch, "href=\"#\" ajaxify=", "type=pages");
+                    AjaxRequest = "https://www.facebook.com" + AjaxRequest.Replace("\"", string.Empty).Replace("amp;", string.Empty) + "type=pages";
+                }
+                catch { };
+
+
+                string ajaxRequestURL = GetAjaxURL_MoreResults(pgSrc_FanPageSearch);
+                ajaxRequestURL = "https://www.facebook.com/" + ajaxRequestURL + "&__a=1&__user=" + __user + "";
+
+                ajaxRequestURL = Uri.UnescapeDataString(ajaxRequestURL) + "&init=quick";
+
+                string res_ajaxRequest = HttpHelper.getHtmlfromUrl(new Uri(ajaxRequestURL));
+
+                if (string.IsNullOrEmpty(res_ajaxRequest))
+                {
+
+                }
+
+
+                if (true)
+                {
+
+                    if (true)
+                    {
+
+                        try
+                        {
+                            string[] PageSplit = Regex.Split(pgSrc_FanPageSearch, "href=\"https://www.facebook.com/pages/");    //data-profileid=
+                            if (PageSplit.Count() != 1)
+                            {
+                                List<string> PageSplitList = PageSplit.ToList();
+                                PageSplitList.RemoveAt(0);
+                                foreach (string item in PageSplitList)
+                                {
+                                    try
+                                    {
+                                        if (item.Contains("<!DOCTYPE html>"))
+                                        {
+                                            continue;
+                                        }
+
+
+                                        //if (PageManager.noOfPageToScrap < list.Count())
+                                        //{
+                                        //    break;
+                                        //}
+
+                                        string pageId = FBUtils.getBetween(item, "/", "?");
+                                        if (!string.IsNullOrEmpty(pageId))
+                                        {
+                                            list.Add(pageId);
+                                            string Href = "http://www.facebook.com/" + pageId;
+                                            ScrapeFanPageInfo(Href, ref fbUser, Keyword);
+                                            GlobusLogHelper.log.Info("Added Page Id : " + pageId);
+                                            GlobusLogHelper.log.Debug("Added Page Id : " + pageId);
+                                        }
+                                    }
+                                    catch { }
+                                }
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    PageSplit = Regex.Split(pgSrc_FanPageSearch, "data-profileid=");
+
+                                    List<string> PageSplitList = PageSplit.ToList();
+                                    PageSplitList.RemoveAt(0);
+                                    foreach (string item in PageSplitList)
+                                    {
+                                        try
+                                        {
+                                            if (item.Contains("<!DOCTYPE html>"))
+                                            {
+                                                continue;
+                                            }
+
+
+
+
+                                            string pageId = FBUtils.getBetween(item, "\"", "\"");
+                                            if (!string.IsNullOrEmpty(pageId))
+                                            {
+                                                list.Add(pageId);
+                                                string Href = "http://www.facebook.com/" + pageId;
+                                                ScrapeFanPageInfo(Href, ref fbUser, Keyword);
+                                                GlobusLogHelper.log.Info("Added Page Id : " + pageId);
+                                                GlobusLogHelper.log.Debug("Added Page Id : " + pageId);
+                                            }
+                                        }
+                                        catch { }
+                                    }
+
+                                }
+                                catch { };
+
+                            }
+
+                        }
+                        catch { };
+
+                        int countForlistIteminPrvious = 0;
+                        while (true)
+                        {
+                            countForlistIteminPrvious = list.Count();
+
+                            try
+                            {
+
+
+
+
+
+                                string[] PageSplit = Regex.Split(pgSrc_FanPageSearch, "rel=\"ajaxify\"");  //rel=\"ajaxify\"
+
+                                if (PageSplit.Count() == 1)
+                                {
+                                    string splitIt = "&amp;offset=";
+                                    PageSplit = Regex.Split(pgSrc_FanPageSearch, splitIt);  //rel=\"ajaxify\"
+                                    if (PageSplit.Count() > 1)
+                                    {
+                                        PageSplit[1] = "/search/results/more/?q=" + Keyword + "&amp;offset=" + PageSplit[1];
+                                        ajaxRequestURL = FBUtils.getBetween(PageSplit[1], "", "\\\"");
+                                    }
+
+
+
+
+                                }
+                                else
+                                {
+
+                                    ajaxRequestURL = FBUtils.getBetween(PageSplit[1], "href=\"", "\"");
+                                }
+                                string pageId = string.Empty;
+                                ajaxRequestURL = ajaxRequestURL.Replace("amp;", "").Replace("type=all", "type=pages").Replace("\\", "%2C").Replace("u00252C", "");
+
+                                ajaxRequestURL = "https://www.facebook.com" + ajaxRequestURL + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl35xKt2u6aEyx90BCxO4oKAdDgZ9LHwxBxCbzEeAq68K5Uc-dwIxbxjx27W88y98uyk4EKUyVWz9E&__req=c&__rev=" + FBUtils.getBetween(PageSplit[1], "revision\":", ",");
+
+                                pgSrc_FanPageSearch = HttpHelper.getHtmlfromUrl(new Uri(ajaxRequestURL));
+                                string allListGroup = FBUtils.getBetween(pgSrc_FanPageSearch, "&quot;ents&quot;:&quot;", "&quot");
+                                string[] Linklist = System.Text.RegularExpressions.Regex.Split(allListGroup, ",");
+                                foreach (string item in Linklist)
+                                {
+
+
+
+                                    try
+                                    {
+                                        if (!string.IsNullOrEmpty(item))
+                                        {
+                                            list.Add(item);
+                                            string Href = "http://www.facebook.com/" + item;
+                                            ScrapeFanPageInfo(Href, ref fbUser, Keyword);
+                                            GlobusLogHelper.log.Info("Added Page Id : " + item);
+                                            GlobusLogHelper.log.Debug("Added Page Id : " + item);
+                                        }
+                                    }
+                                    catch { };
+
+                                }
+
+                                if (countForlistIteminPrvious == list.Count())
+                                {
+                                    GlobusLogHelper.log.Debug("No of Page Found To Scrap  : " + list.Count());
+                                    GlobusLogHelper.log.Info("No of Page Found To Scrap  : " + list.Count());
+                                    break;
+                                }
+                                list = list.Distinct().ToList();
+
+                            }
+                            catch { };
+                        }
+                    }
+                }
+
+
+                List<string> lstLinkData = new List<string>();
+
+                list = list.Distinct().ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.StackTrace);
+
+            }
+            return list;
+        }
+
+
+        Dictionary<string, string> CheckDupliCats = new Dictionary<string, string>();
+
+
+        public void ScrapeFanPageInfo(string FanpageUrl, ref FacebookUser fbUser, string keyword)
+        {
+
+            GlobusHttpHelper httphelper = fbUser.globusHttpHelper;
+            Regex regex = new Regex("\\<[^\\>]*\\>");
+            try
+            {
+                string Fanpurl = string.Empty;
+                string FanpageSrc = httphelper.getHtmlfromUrl(new Uri(FanpageUrl));
+                Fanpurl = httphelper.responseURI.ToString();
+                CheckDupliCats.Add(Fanpurl, Fanpurl);
+
+                // if (strcategoryurl.Contains("category\":") && strcategoryurl.Contains("name\":"))
+                {
+                    string Link = string.Empty;
+                    string category = string.Empty;
+                    string name = string.Empty;
+                    string FanPageLikeCount = string.Empty;
+
+                    if (!string.IsNullOrEmpty(ScrapersExprotFilePath))
+                    {
+
+                        string Fpagekeyword = string.Empty;
+                        string fpagecategoryname = string.Empty;
+                        string fpagename = string.Empty;
+
+
+                        fpagecategoryname = Utils.getBetween(FanpageSrc, "<div class=\"_58gj fsxxl fwn fcw\">", "</div>");
+                        fpagename = Utils.getBetween(FanpageSrc, "<title id=\"pageTitle\">", "</title>").Replace("&amp;", "&");  // fpname;
+                        if (string.IsNullOrEmpty(FanPageLikeCount))
+                        {
+
+                            FanPageLikeCount = Utils.getBetween(FanpageSrc, "<div class=\"_75e\" id=\"u_0_g\">", "</div>");
+                        }
+                        if (string.IsNullOrEmpty(FanPageLikeCount))
+                        {
+                            FanPageLikeCount = Utils.getBetween(FanpageSrc, "<div class=\"_75e\" id=\"u_0_10\">", "</div>");
+                        }
+                        keyword = regex.Replace(keyword, string.Empty);
+
+                        fpagecategoryname = regex.Replace(fpagecategoryname, string.Empty);
+                        fpagename = regex.Replace(fpagename, string.Empty);
+                        FanPageLikeCount = regex.Replace(FanPageLikeCount, string.Empty);
+                        string CSVHeader = "Keyword" + "," + "FanpageUrl" + ", " + "FanpageCategoryName" + "," + "FanPageName" + "," + "LikeCount";
+                        string CSV_Content = keyword + "," + Fanpurl + ", " + fpagecategoryname + "," + fpagename + "," + FanPageLikeCount;
+                        try
+                        {
+
+                            Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ScrapersExprotFilePath);
+                            GlobusLogHelper.log.Debug("Data Saved In CSV ." + CSV_Content);
+                            GlobusLogHelper.log.Info("Data Saved In CSV ." + CSV_Content);
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+        }
+        public List<string> Extractkeywordid(ref FacebookUser fbUser, string lkey, string userid)
         {
             List<string> toatalid = new List<string>();
             GlobusHttpHelper chilkathttphelr = fbUser.globusHttpHelper;
@@ -663,7 +1169,7 @@ namespace Pages
 
                 string extractkeywordslimit = chilkathttphelr.getHtmlfromUrl(new Uri("https://www.facebook.com/search/ajax/more.php?offsets[pps]=" + offset.ToString() + "&pagesize=300&q=" + lkey + "&type=all&init=quick&__a=1&__user=" + userid));
 
-                string[] Arr=Regex.Split(extractkeywordslimit,"pages");
+                string[] Arr = Regex.Split(extractkeywordslimit, "pages");
 
 
 
@@ -697,7 +1203,7 @@ namespace Pages
                             {
                                 string keyword_idarritem = keyword_idarr[i].Substring(keyword_idarr[i].IndexOf("55D="), keyword_idarr[i].IndexOf("&amp;") - keyword_idarr[i].IndexOf("55D=")).Replace("55D=", string.Empty);
                                 toatalid.Add(keyword_idarritem);
-                                GlobusLogHelper.log.Debug("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " +fbUser.username);
+                                GlobusLogHelper.log.Debug("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " + fbUser.username);
                                 GlobusLogHelper.log.Info("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " + fbUser.username);
                             }
                         }
@@ -712,7 +1218,7 @@ namespace Pages
                                 {
                                     string keyword_idarritem = keyword_idarr[i].Substring(keyword_idarr[i].IndexOf("55D="), keyword_idarr[i].IndexOf("&amp;") - keyword_idarr[i].IndexOf("55D=")).Replace("55D=", string.Empty);
                                     toatalid.Add(keyword_idarritem);
-                                    GlobusLogHelper.log.Debug("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " +fbUser.username);
+                                    GlobusLogHelper.log.Debug("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " + fbUser.username);
                                     GlobusLogHelper.log.Info("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " + fbUser.username);
                                 }
                             }
@@ -727,7 +1233,7 @@ namespace Pages
                                     {
                                         string keyword_idarritem = keyword_idarr[i].Substring(keyword_idarr[i].IndexOf("55D="), keyword_idarr[i].IndexOf("&amp;") - keyword_idarr[i].IndexOf("55D=")).Replace("55D=", string.Empty);
                                         toatalid.Add(keyword_idarritem);
-                                        GlobusLogHelper.log.Debug("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " +fbUser.username);
+                                        GlobusLogHelper.log.Debug("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " + fbUser.username);
                                         GlobusLogHelper.log.Info("Fan Page ID : " + keyword_idarritem + " Keyword : " + lkey + " with UserName : " + fbUser.username);
                                     }
                                 }
@@ -750,11 +1256,11 @@ namespace Pages
 
                             }
                         }
-                       if (!pagesourceofKeyword_idforoffset1.Contains("displayed"))
-                        if (flage)
-                        {
-                            break;
-                        }
+                        if (!pagesourceofKeyword_idforoffset1.Contains("displayed"))
+                            if (flage)
+                            {
+                                break;
+                            }
                         countlimit++;
                         break;
                     }
@@ -859,7 +1365,7 @@ namespace Pages
             return boolValue;
         }
 
-        public List<string>  PostOnPageWallFacebooker(string Keyword, ref FacebookUser fbUser)
+        public List<string> PostOnPageWallFacebooker(string Keyword, ref FacebookUser fbUser)
         {
             List<string> FanPageUrls = new List<string>();
 
@@ -867,9 +1373,9 @@ namespace Pages
             {
                 #region Post variable
 
-                string fbpage_id = string.Empty;            
+                string fbpage_id = string.Empty;
                 string __user = string.Empty;
-            
+
 
                 #endregion
 
@@ -906,8 +1412,8 @@ namespace Pages
                     __user = GlobusHttpHelper.ParseJson(pgSrc_FanPageSearch, "user");
                 }
 
-                string AjaxRequest = Utils.getBetween(pgSrc_FanPageSearch, "href=\"#\" ajaxify=", "type=pages");
-                AjaxRequest = "https://www.facebook.com"+AjaxRequest.Replace("\"", string.Empty).Replace("amp;", string.Empty) + "type=pages";
+                string AjaxRequest = Utils.getBetween(pgSrc_FanPageSearch, "href=\"#\" ajaxify=\"", "\"");
+                AjaxRequest = "https://www.facebook.com" + AjaxRequest.Replace("\"", string.Empty).Replace("amp;", string.Empty) + "type=pages";
 
                 List<string> pagesList = GetPages_FBSearch(pgSrc_FanPageSearch);
 
@@ -961,7 +1467,7 @@ namespace Pages
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.StackTrace);               
+                Console.WriteLine(ex.StackTrace);
             }
             return FanPageUrls;
         }
@@ -1129,7 +1635,7 @@ namespace Pages
                                                 if (!isStopFanPageScraper)
                                                 {
                                                     Thread likerThread = new Thread(AjaxPoster);
-                                                   
+
                                                     likerThread.Name = "workerThread_AjaxPoster_" + fanPageURL.Replace("/", "").Replace(":", "");
                                                     likerThread.IsBackground = true;
 
@@ -1277,12 +1783,12 @@ namespace Pages
         }
 
         public void ExtractNew()
-        {             
+        {
             int numberOfAccountPatch = 25;
             GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
             if (NoOfThreads > 0)
             {
-               numberOfAccountPatch = NoOfThreads;
+                numberOfAccountPatch = NoOfThreads;
             }
             countThreadControllerMain = 0;
             List<List<string>> list_listAccounts = new List<List<string>>();
@@ -1291,7 +1797,18 @@ namespace Pages
                 list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
                 foreach (List<string> listAccounts in list_listAccounts)
                 {
-                    string AccountArr = listAccounts[0];
+                    string AccountArr = string.Empty;
+                    foreach (var item in listAccounts)
+                    {
+                        if (item.Contains(FanPageScraperUsingAccount))
+                        {
+                            AccountArr = item;
+                            break;
+                        }
+                    }
+                    //  string AccountArr = listAccounts[0];
+
+                    //FanPageScraperUsingAccount = "";
                     string Account = AccountArr;
 
                     foreach (string account in listAccounts)
@@ -1357,7 +1874,7 @@ namespace Pages
                                         {
                                             GlobusLogHelper.log.Error(ex.Message);
                                         }
-                                       
+
                                     }
                                 }
                                 catch (Exception ex)
@@ -1489,22 +2006,24 @@ namespace Pages
                                                 }
                                                 if (!isStopFanPageScraper)
                                                 {
+                                                    #region MyRegion
                                                     //Thread likerThread = new Thread(AjaxPoster);
-                                                    Thread likerThread = new Thread(AjaxPosterNew);
-                                                    likerThread.Name = "workerThread_AjaxPoster_" + fanPageURL.Replace("/", "").Replace(":", "");
-                                                    likerThread.IsBackground = true;
+                                                    //Thread likerThread = new Thread(AjaxPosterNew);
+                                                    //likerThread.Name = "workerThread_AjaxPoster_" + fanPageURL.Replace("/", "").Replace(":", "");
+                                                    //likerThread.IsBackground = true;
 
-                                                    try
-                                                    {
-                                                        dictionaryLikerThreads.Add(likerThread.Name, Thread.CurrentThread);
-                                                    }
-                                                    catch (Exception ex)
-                                                    {
-                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                    }
+                                                    //try
+                                                    //{
+                                                    //    dictionaryLikerThreads.Add(likerThread.Name, Thread.CurrentThread);
+                                                    //}
+                                                    //catch (Exception ex)
+                                                    //{
+                                                    //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    //}
 
-                                                    likerThread.Start(new object[] { fanPageURL, objGlobusHttpHelper });
-
+                                                    //likerThread.Start(new object[] { fanPageURL, objGlobusHttpHelper }); 
+                                                    #endregion
+                                                    AjaxPosterNew(new object[] { fanPageURL, objGlobusHttpHelper });
                                                     countThreadControllerMain++;
                                                 }
                                             }
@@ -1530,7 +2049,7 @@ namespace Pages
                         }
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -1631,7 +2150,7 @@ namespace Pages
                 {
                     new Thread(() =>
                     {
-                        GlobusHttpHelper httpHelper = new GlobusHttpHelper();                       
+                        GlobusHttpHelper httpHelper = new GlobusHttpHelper();
                         try
                         {
                             lstFanPageScraperThreads.Add(Thread.CurrentThread);
@@ -1663,15 +2182,24 @@ namespace Pages
                         }
 
                         JObject Data = JObject.Parse(jsonData);
+                        string id = string.Empty;
+                        string name = string.Empty;
+                        string first_name = string.Empty;
+                        string middle_name = string.Empty;
+                        string last_name = string.Empty;
+                        string link = string.Empty;
+                        string gender = string.Empty;
+                        string locale = string.Empty;
 
-                        string id = (string)((JValue)Data["id"]);
-                        string name = (string)((JValue)Data["name"]);
-                        string first_name = (string)((JValue)Data["first_name"]);
-                        string middle_name = (string)((JValue)Data["middle_name"]);
-                        string last_name = (string)((JValue)Data["last_name"]);
-                        string link = (string)((JValue)Data["link"]);
-                        string gender = (string)((JValue)Data["gender"]);
-                        string locale = (string)((JValue)Data["locale"]);
+
+                        id = (string)((JValue)Data["id"]);
+                        name = (string)((JValue)Data["name"]);
+                        first_name = (string)((JValue)Data["first_name"]);
+                        middle_name = (string)((JValue)Data["middle_name"]);
+                        last_name = (string)((JValue)Data["last_name"]);
+                        link = (string)((JValue)Data["link"]);
+                        gender = (string)((JValue)Data["gender"]);
+                        locale = (string)((JValue)Data["locale"]);
 
                         if (string.IsNullOrEmpty(link))
                         {
@@ -1711,7 +2239,7 @@ namespace Pages
                         }
                         else
                         {
-                            FBEmailId = UserName + "@facebook.com"; ;
+                            FBEmailId = id + "@facebook.com"; ;
                         }
 
 
@@ -1739,11 +2267,16 @@ namespace Pages
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
 
+
+
                             try
                             {
                                 string CSVHeader = "FriendId" + "," + "Name" + "," + "FirstName" + "," + "MiddleName" + "," + "LastName" + "," + "ProfileLink/Url" + "," + "Gender" + "," + "Locale" + "," + "FanPageURL" + "," + "FbEmail";
-                                string CSV_Content = id.Replace(",", string.Empty) + "," + name.Replace(",", string.Empty) + "," + first_name.Replace(",", string.Empty) + "," + middle_name.Replace(",", string.Empty) + "," + last_name.Replace(",", string.Empty) + "," + link.Replace(",", string.Empty) + "," + gender.Replace(",", string.Empty) + "," + locale.Replace(",", string.Empty) + "," + url.Replace(",", string.Empty) + "," + FBEmailId.Replace(",", string.Empty);
-
+                                // middle_name = middle_name.Replace(",", string.Empty);
+                                //string CSV_Content = id.Replace(",", string.Empty) + "," + name.Replace(",", string.Empty) + "," + first_name.Replace(",", string.Empty) + "," + last_name.Replace(",", string.Empty) + "," + link.Replace(",", string.Empty) + "," + gender.Replace(",", string.Empty) + "," + locale.Replace(",", string.Empty) + "," + url.Replace(",", string.Empty) + "," + FBEmailId.Replace(",", string.Empty);
+                                string CSV_Content = id + "," + name + "," + first_name + "," + middle_name + "," + last_name + "," + link + "," + gender + "," + locale + "," + url + "," + FBEmailId;
+                                //GlobusLogHelper.log.Info(Data + " : Added");
+                                // GlobusLogHelper.log.Debug(Data + " : Added");
                                 Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ScrapersFansScraperExprotFilePath);
                             }
                             catch (Exception ex)
@@ -1904,7 +2437,7 @@ namespace Pages
 
                         try
                         {
-                            string CSVHeader = "FriendId" + "," + "Name" + "," + "FirstName" + "," + "MiddleName" + "," + "LastName" + "," + "ProfileLink/Url" + "," + "Gender" + "," + "Locale" + "," + "FanPageURL"+","+"FbEmail";
+                            string CSVHeader = "FriendId" + "," + "Name" + "," + "FirstName" + "," + "MiddleName" + "," + "LastName" + "," + "ProfileLink/Url" + "," + "Gender" + "," + "Locale" + "," + "FanPageURL" + "," + "FbEmail";
                             string CSV_Content = id + "," + name + "," + first_name + "," + middle_name + "," + last_name + "," + link + "," + gender + "," + locale + "," + url + "," + FBEmailId;
 
                             Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, ScrapersFansScraperExprotFilePath);
@@ -2015,9 +2548,9 @@ namespace Pages
 
                     string jsonRes = httpHelper.getHtmlfromUrlProxy(new Uri(PageUrls), "", 80, "", "");
 
-                 //string[] ajexdataForTimeplane = System.Text.RegularExpressions.Regex.Split(jsonRes, "section_pagelet_id");
+                    //string[] ajexdataForTimeplane = System.Text.RegularExpressions.Regex.Split(jsonRes, "section_pagelet_id");
                     string[] ajexdataForTimeplane = System.Text.RegularExpressions.Regex.Split(jsonRes, "profile_id");
-                    
+
                     foreach (string item in ajexdataForTimeplane)
                     {
                         try
@@ -2030,7 +2563,7 @@ namespace Pages
                                     {
                                         string plane = data;
                                         PageletList.Add(plane);
-                                       // PageletList=PageletList.Distinct().ToList();
+                                        // PageletList=PageletList.Distinct().ToList();
                                     }
                                     catch (Exception ex)
                                     {
@@ -2097,7 +2630,7 @@ namespace Pages
                                 {
                                     if (item.Contains(PageletList[Startcounter].ToString()))
                                     {
-                                        string data = item.Substring(item.IndexOf(":"), item.IndexOf(",") - item.IndexOf(":")).Replace(":", "").Replace("\"", "").Replace("&quot;", ""); 
+                                        string data = item.Substring(item.IndexOf(":"), item.IndexOf(",") - item.IndexOf(":")).Replace(":", "").Replace("\"", "").Replace("&quot;", "");
                                         {
                                             try
                                             {
@@ -2119,7 +2652,7 @@ namespace Pages
                             }
                         }
                     }
-                    if (StartList.Count()==0)
+                    if (StartList.Count() == 0)
                     {
 
                         foreach (string item in ajexdata2)
@@ -2157,8 +2690,8 @@ namespace Pages
                                 }
                             }
                         }
-                      
-                        
+
+
                     }
 
 
@@ -2173,7 +2706,7 @@ namespace Pages
                                 {
                                     //  if (Startcounter < PageletList.Count())
                                     {
-                                       // if (item.Contains(PageletList[Startcounter].ToString()))
+                                        // if (item.Contains(PageletList[Startcounter].ToString()))
                                         {
                                             if (!item.Contains("contextwindowend"))
                                             {
@@ -2185,8 +2718,8 @@ namespace Pages
                                                         {
                                                             StartList.Add(data);
                                                             Startcounter++;
-                                                        } 
-                                                      
+                                                        }
+
                                                     }
                                                     catch (Exception ex)
                                                     {
@@ -2215,13 +2748,13 @@ namespace Pages
                             try
                             {
 
-                               if (Endcounter < PageletList.Count())
+                                if (Endcounter < PageletList.Count())
                                 {
-                                    if ((item.Contains(PageletList[Endcounter].ToString()) && item.Contains("query_type"))&&!item.Contains("contextwindowend"))
+                                    if ((item.Contains(PageletList[Endcounter].ToString()) && item.Contains("query_type")) && !item.Contains("contextwindowend"))
                                     {
-		 
 
-                                        string data = item.Substring(item.IndexOf(":"), item.IndexOf(",") - item.IndexOf(":")).Replace(":", "").Replace("\"", "").Replace("&quot;", "") ;
+
+                                        string data = item.Substring(item.IndexOf(":"), item.IndexOf(",") - item.IndexOf(":")).Replace(":", "").Replace("\"", "").Replace("&quot;", "");
                                         {
                                             try
                                             {
@@ -2234,7 +2767,7 @@ namespace Pages
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
                                         }
-                                        
+
                                     }
                                 }
 
@@ -2298,9 +2831,9 @@ namespace Pages
                                 try
                                 {
 
-                                  //  if (Endcounter < PageletList.Count())
+                                    //  if (Endcounter < PageletList.Count())
                                     {
-                                       // if (item.Contains(PageletList[Endcounter].ToString()) && !item.Contains("pages_actions_pagelet") && (item.Contains(",\\\"query_type\\\"") || item.Contains(",\"query_type\"")))
+                                        // if (item.Contains(PageletList[Endcounter].ToString()) && !item.Contains("pages_actions_pagelet") && (item.Contains(",\\\"query_type\\\"") || item.Contains(",\"query_type\"")))
                                         {
                                             string data = item.Substring(item.IndexOf(":"), item.IndexOf(",") - item.IndexOf(":")).Replace(":", "").Replace("\"", "").Replace("&quot;", "");
                                             {
@@ -2362,7 +2895,7 @@ namespace Pages
                             if (!item.Contains("<!DOCTYPE"))
                             {
 
-                                string data = item.Substring(item.IndexOf(":"), item.IndexOf(",") - item.IndexOf(":")).Replace(":", "").Replace("\"", "").Replace("&quot;", "") ;
+                                string data = item.Substring(item.IndexOf(":"), item.IndexOf(",") - item.IndexOf(":")).Replace(":", "").Replace("\"", "").Replace("&quot;", "");
                                 {
                                     filter_after_timestamp = data;
                                     break;
@@ -2453,11 +2986,11 @@ namespace Pages
                     }
 
 
-                    foreach (string IDitem in Idlist)                    
+                    foreach (string IDitem in Idlist)
                     {
                         if (!isStopFanPageScraper)
                         {
-                           
+
                             try
                             {
                                 GlobusLogHelper.log.Info("Scraping Like UserId : " + IDitem + " On Fans : " + PageUrls);
@@ -2497,9 +3030,9 @@ namespace Pages
                                             queueAddFirstID.Enqueue(IDitem + "<:>" + PageUrls);
                                         }
                                     }
-                                    catch(Exception  ex)
+                                    catch (Exception ex)
                                     {
-                                        GlobusLogHelper.log.Error("Error : "+ex.StackTrace);
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
                                 }
                             }
@@ -2517,7 +3050,7 @@ namespace Pages
                         {
                             try
                             {
-                              
+
                                 try
                                 {
                                     lstFanPageScraperThreads.Add(Thread.CurrentThread);
@@ -2537,7 +3070,7 @@ namespace Pages
                             while (true)
                             {
                                 Thread.Sleep(1000 * 80);
-                               // Thread.Sleep(1000 * 8);
+                                // Thread.Sleep(1000 * 8);
                                 ParseAjaxID(PageUrl);
                             }
                         }).Start();
@@ -2568,9 +3101,9 @@ namespace Pages
 
 
         private void AjaxPosterNew(object obj)
-        { 
+        {
 
-         try
+            try
             {
                 lstFanPageScraperThreads.Add(Thread.CurrentThread);
                 lstFanPageScraperThreads.Distinct();
@@ -2580,265 +3113,459 @@ namespace Pages
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
-         try
-         {
-             if (!isStopFanPageScraper)
-             {
-                 List<string> lstNormalPost = new List<string>();
-                 List<string> lstPostWithPhoto = new List<string>();
-                 string pageId = string.Empty;
-                 string userID = string.Empty;
-                 List<string> Idlist = new List<string>();
+            try
+            {
+                if (!isStopFanPageScraper)
+                {
+                    List<string> lstNormalPost = new List<string>();
+                    List<string> lstPostWithPhoto = new List<string>();
+                    string pageId = string.Empty;
+                    string userID = string.Empty;
+                    List<string> Idlist = new List<string>();
 
-                 //string[] arrayPageUrl = (string[])obj;
-                 //string PageUrl = arrayPageUrl[0];
-                 Array arr=new object[2];
-                 arr = (Array)obj;
-                 string PageUrl = (string)arr.GetValue(0);
-                 GlobusHttpHelper HttpHelper = (GlobusHttpHelper)arr.GetValue(1);
+                    //string[] arrayPageUrl = (string[])obj;
+                    //string PageUrl = arrayPageUrl[0];
+                    Array arr = new object[2];
+                    arr = (Array)obj;
+                    string PageUrl = (string)arr.GetValue(0);
+                    GlobusHttpHelper HttpHelper = (GlobusHttpHelper)arr.GetValue(1);
 
-                 GlobusLogHelper.log.Info("Fans Crawler Started With Page URL :" + PageUrl);
-                 GlobusLogHelper.log.Debug("Fans Crawler Started With Page URL :" + PageUrl);
+                    GlobusLogHelper.log.Info("Fans Crawler Started With Page URL :" + PageUrl);
+                    GlobusLogHelper.log.Debug("Fans Crawler Started With Page URL :" + PageUrl);
 
-                 string homeapgesrc = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
-                 userID = GlobusHttpHelper.GetParamValue(homeapgesrc, "user"); 
-                 string fanPageSrc = string.Empty;
-                 fanPageSrc = HttpHelper.getHtmlfromUrl(new Uri(PageUrl));
+                    string homeapgesrc = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+                    userID = GlobusHttpHelper.GetParamValue(homeapgesrc, "user");
+                    string fanPageSrc = string.Empty;
+                    fanPageSrc = HttpHelper.getHtmlfromUrl(new Uri(PageUrl));
 
-                 pageId = Utils.getBetween(fanPageSrc, "pageID\":", ",");
-                 if (!string.IsNullOrEmpty(fanPageSrc))
-                 {
-                     string[] pagaDataByHref = Regex.Split(fanPageSrc,"href");
-                     foreach (string item in pagaDataByHref)
-                     {
-                         string temp = Utils.getBetween(item, "\"", "\"");
-                         if (temp.Contains("photos"))
-                         {
-                             lstPostWithPhoto.Add(temp);
-                         }
-                         if(temp.Contains("posts"))
-                         {
-                             lstNormalPost.Add(temp);
-                         }
-                     }
+                    pageId = Utils.getBetween(fanPageSrc, "pageID\":", ",");
+                    if (!string.IsNullOrEmpty(fanPageSrc))
+                    {
+                        GlobusLogHelper.log.Info("Scrapping Posts Url From Fanpage");
+                        string[] pagaDataByHref = Regex.Split(fanPageSrc, "href");
+                        foreach (string item in pagaDataByHref)
+                        {
+                            string temp = Utils.getBetween(item, "\"", "\"").Replace("\\", string.Empty);
+
+                            if (temp.Contains("photos"))
+                            {
+                                if (!temp.Contains("photos_stream"))
+                                {
+                                    GlobusLogHelper.log.Info("Post Url : https://www.facebook.com/" + temp);
+                                    lstPostWithPhoto.Add(temp);
+                                }
+                            }
+                            if (temp.Contains("posts"))
+                            {
+                                GlobusLogHelper.log.Info("Post Url : https://www.facebook.com/" + temp);
+                                lstNormalPost.Add(temp);
+                            }
+                        }
 
 
-                     //PAgination Logic
-                     string[] scrollingData = Regex.Split(fanPageSrc, "function");
-                     string nextPagData = string.Empty;
-                     foreach (string scrolling in scrollingData)
-                     {
-                         if (scrolling.Contains("return new ScrollingPager"))
-                         {
-                             nextPagData = Utils.getBetween(scrolling, "PagePostsSectionPagelet\\\", ", ", null);}})").Replace("\\",string.Empty);
-                             break;
-                         }
-                     }
-                     Queue<string> QueueStart = new Queue<string>();
-                     QueueStart.Enqueue("{\"segment_index\":0,\"page_index\":0,\"page\":"+pageId+",\"column\":\"main\",\"post_section\":{\"profile_id\":"+pageId+",\"start\":1420099200,\"end\":1451635199,\"query_type\":8,\"filter\":1,\"filter_after_timestamp\":1420400403},\"section_index\":1,\"hidden\":false,\"posts_loaded\":0,\"show_all_posts\":false}");
-                     QueueStart.Enqueue("{\"segment_index\":0,\"page_index\":0,\"page\":"+pageId+",\"column\":\"main\",\"post_section\":{\"profile_id\":"+pageId+",\"start\":1388563200,\"end\":1420099199,\"query_type\":8,\"filter\":1},\"section_index\":2,\"hidden\":false,\"posts_loaded\":0,\"show_all_posts\":false}");
-                     QueueStart.Enqueue("{\"segment_index\":26,\"page_index\":0,\"page\":"+pageId+",\"column\":\"main\",\"post_section\":{\"profile_id\":"+pageId+",\"start\":1388563200,\"end\":1420099199,\"query_type\":8,\"filter\":1,\"is_pages_redesign\":true},\"section_index\":2,\"hidden\":false,\"posts_loaded\":26,\"show_all_posts\":false}");
-                     while (true)
-                     {
-                         string nextPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=" + Uri.EscapeDataString(nextPagData) + "&__user="+userID+"&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUWdDx2ubhHxd5BzEy6Kdy8-&__req=r&__rev=1555029"));
-                         string[] scrollingData1 = Regex.Split(nextPageSource, "function");
-                         nextPagData = string.Empty;
-                         foreach (string scrolling in scrollingData1)
-                         {
-                             if (scrolling.Contains("return new ScrollingPager"))
-                             {
-                                 nextPagData = Utils.getBetween(scrolling, "PagePostsSectionPagelet\\\", ", ", null);}})").Replace("\\", string.Empty);
-                                 break;
-                             }
-                         }
+                        //PAgination Logic
+                        string[] scrollingData = Regex.Split(fanPageSrc, "function");
+                        string nextPagData = string.Empty;
+                        foreach (string scrolling in scrollingData)
+                        {
+                            if (scrolling.Contains("return new ScrollingPager"))
+                            {
+                                nextPagData = Utils.getBetween(scrolling, "PagePostsSectionPagelet\\\", ", ", null);}})").Replace("\\", string.Empty);
+                                break;
+                            }
+                        }
+                        Queue<string> QueueStart = new Queue<string>();
+                        QueueStart.Enqueue("{\"segment_index\":0,\"page_index\":0,\"page\":" + pageId + ",\"column\":\"main\",\"post_section\":{\"profile_id\":" + pageId + ",\"start\":1420099200,\"end\":1451635199,\"query_type\":8,\"filter\":1,\"filter_after_timestamp\":1420400403},\"section_index\":1,\"hidden\":false,\"posts_loaded\":0,\"show_all_posts\":false}");
+                        QueueStart.Enqueue("{\"segment_index\":0,\"page_index\":0,\"page\":" + pageId + ",\"column\":\"main\",\"post_section\":{\"profile_id\":" + pageId + ",\"start\":1388563200,\"end\":1420099199,\"query_type\":8,\"filter\":1},\"section_index\":2,\"hidden\":false,\"posts_loaded\":0,\"show_all_posts\":false}");
+                        QueueStart.Enqueue("{\"segment_index\":26,\"page_index\":0,\"page\":" + pageId + ",\"column\":\"main\",\"post_section\":{\"profile_id\":" + pageId + ",\"start\":1388563200,\"end\":1420099199,\"query_type\":8,\"filter\":1,\"is_pages_redesign\":true},\"section_index\":2,\"hidden\":false,\"posts_loaded\":26,\"show_all_posts\":false}");
+                        while (true)
+                        {
+                            string nextPageSource = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=" + Uri.EscapeDataString(nextPagData) + "&__user=" + userID + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUWdDx2ubhHxd5BzEy6Kdy8-&__req=r&__rev=1555029"));
+                            string[] scrollingData1 = Regex.Split(nextPageSource, "function");
+                            nextPagData = string.Empty;
+                            foreach (string scrolling in scrollingData1)
+                            {
+                                if (scrolling.Contains("return new ScrollingPager"))
+                                {
+                                    nextPagData = Utils.getBetween(scrolling, "PagePostsSectionPagelet\\\", ", ", null);}})").Replace("\\", string.Empty);
+                                    break;
+                                }
+                            }
 
-                         string[] pagaDataByHref1 = Regex.Split(nextPageSource, "href");
-                         foreach (string item in pagaDataByHref1)
-                         {
-                             string temp = Utils.getBetween(item, "\"", "\"");
-                             if (temp.Contains("photos"))
-                             {
-                                 lstPostWithPhoto.Add(temp);
-                             }
-                             if (temp.Contains("posts"))
-                             {
-                                 lstNormalPost.Add(temp);
-                             }
-                         }
-                         if (string.IsNullOrEmpty(nextPagData))
-                         {
-                             if (QueueStart.Count != 0)
-                             {
-                                 nextPagData = QueueStart.Dequeue();
-                             }
-                             else
-                             {
-                                 break;
-                             }
-                                 
-                         }
+                            string[] pagaDataByHref1 = Regex.Split(nextPageSource, "href");
+                            foreach (string item in pagaDataByHref1)
+                            {
+                                string temp = Utils.getBetween(item, "\"", "\"").Replace("\\", string.Empty); ;
+                                if (temp.Contains("photos"))
+                                {
+                                    if (!temp.Contains("photos_stream"))
+                                    {
+                                        GlobusLogHelper.log.Info("Post Url : https://www.facebook.com/" + temp);
+                                        lstPostWithPhoto.Add(temp);
+                                    }
+                                }
+                                if (temp.Contains("posts"))
+                                {
+                                    GlobusLogHelper.log.Info("Post Url : https://www.facebook.com/" + temp);
+                                    lstNormalPost.Add(temp);
+                                }
+                            }
+                            if (string.IsNullOrEmpty(nextPagData))
+                            {
+                                if (QueueStart.Count != 0)
+                                {
+                                    nextPagData = QueueStart.Dequeue();
+                                }
+                                else
+                                {
+                                    break;
+                                }
 
-                     }
+                            }
 
-                     lstPostWithPhoto = lstPostWithPhoto.Distinct().ToList();
-                     lstNormalPost = lstNormalPost.Distinct().ToList();
+                        }
 
-                     foreach (string link in lstPostWithPhoto)
-                     {
-                         string temp = link;
-                         temp = temp.Replace("/?type=1", string.Empty);
-                         string[] spitData = temp.Split('/');
-                         string postId = string.Empty;
-                         postId = spitData[spitData.Length - 1];
-                         if (postId.Contains("&"))
-                         {
-                             int i = postId.IndexOf('&');
-                             int j = postId.Length - 1;
-                             try
-                             {
-                                 postId = postId.Remove(postId.IndexOf('&'),((postId.Length)-postId.IndexOf('&')));
-                             }
-                             catch(Exception ex){};
-                         }
-                         string graphResp = HttpHelper.getHtmlfromUrl(new Uri("http://graph.facebook.com/" + postId));
-                         if (!string.IsNullOrEmpty(graphResp))
-                         {
-                             JObject JData = JObject.Parse(graphResp);
-                             try
-                             {
+                        lstPostWithPhoto = lstPostWithPhoto.Distinct().ToList();
+                        lstNormalPost = lstNormalPost.Distinct().ToList();
 
-                                 var Comments = JData["comments"]["data"];
-                                 string Comment_next = string.Empty;
-                                 try
-                                 {
-                                     Comment_next = JData["comments"]["paging"]["next"].ToString().Replace("\"", string.Empty);
-                                 }
-                                 catch (Exception ex)
-                                 {
-                                     Console.WriteLine(ex.StackTrace);
-                                     Comment_next = "";
-                                 }
-                             getComments:
-                                 foreach (var _Commentitem in Comments)
-                                 {
-                                     try
-                                     {
-                                         string commentfrom_id = _Commentitem["from"]["id"].ToString().Replace("\"", string.Empty).Trim();
-                                         Idlist.Add(commentfrom_id);
+                        foreach (string link in lstPostWithPhoto)
+                        {
+                            string temp = link;
+                            temp = temp.Replace("/?type=1", string.Empty);
+                            string[] spitData = temp.Split('/');
+                            string postId = string.Empty;
+                            postId = spitData[spitData.Length - 1];
+                            if (postId.Contains("&"))
+                            {
+                                int i = postId.IndexOf('&');
+                                int j = postId.Length - 1;
+                                try
+                                {
+                                    postId = postId.Remove(postId.IndexOf('&'), ((postId.Length) - postId.IndexOf('&')));
+                                }
+                                catch (Exception ex) { };
+                            }
 
-                                         //Scraper method Calling 
-                                         DataParsingWithGraphApi(commentfrom_id, PageUrl);
-                                     }
-                                     catch (Exception ex)
-                                     {
-                                         Console.WriteLine(ex.StackTrace);
-                                     }
-                                 }
-                                 if (!string.IsNullOrEmpty(Comment_next))
-                                 {
-                                     string commentpagesrc = HttpHelper.getHtmlfromUrl(new Uri(Comment_next));
-                                     JObject JData_Comment_next = JObject.Parse(commentpagesrc);
-                                     Comments = JData_Comment_next["data"];
-                                     try
-                                     {
-                                         Comment_next = JData_Comment_next["paging"]["next"].ToString().Replace("\"", string.Empty).Trim();
-                                     }
-                                     catch (Exception ex)
-                                     {
-                                         Console.WriteLine(ex.StackTrace);
-                                         Comment_next = "";
-                                     }
-                                     goto getComments;
-                                 }
-                             }
-                             catch (Exception ex)
-                             {
-                                 GlobusLogHelper.log.Error(ex.Message);
-                             }
+                            string DataProfileId = string.Empty;
+                            int likeCount = 1000;
+                            string PostPage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com" + link));
+                            DataProfileId = Utils.getBetween(PostPage, "data-profileid=\"", "\"");
+                            if (string.IsNullOrEmpty(DataProfileId))
+                            {
+                                DataProfileId = Utils.getBetween(PostPage, "actorid\":\"", "\"");
+                            }
+                            try
+                            {
+                                //"likecount":
+                                string NoOFLikes = Utils.getBetween(PostPage, "likesentences\":{\"current\":{\"text\":\"", "people like").Replace(",", string.Empty);
+                                if (string.IsNullOrEmpty(NoOFLikes))
+                                {
+                                    NoOFLikes = Utils.getBetween(PostPage, "\"likecount\":", ",");
+                                }
 
-                             try
-                             {
+                                likeCount = int.Parse(NoOFLikes);
+                            }
+                            catch (Exception ex)
+                            {
+                                likeCount = 1000;
+                                GlobusLogHelper.log.Error(ex.Message);
+                            }
+                            string GetLikesPage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/browser/dialog/likes?id=" + postId + "&actorid=" + DataProfileId + "&__asyncDialog=1&__user=" + userID + "&__a=1&__dyn=7AmajEyl2qm9o-t2u59G85ku7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24oSy28Sq5UC4UKUyVWz9E&__req=e&__rev=1821576"));
 
-                                 var Likes = JData["likes"]["data"];
-                                 string Likes_next = string.Empty;
-                                 try
-                                 {
-                                     Likes_next = JData["likes"]["paging"]["next"].ToString().Replace("\"", string.Empty);
-                                 }
-                                 catch (Exception ex)
-                                 {
-                                     Console.WriteLine(ex.StackTrace);
-                                     Likes_next = "";
-                                 }
-                             getLikes:
-                                 foreach (var _Likeitem in Likes)
-                                 {
-                                     string like_id = _Likeitem["id"].ToString().Replace("\"", string.Empty).Trim();
-                                     Idlist.Add(like_id);
+                            GetLikesPage = HttpUtility.HtmlDecode(GetLikesPage);
+                            GetLikesPage = GetLikesPage.Replace("\\", string.Empty);
 
-                                     DataParsingWithGraphApi(like_id, PageUrl);
-                                 }
-                                 if (!string.IsNullOrEmpty(Likes_next))
-                                 {
-                                     string likepagesrc = HttpHelper.getHtmlfromUrl(new Uri(Likes_next));
-                                     JObject JData_Like_next = JObject.Parse(likepagesrc);
-                                     Likes = JData_Like_next["data"];
-                                     try
-                                     {
-                                         Likes_next = JData_Like_next["paging"]["next"].ToString().Replace("\"", string.Empty).Trim();
-                                     }
-                                     catch (Exception ex)
-                                     {
-                                         Console.WriteLine(ex.StackTrace);
-                                         Likes_next = "";
-                                     }
-                                     goto getLikes;
-                                 }
-                             }
-                             catch (Exception ex)
-                             {
-                                 Console.WriteLine(ex.StackTrace);
-                             }
-                         }
+                            string[] splitHref = Regex.Split(GetLikesPage, "\"_8o _8t lfloat _ohe\"");
+                            foreach (var item in splitHref)
+                            {
+                                if (item.Contains("https://www.facebook.com"))
+                                {
+                                    string ProfileUrl = Utils.getBetween(item, "href=\"", "\"");
+                                    ScrapeUserInfo(ref HttpHelper, ProfileUrl, ScrapersFansScraperExprotFilePath, PageUrl);
+                                }
+                            }
 
-                     }
+                            int pageCount = 100;
+                            while (likeCount > pageCount)
+                            {
+                                string AjaxLikeUrl = "https://www.facebook.com/ajax/browser/list/likes/?id=" + postId + "&actorid=" + DataProfileId + "&beforetime=0&aftertime=0&start=" + pageCount + "&__user=" + userID + "&__a=1&__dyn=7AmajEyl2qm9o-t2u59G85ku7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24oSy28Sq5UC4UKUyVWz9E&__req=h&__rev=1821576";
+                                string AjaxLikeResp = HttpHelper.getHtmlfromUrl(new Uri(AjaxLikeUrl));
+                                AjaxLikeResp = HttpUtility.HtmlDecode(AjaxLikeResp);
+                                AjaxLikeResp = AjaxLikeResp.Replace("\\", string.Empty);
+                                splitHref = Regex.Split(AjaxLikeResp, "\"_8o _8t lfloat _ohe\"");
+                                foreach (var item in splitHref)
+                                {
+                                    if (item.Contains("https://www.facebook.com"))
+                                    {
+                                        string ProfileUrl = Utils.getBetween(item, "href=\"", "\"");
+                                        ScrapeUserInfo(ref HttpHelper, item, ScrapersFansScraperExprotFilePath, PageUrl);
+                                    }
+                                }
 
-                     foreach (string simplePostUrl in lstNormalPost)
-                     {
-                         string temp = "http://www.facebook.com" + simplePostUrl;
-                         GetPostCommentParsing(simplePostUrl, ref HttpHelper, pageId, userID, ref Idlist,PageUrl);
-                     
-                     }
-                 }
+                                pageCount = pageCount + 100;
 
-                 else
-                 {
-                     GlobusLogHelper.log.Info("Please Check Page URL ");
-                     GlobusLogHelper.log.Debug("Please Check Page URL");
-                 }
 
-             }
-         }
-         catch (Exception ex)
-         {
-             GlobusLogHelper.log.Error(ex.Message);
-         }
-        
+                            }
+
+                        }
+
+                        if (lstNormalPost[0].Contains("posts_to_page"))
+                        {
+                            lstNormalPost.RemoveAt(0);
+                        }
+                        foreach (string simplePostUrl in lstNormalPost)
+                        {
+                            string TempItem = simplePostUrl.Replace("\\", string.Empty);
+
+                            string ActorId = string.Empty;
+                            int likeCount = 1000;
+                            string PostPage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com" + TempItem));
+                            string postId = string.Empty;
+                            postId = Utils.getBetween(PostPage, "\"post_fbid\":", "}");
+
+                            ActorId = Utils.getBetween(PostPage, "actorid\":\"", "\""); ;
+                            try
+                            {
+                                likeCount = int.Parse(Utils.getBetween(PostPage, "likesentences\":{\"current\":{\"text\":\"", "people like").Replace(",", string.Empty));
+                            }
+                            catch (Exception ex)
+                            {
+                                likeCount = 1000;
+                                GlobusLogHelper.log.Error(ex.Message);
+                            }
+                            string GetLikesPage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/browser/dialog/likes?id=" + postId + "&actorid=" + ActorId + "&__asyncDialog=1&__user=" + userID + "&__a=1&__dyn=7AmajEyl2qm9o-t2u59G85ku7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24oSy28Sq5UC4UKUyVWz9E&__req=e&__rev=1821576"));
+
+                            GetLikesPage = HttpUtility.HtmlDecode(GetLikesPage);
+                            GetLikesPage = GetLikesPage.Replace("\\", string.Empty);
+
+                            string[] splitHref = Regex.Split(GetLikesPage, "\"_8o _8t lfloat _ohe\"");
+                            foreach (var item in splitHref)
+                            {
+                                if (item.Contains("https://www.facebook.com"))
+                                {
+                                    string ProfileUrl = Utils.getBetween(item, "href=\"", "\"");
+                                    ScrapeUserInfo(ref HttpHelper, ProfileUrl, ScrapersFansScraperExprotFilePath, PageUrl);
+                                }
+                            }
+
+                            int pageCount = 100;
+
+                            while (likeCount > pageCount)
+                            {
+                                string AjaxLikeUrl = "https://www.facebook.com/ajax/browser/list/likes/?id=" + postId + "&actorid=" + ActorId + "&beforetime=0&aftertime=0&start=" + pageCount + "&__user=" + userID + "&__a=1&__dyn=7AmajEyl2qm9o-t2u59G85ku7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24oSy28Sq5UC4UKUyVWz9E&__req=h&__rev=1821576";
+                                string AjaxLikeResp = HttpHelper.getHtmlfromUrl(new Uri(AjaxLikeUrl));
+                                AjaxLikeResp = HttpUtility.HtmlDecode(AjaxLikeResp);
+                                AjaxLikeResp = AjaxLikeResp.Replace("\\", string.Empty);
+                                splitHref = Regex.Split(AjaxLikeResp, "\"_8o _8t lfloat _ohe\"");
+                                foreach (var item in splitHref)
+                                {
+                                    if (item.Contains("https://www.facebook.com"))
+                                    {
+                                        string ProfileUrl = Utils.getBetween(item, "href=\"", "\"");
+                                        ScrapeUserInfo(ref HttpHelper, ProfileUrl, ScrapersFansScraperExprotFilePath, PageUrl);
+                                    }
+                                }
+
+                                pageCount = pageCount + 100;
+
+
+                            }
+
+
+                        }
+                    }
+
+                    else
+                    {
+                        GlobusLogHelper.log.Info("Please Check Page URL ");
+                        GlobusLogHelper.log.Debug("Please Check Page URL");
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.Message);
+            }
+
         }
 
-        public void GetPostCommentParsing(string posturl, ref GlobusHttpHelper objGlobusHttpHelper, string pageid, string UserId, ref List<string> Idlist,string pageUrl)
+        Dictionary<string, string> dictUnique = new Dictionary<string, string>();
+        public void ScrapeUserInfo(ref GlobusHttpHelper HttpHelper, string profileUrl, string CSVFilePath, string refUrl)
+        {
+
+            try
+            {
+                dictUnique.Add(profileUrl, profileUrl);
+
+                // GlobusHttpHelper HttpHelper = fbuser.globusHttpHelper;
+                string Urls = string.Empty;
+                string id = string.Empty;
+                string name = string.Empty;
+                string first_name = string.Empty;
+                string last_name = string.Empty;
+                string link = string.Empty;
+                string gender = string.Empty;
+                string locale = string.Empty;
+                string birthday = "";
+                string language = "";
+                string website = "";
+                string email = "";
+                string location = "";
+                string jobposition = "";
+                string jobcompany = "";
+                string Mobile_Phones = "";
+                string University = "";
+                string Secondaryschool = "";
+                string Hometown = "";
+                string Currentlocation = "";
+                string pagesourceofProfileUrl = string.Empty;
+                string FBEmailId = string.Empty;
+                string FBUserName = string.Empty;
+                string ProfileLink = string.Empty;
+                Urls = profileUrl.Replace("&fref=pb&hc_location=profile_browser", string.Empty);
+
+
+                string pageSrc = HttpHelper.getHtmlfromUrl(new Uri(Urls));
+                ProfileLink = HttpHelper.responseURI.ToString();
+                try
+                {
+                    id = Utils.getBetween(pageSrc, "\"profile_id\":", ",");
+                    if (string.IsNullOrEmpty(id))
+                    {
+                        id = Utils.getBetween(pageSrc, "entity_id\":\"", "\"");
+                    }
+
+                    FBUserName = Utils.getBetween(pageSrc, "\"timeline\",\"q\":\"", "\"");
+                    if (string.IsNullOrEmpty(FBUserName))
+                    {
+                        FBUserName = Utils.getBetween(pageSrc, "URL=/", "?");
+                    }
+                    if (FBUserName.Equals("profile.php"))
+                    {
+                        FBUserName = string.Empty;
+                    }
+                    string aboutUrl = string.Empty;
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        aboutUrl = "https://www.facebook.com/" + FBUserName + "/about";
+                    }
+                    else
+                    {
+                        aboutUrl = "https://www.facebook.com/profile.php?id=" + id + "&sk=about";
+                    }
+
+                    string AboutPage = HttpHelper.getHtmlfromUrl(new Uri(aboutUrl));
+                    string WorkDetails = Utils.getBetween(Utils.getBetween(AboutPage, "Works at <a", "</div>"), ">", "</a>");
+                    name = Utils.getBetween(AboutPage, "setPageTitle\",[],[\"", "\"");
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        name = Utils.getBetween(AboutPage, "<title id=\"pageTitle\">", "</title>");
+
+                    }
+                    name = name.Replace(",", string.Empty);
+                    University = Utils.getBetween(Utils.getBetween(AboutPage, "Studied at <a", "</div>"), ">", "</a>").Replace(",", string.Empty);
+                    location = Utils.getBetween(Utils.getBetween(AboutPage, "Lives in <a", "</div>"), ">", "</a>").Replace(",", string.Empty); ;
+                    birthday = Utils.getBetween(AboutPage, "Birthday</span></div><div>", "</div>").Replace(",", string.Empty);
+                    if (AboutPage.Contains("Phones</span></div><div><span dir=\"ltr\">"))
+                    {
+                        Mobile_Phones = Utils.getBetween(AboutPage, "Phones</span></div><div><span dir=\"ltr\">", "</span>");
+                    }
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        FBEmailId = FBUserName + "@facebook.com";
+
+                    }
+                    else
+                    {
+                        FBEmailId = id + "@facebook.com";
+                    }
+                    string basicInfoUrl = string.Empty;
+                    if (!string.IsNullOrEmpty(FBUserName))
+                    {
+                        basicInfoUrl = aboutUrl + "?section=contact-info&pnref=about";
+                    }
+                    else
+                    {
+                        basicInfoUrl = aboutUrl + "&section=contact-info&pnref=about";
+                    }
+                    string basicInfoPage = HttpHelper.getHtmlfromUrl(new Uri(basicInfoUrl));
+                    string genderInfo = Utils.getBetween(basicInfoPage, "Gender</span>", "</span>");
+                    if (genderInfo.Contains("Male"))
+                    {
+                        gender = "Male";
+                    }
+                    else
+                    {
+                        gender = "Female";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+                if (!string.IsNullOrEmpty(CSVFilePath))
+                {
+                    try
+                    {
+
+                        if (!string.IsNullOrEmpty(FBUserName))
+                        {
+                            ProfileLink = FBGlobals.Instance.fbhomeurl + FBUserName;
+                        }
+                        else
+                        {
+                            ProfileLink = FBGlobals.Instance.fbhomeurl + id;
+                        }
+
+
+                        Regex regex = new Regex("\\<[^\\>]*\\>");
+                        ProfileLink = regex.Replace(ProfileLink, string.Empty);
+                        id = regex.Replace(id, string.Empty);
+                        name = regex.Replace(name, string.Empty);
+                        University = regex.Replace(University, string.Empty);
+                        location = regex.Replace(location, string.Empty);
+                        birthday = regex.Replace(birthday, string.Empty);
+
+                        // string commaSeparatedData = id + "," + name + "," + first_name + "," + last_name + "," + link + "," + gender + "," + locale;
+
+                        string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "University" + "," + "Location" + "," + "Birthday" + "," + "FbEmail" + "," + "Referred Url";
+                        string CSV_Content = ProfileLink + "," + id + "," + name + "," + University + "," + location + "," + birthday + "," + FBEmailId + "," + refUrl;
+
+                        // string CSVHeader = "ProfileLink" + "," + "Id" + "," + "Name" + ", " + "FirstName" + "," + "LastName" + "," + "Birthday" + "," + "Link" + "," + "Gender" + "," + "Locale" + "," + "HomeTown" + "," + "CurrentLocation" + "," + "Employer" + "," + "University" + "," + "Secondary School" + "," + "HighSchool " + "," + "Email" + "," + "Telephone" + "," + "UserAccount";
+
+                        // string CSV_Content = ProfileLink + "," + id + "," + name + "," + first_name + "," + last_name + "," + birthday + "," + link + "," + gender + "," + locale + "," + Hometown + "," + Currentlocation + ", " + jobcompany + "," + University + "," + Secondaryschool + "," + email + "," + Mobile_Phones + ",," + fbUser.username;// +"," + jobcompany + "," + infohref + "," + Username + "," + Hometown + "," + Currentlocation + "," + University + "," + Secondaryschool;
+                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, CSVFilePath);
+                        GlobusLogHelper.log.Info("Profile Info Scraped for UserID: " + id + " Saved In CSV");
+                        GlobusLogHelper.log.Debug("Profile Info Scraped for UserID: " + id + " Saved In CSV");
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+        }
+        public void GetPostCommentParsing(string posturl, ref GlobusHttpHelper objGlobusHttpHelper, string pageid, string UserId, ref List<string> Idlist, string pageUrl)
         {
             #region Variables resion
             string posthtml = string.Empty;
             string posturl1 = string.Empty;
-            string post = string.Empty;           
+            string post = string.Empty;
             string like_id = string.Empty;
-            string like_name = string.Empty;           
+            string like_name = string.Empty;
             string commentid = string.Empty;
             string commentmsg = string.Empty;
             string commentcreated_time = string.Empty;
             string commentlike_count = string.Empty;
-            string user_likes = string.Empty;           
+            string user_likes = string.Empty;
             string post_date = string.Empty;
             string linkurl = string.Empty;
             string pictureurl = string.Empty;
@@ -2858,25 +3585,25 @@ namespace Pages
             }
             else
             {
-                posturl1 =("https://www.facebook.com" + posturl).Replace("\\",string.Empty);
+                posturl1 = ("https://www.facebook.com" + posturl).Replace("\\", string.Empty);
             }
             try
-            {                
-               
+            {
+
                 posthtml = objGlobusHttpHelper.getHtmlfromUrl(new Uri(posturl1));
                 //post = socioHelper.getBetween(posthtml, "class=\"hasCaption\">", "<i class=\"_4-k1 img sp_LWp1MpKGrs1 sx_35a5d8").Replace("<br />", " ");
                 string post1 = Utils.getBetween(posthtml, "<p>", "<form rel=\"async").Replace("See Translation", "");
-               
+
                 post = Regex.Replace(post1, "<[^>]+>|&nbsp;", "");
                 try
                 {
-                    pictureurl = Utils.getBetween(posthtml, "id=\"fbPhotoImage\" src=\"", "\" alt=\"\" /></div><div").Replace("amp;", "");                    
+                    pictureurl = Utils.getBetween(posthtml, "id=\"fbPhotoImage\" src=\"", "\" alt=\"\" /></div><div").Replace("amp;", "");
                 }
                 catch (Exception ex)
                 {
 
                 }
-                getlikecomment = Utils.getBetween(posthtml, "feedbacktargets\":", "mentionsdatasource\":");           
+                getlikecomment = Utils.getBetween(posthtml, "feedbacktargets\":", "mentionsdatasource\":");
 
 
                 JObject jobjectdata = JObject.Parse("{" + Utils.getBetween(posthtml, "showsendonentertip\":true}],", ",\"actions\":[]") + "}");
@@ -2884,14 +3611,14 @@ namespace Pages
                 {
                     var Comments = jobjectdata["comments"];
                     foreach (var _Commentitem in Comments)
-                    {                     
-                        
+                    {
+
                         string commentfrom_id = string.Empty;
                         string commentfrom_name = string.Empty;
                         commentid = _Commentitem["id"].ToString().Replace("\"", string.Empty).Trim();
                         commentmsg = _Commentitem["body"]["text"].ToString().Replace("\"", string.Empty).Trim();
-                        commentfrom_id = _Commentitem["author"].ToString().Replace("\"", string.Empty).Trim();                     
-                        
+                        commentfrom_id = _Commentitem["author"].ToString().Replace("\"", string.Empty).Trim();
+
                     }
                 }
                 catch (Exception ex)
@@ -2917,8 +3644,8 @@ namespace Pages
                             DataParsingWithGraphApi(like_id, pageUrl);
 
                             //like_name = Utils.getBetween(liker_item, "profile_browser\\u002522\\u00257D\\\">", "\\u003C\\/a>");                     
-                          
-                           
+
+
                         }
                     }
                 }
@@ -2933,7 +3660,7 @@ namespace Pages
             }
 
         }
-        
+
 
 
         /// <summary>
@@ -3522,8 +4249,8 @@ namespace Pages
                     try
                     {
 
-                          Thread.Sleep(80 * 1000);
-                         // Thread.Sleep(8 * 1000);
+                        Thread.Sleep(80 * 1000);
+                        // Thread.Sleep(8 * 1000);
 
                         foreach (string fanPageURL in lstFanPageURLs)
                         {
@@ -3578,7 +4305,7 @@ namespace Pages
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
         }
-     
+
         private void InsertUserDetails()
         {
             while (true)
@@ -3623,7 +4350,7 @@ namespace Pages
 
                 finally
                 {
-                    
+
                 }
             }
         }
@@ -3724,7 +4451,7 @@ namespace Pages
                         catch (Exception ex)
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }                    
+                        }
 
                         foreach (string url in lstFanPageURLs)
                         {
@@ -3767,6 +4494,7 @@ namespace Pages
 
         public static Queue<string> queFanPageURLsFanPageLiker = new Queue<string>();
         public static Queue<string> queFanPageMessagesFanPageLiker = new Queue<string>();
+        public static Queue<string> queFanPageCommentsFanPageLiker = new Queue<string>();
         public static Queue<string> queueFriendsUrlFriendsPostLiker = new Queue<string>();
 
         public Queue<string> queFanPageMessagesFanPage = new Queue<string>();
@@ -3837,7 +4565,7 @@ namespace Pages
         #endregion
 
         public void StartLikePage()
-        {  
+        {
             try
             {
                 countThreadControllerFanPageLiker = 0;
@@ -3856,8 +4584,8 @@ namespace Pages
                 }
                 List<List<string>> list_listAccounts = new List<List<string>>();
                 if (FBGlobals.listAccounts.Count >= 1)
-                {                  
-                       
+                {
+
 
                     try
                     {
@@ -3893,6 +4621,8 @@ namespace Pages
 
                                         if (item != null)
                                         {
+
+
                                             try
                                             {
                                                 Thread profilerThread = new Thread(StartLikePageMultiThreads);
@@ -3906,6 +4636,10 @@ namespace Pages
                                             {
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
+
+
+
+
                                         }
                                     }
                                     catch (Exception ex)
@@ -3928,6 +4662,188 @@ namespace Pages
             }
         }
 
+        public void PageCommentOnRescentPost()
+        {
+
+            int numberOfAccountPatch = 25;
+
+            if (NoOfThreadsFanPageLiker > 0)
+            {
+                numberOfAccountPatch = NoOfThreadsFanPageLiker;
+            }
+
+            List<List<string>> list_listAccounts = new List<List<string>>();
+            if (FBGlobals.listAccounts.Count >= 1)
+            {
+                try
+                {
+                    list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+
+                foreach (List<string> listAccounts in list_listAccounts)
+                {
+                    //int tempCounterAccounts = 0;                       
+
+                    foreach (string account in listAccounts)
+                    {
+                        try
+                        {
+                            lock (lockrThreadControllerFanPageLiker)
+                            {
+                                try
+                                {
+                                    if (countThreadControllerFanPageLiker >= 1)//>= listAccounts.Count)
+                                    {
+                                        Monitor.Wait(lockrThreadControllerFanPageLiker);
+                                    }
+
+                                    string acc = account.Remove(account.IndexOf(':'));
+
+                                    //Run a separate thread for each account
+                                    FacebookUser item = null;
+                                    FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                                    if (item != null)
+                                    {
+                                        try
+                                        {
+                                            Thread profilerThread = new Thread(FanPageCommentOnRescentPost);
+                                            profilerThread.Name = "workerThread_Profiler_" + acc;
+                                            profilerThread.IsBackground = true;
+
+                                            profilerThread.Start(new object[] { item });
+                                            countThreadControllerFanPageLiker++;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        Queue<string> CommentQueue = new Queue<string>();
+        //makeRescentPostScheduler
+        //PageCommentOnRescentPost
+        public void makeRescentPostScheduler()
+        {
+            try
+            {
+                countThreadControllerFanPageLiker = 0;
+
+                int numberOfAccountPatch = 25;
+
+                if (NoOfThreadsFanPageLiker > 0)
+                {
+                    numberOfAccountPatch = NoOfThreadsFanPageLiker;
+                }
+
+                foreach (string item in lstFanPageUrlsFanPageLiker)
+                {
+                    PageManager.queFanPageURLsFanPageLiker.Enqueue(item);
+                }
+
+                foreach (string comment in lstFanPageCommentsFanPageLiker)
+                {
+                    CommentQueue.Enqueue(comment);
+                }
+                List<List<string>> list_listAccounts = new List<List<string>>();
+                if (FBGlobals.listAccounts.Count >= 1)
+                {
+                    try
+                    {
+                        list_listAccounts = Utils.Split(FBGlobals.listAccounts, numberOfAccountPatch);
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+
+                startAgain:
+                    foreach (List<string> listAccounts in list_listAccounts)
+                    {
+                        //int tempCounterAccounts = 0;                       
+
+                        foreach (string account in listAccounts)
+                        {
+                            try
+                            {
+                                lock (lockrThreadControllerFanPageLiker)
+                                {
+                                    try
+                                    {
+                                        if (countThreadControllerFanPageLiker >= listAccounts.Count)
+                                        {
+                                            Monitor.Wait(lockrThreadControllerFanPageLiker);
+                                        }
+
+                                        string acc = account.Remove(account.IndexOf(':'));
+
+                                        //Run a separate thread for each account
+                                        FacebookUser item = null;
+                                        FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                                        if (item != null)
+                                        {
+                                            try
+                                            {
+                                                string FBUserName = item.username;
+                                                string FBPassword = item.password;
+                                                string FanpageUrl = queFanPageURLsFanPageLiker.Dequeue();
+                                                DataBaseHandler.InsertQuery("insert into tblCommentOnRescentPost (UserName,Password,FanPageUrl) values('" + FBUserName + "','" + FBPassword + "','" + FanpageUrl + "')", "tblCommentOnRescentPost");
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+                    }
+
+                    if (queFanPageURLsFanPageLiker.Count > 0)
+                    {
+
+                        goto startAgain;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+        }
+
+
         public void StartLikePageMultiThreads(object parameters)
         {
             try
@@ -3945,43 +4861,41 @@ namespace Pages
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
 
-                 
-
 
                     try
                     {
-                        
-                            Array paramsArray = new object[1];
-                            paramsArray = (Array)parameters;
 
-                            FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+                        Array paramsArray = new object[1];
+                        paramsArray = (Array)parameters;
 
-                            if (!objFacebookUser.isloggedin)
-                            {
-                                GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+                        FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
 
-                                objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+                        if (!objFacebookUser.isloggedin)
+                        {
+                            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
 
-
-                                //Login Process
-
-                                Accounts.AccountManager objAccountManager = new AccountManager();
+                            objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
 
 
-                                objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
-                            }
+                            //Login Process
 
-                            if (objFacebookUser.isloggedin)
-                            {
-                                // Call LikePage
-                                StartFanPageLikerProcess(ref objFacebookUser);
-                            }
-                            else
-                            {
-                                GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
-                                GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
-                            }
-                        
+                            Accounts.AccountManager objAccountManager = new AccountManager();
+
+
+                            objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                        }
+
+                        if (objFacebookUser.isloggedin)
+                        {
+                            // Call LikePage
+                            StartFanPageLikerProcess(ref objFacebookUser);
+                        }
+                        else
+                        {
+                            GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                            GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                        }
+
 
                     }
                     catch (Exception ex)
@@ -3999,7 +4913,7 @@ namespace Pages
             {
                 try
                 {
-                  //  if (!isStopFanPageLiker)
+                    //  if (!isStopFanPageLiker)
                     {
                         lock (lockrThreadControllerFanPageLiker)
                         {
@@ -4014,6 +4928,103 @@ namespace Pages
                 }
             }
         }
+
+
+        public void FanPageCommentOnRescentPost(object parameters)
+        {
+            try
+            {
+                if (!isStopFanPageLiker)
+                {
+                    try
+                    {
+                        lstThreadsFanPageLiker.Add(Thread.CurrentThread);
+                        lstThreadsFanPageLiker.Distinct();
+                        Thread.CurrentThread.IsBackground = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+
+                    try
+                    {
+
+                        Array paramsArray = new object[1];
+                        paramsArray = (Array)parameters;
+
+                        FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+
+                        if (!objFacebookUser.isloggedin)
+                        {
+                            GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+
+                            objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+
+
+                            //Login Process
+
+                            Accounts.AccountManager objAccountManager = new AccountManager();
+
+
+                            objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                        }
+
+                        if (objFacebookUser.isloggedin)
+                        {
+                            // Call LikePage
+                            //StartFanPageLikerProcess(ref objFacebookUser);
+                            DataSet ds = DataBaseHandler.SelectQuery("select * from tblCommentOnRescentPost where UserName='" + objFacebookUser.username + "'", "tblCommentOnRescentPost");
+                            DataBaseHandler.DeleteQuery("delete from tblCommentOnRescentPost where UserName='" + objFacebookUser.username + "'", "tblCommentOnRescentPost");
+                            List<string> lstFanPageUrlsWithUser = new List<string>();
+                            foreach (DataRow dr in ds.Tables[0].Rows)
+                            {
+                                lstFanPageUrlsWithUser.Add(dr[3].ToString());
+                            }
+
+                            List<string> lstFanPageUrlsWithUserNew = lstFanPageUrlsWithUser;
+                            CommentOnRescentPost(ref objFacebookUser, lstFanPageUrlsWithUserNew, lstFanPageCommentsFanPageLiker);
+                            GlobusLogHelper.log.Info("Process Completed With User :" + objFacebookUser.username);
+                        }
+                        else
+                        {
+                            GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                            GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                        }
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+
+            finally
+            {
+                try
+                {
+                    //  if (!isStopFanPageLiker)
+                    {
+                        lock (lockrThreadControllerFanPageLiker)
+                        {
+                            countThreadControllerFanPageLiker--;
+                            Monitor.Pulse(lockrThreadControllerFanPageLiker);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+            }
+        }
+
 
         public void StartFanPageLikerProcess(ref FacebookUser fbUser)
         {
@@ -4037,7 +5048,7 @@ namespace Pages
 
                 if (StartProcessUsingFanPageLiker == "Comment On Post")
                 {
-                    
+
                     if (lstFanPageCommentsFanPageLiker.Count == 0)
                     {
                         GlobusLogHelper.log.Info("Please Upload Fan Page Comments..! ");
@@ -4045,9 +5056,9 @@ namespace Pages
                         return;
                     }
                     CommentOnPost2(ref fbUser, lstFanPageUrlsFanPageLiker, lstFanPageCommentsFanPageLiker);
-                   // CommentOnPost(ref fbUser, lstFanPageUrlsFanPageLiker, lstFanPageCommentsFanPageLiker);
-                     GlobusLogHelper.log.Info("Process completed With :" +fbUser.username);
-                     GlobusLogHelper.log.Debug("Process completed With :" + fbUser.username);
+                    // CommentOnPost(ref fbUser, lstFanPageUrlsFanPageLiker, lstFanPageCommentsFanPageLiker);
+                    GlobusLogHelper.log.Info("Process completed With :" + fbUser.username);
+                    GlobusLogHelper.log.Debug("Process completed With :" + fbUser.username);
                 }
                 if (StartProcessUsingFanPageLiker == "Comment On Recent Post")
                 {
@@ -4058,7 +5069,7 @@ namespace Pages
                 }
                 if (StartProcessUsingFanPageLiker == "Like Post" && isLikePostThroughFreindsUrls)
                 {
-                    LikePostsOnFreindsPage(ref fbUser, lstFreindsPagePostsLiker);                  
+                    LikePostsOnFreindsPage(ref fbUser, lstFreindsPagePostsLiker);
                 }
             }
             catch (Exception ex)
@@ -4082,10 +5093,10 @@ namespace Pages
                 string xhpc_targetid = string.Empty;
                 string xhpc_composerid12 = string.Empty;
                 int NoOfEmailAccount = 20;
-                int countPost=0;
+                int countPost = 0;
 
                 #endregion
-               
+
                 List<string> FanpageUrls = lstFanPageUrlsFanPageLiker;
 
                 foreach (string item in FanpageUrls)
@@ -4232,7 +5243,7 @@ namespace Pages
                             GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                             GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                             Thread.Sleep(delayInSeconds);
-                            return;
+                            //return;
                         }
                         else if (res_post_1st.Contains("Already connected"))
                         {
@@ -4290,7 +5301,7 @@ namespace Pages
                             countPost++;
                             GlobusLogHelper.log.Info("Liked " + FanpageUrl + "  with " + fbUser.username + "<:>" + TotalFanPagelikeCounter.ToString());
                             GlobusLogHelper.log.Debug("Liked " + FanpageUrl + "  with " + fbUser.username + "<:>" + TotalFanPagelikeCounter.ToString());
-                            
+
                             int delayInSeconds = Utils.GenerateRandom(minDelayFanPageLiker * 1000, maxDelayFanPageLiker * 1000);
                             GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                             GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
@@ -4309,12 +5320,15 @@ namespace Pages
 
                             // WriteLikedCounterAtLabel();
 
-                            //CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.path_LikedPages);
+
                         }
 
                         string postURL_2nd = FBGlobals.Instance.PageManagerFanPageLikerpostURL2nd;
                         string postData_2nd = "profile_id=" + fbpage_id + "&tab_key=timeline&fb_dtsg=" + fb_dtsg + "&__user=" + __user + "&phstamp=" + Utils.GenerateTimeStamp() + "";
                         string res_post_2nd = HttpHelper.postFormData(new Uri(postURL_2nd), postData_2nd);
+
+
+                        GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, LikePostExportFilePath);
                         #endregion
 
                         //Delay
@@ -4380,7 +5394,14 @@ namespace Pages
                         GlobusLogHelper.log.Info("Started Sharing Page : " + FanpageUrl + " With UserName : " + fbUser.username);
                         GlobusLogHelper.log.Debug("Started Sharing Page : " + FanpageUrl + " With UserName : " + fbUser.username);
 
-
+                        string message = string.Empty;
+                        try
+                        {
+                            message = lstFanPageMessageFanPageLiker[new Random().Next(0, lstFanPageMessageFanPageLiker.Count - 1)];
+                        }
+                        catch (Exception ex)
+                        {
+                        }
 
                         Thread.Sleep(Utils.GenerateRandom(300, 1200));
 
@@ -4411,7 +5432,7 @@ namespace Pages
                             {
                                 appid = PageSrcFanPageUrl.Substring(PageSrcFanPageUrl.IndexOf("appid="), (PageSrcFanPageUrl.IndexOf("&", PageSrcFanPageUrl.IndexOf("appid=")) - PageSrcFanPageUrl.IndexOf("appid="))).Replace("appid=", string.Empty).Replace("\"", string.Empty).Replace(":", string.Empty).Replace("\"", string.Empty);
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
@@ -4443,7 +5464,7 @@ namespace Pages
                             if (appid.Length > 15)
                             {
                                 PValue = PageSrcFanPageUrl.Substring(PageSrcFanPageUrl.IndexOf("p[]="), (PageSrcFanPageUrl.IndexOf(" ", PageSrcFanPageUrl.IndexOf("p[]=")) - PageSrcFanPageUrl.IndexOf("p[]="))).Replace("p[]=", string.Empty).Replace("\"", string.Empty).Replace(":", string.Empty).Replace("\"", string.Empty);
-                               
+
 
                             }
                         }
@@ -4534,7 +5555,7 @@ namespace Pages
 
                         try
                         {
-                            string postdataforshare = "fb_dtsg=" + fb_dtsg + "&ad_params=&friendTarget=&groupTarget=&mode=self&message=&attachment[params][0]=" + Attachmaentparam + "&attachment[params][images][0]=" + ImageUrl + "&attachment[type]=" + AttachmaentType + "&composer_link_best_image_w=180&composer_link_best_image_h=180&composer_link_image_selected=0&composer_link_images_provided=1&composer_link_images_loaded=1&composer_link_images_shown=1&composer_link_load_duration=404&composer_link_sort_order=0&composer_link_selector_type=UIThumbPager_3&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&__user=" + __user + "&__a=1&__req=a&phstamp=165816810410410112277635";
+                            string postdataforshare = "fb_dtsg=" + fb_dtsg + "&ad_params=&friendTarget=&groupTarget=&mode=self&message=" + Uri.EscapeUriString(message) + "&attachment[params][0]=" + Attachmaentparam + "&attachment[params][images][0]=" + ImageUrl + "&attachment[type]=" + AttachmaentType + "&composer_link_best_image_w=180&composer_link_best_image_h=180&composer_link_image_selected=0&composer_link_images_provided=1&composer_link_images_loaded=1&composer_link_images_shown=1&composer_link_load_duration=404&composer_link_sort_order=0&composer_link_selector_type=UIThumbPager_3&src=i&appid=" + appid + "&parent_fbid=&ogid=&audience[0][value]=80&__user=" + __user + "&__a=1&__req=a&phstamp=165816810410410112277635";
                             string response = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPagePostSharerSubmit), postdataforshare);
                             if (!response.Contains("errorSummary") || !response.Contains("error"))
                             {
@@ -4552,12 +5573,12 @@ namespace Pages
                                     string CSVHeader = "UserName" + "," + "FanpageUrl";
                                     string CSV_Content = fbUser.username + "," + FanpageUrl;
                                     //CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.path_SharedPages);
-                                    
+
                                     int delayInSeconds = Utils.GenerateRandom(minDelayFanPageLiker * 1000, maxDelayFanPageLiker * 1000);
                                     GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                     GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                     Thread.Sleep(delayInSeconds);
-                                    
+
                                 }
                                 catch (Exception ex)
                                 {
@@ -4599,12 +5620,12 @@ namespace Pages
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                    if(NoOfPostFanPageLikercount==NoOfcount)
+                    if (NoOfPostFanPageLikercount == NoOfcount)
                     {
                         break;
                     }
                 }
-                GlobusLogHelper.log.Info("Process completed with :  "+ fbUser.username );
+                GlobusLogHelper.log.Info("Process completed with :  " + fbUser.username);
                 GlobusLogHelper.log.Debug("Process completed with :  " + fbUser.username);
             }
             catch (Exception ex)
@@ -4615,7 +5636,7 @@ namespace Pages
 
         public void LikePost(ref FacebookUser fbUser, List<string> lstFanpageURLs, List<string> lstFanpageMessages)
         {
-            
+
             try
             {
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
@@ -4739,7 +5760,7 @@ namespace Pages
                     bool isTimeLine = false;
 
                     //while (countMessagePost <= noOfPosts)  // noOfPosts //foreach (string lstFanPageURLsitem in lstFanPageURLs)
-                    while(urlCount<=lstFanpageURLs.Count)
+                    while (urlCount <= lstFanpageURLs.Count)
                     {
 
                         lock (lockrqueFanPageURLsFanPageLiker)
@@ -4884,7 +5905,7 @@ namespace Pages
                                     {
                                         try
                                         {
-                                            if (countAvailable< noOfPosts)
+                                            if (countAvailable < noOfPosts)
                                             {
                                                 GlobusLogHelper.log.Info("No more posts are available to like with : " + fbUser.username);
                                                 //GlobusLogHelper.log.Info("Process accomplished with : " + fbUser.username);
@@ -5352,7 +6373,7 @@ namespace Pages
                                                                         ftentidentifier = ftentidentifier.Replace("}", string.Empty).Replace("\"", string.Empty);
                                                                         ftentidentifierList.Add(ftentidentifier);
                                                                         ftentidentifierList = ftentidentifierList.Distinct().ToList();
-                                                                       
+
                                                                     }
                                                                 }
                                                             }
@@ -5367,35 +6388,35 @@ namespace Pages
                                                 wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com//ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A1%2C%22page_index%22%3A0%2C%22page%22%3A111445058579%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A334873533267523%2C%22start%22%3A0%2C%22end%22%3A1406876399%2C%22query_type%22%3A36%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A0%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A3%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171%20HTTP/1.1"));
                                                 //string[] LikeUnlike = Regex.Split(wallPageSrc, "fbTimelineUFI uiCommentContainer");
 
-                                              string[]  ArrFrom1 = Regex.Split(wallPageSrc, "timelineUnitContainer");
+                                                string[] ArrFrom1 = Regex.Split(wallPageSrc, "timelineUnitContainer");
 
 
-                                              foreach (string itemFan in ArrFrom1)
-                                              {
-                                                  try
-                                                  {
-                                                      if (!itemFan.Contains("<!DOCTYPE"))
-                                                      {
-                                                          if (itemFan.Contains("/form"))
-                                                          {
-                                                              try
-                                                              {
-                                                                  string tempFan = itemFan;
-                                                                  tempFan = tempFan.Substring(0, tempFan.IndexOf("/form"));
-                                                                  FanpgeData.Add(tempFan);
-                                                              }
-                                                              catch (Exception ex)
-                                                              {
-                                                                  GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                              }
-                                                          }
-                                                      }
-                                                  }
-                                                  catch (Exception ex)
-                                                  {
-                                                      GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                  }
-                                              }
+                                                foreach (string itemFan in ArrFrom1)
+                                                {
+                                                    try
+                                                    {
+                                                        if (!itemFan.Contains("<!DOCTYPE"))
+                                                        {
+                                                            if (itemFan.Contains("/form"))
+                                                            {
+                                                                try
+                                                                {
+                                                                    string tempFan = itemFan;
+                                                                    tempFan = tempFan.Substring(0, tempFan.IndexOf("/form"));
+                                                                    FanpgeData.Add(tempFan);
+                                                                }
+                                                                catch (Exception ex)
+                                                                {
+                                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
+                                                }
 
 
 
@@ -5429,7 +6450,7 @@ namespace Pages
                                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                     }
                                                 }
-                                                wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com//ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A1%2C%22page_index%22%3A0%2C%22page%22%3A334873533267523%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A334873533267523%2C%22start%22%3A0%2C%22end%22%3A1406876399%2C%22query_type%22%3A36%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A0%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A3%2C%22show_all_posts%22%3Afalse%7D&__user="+__user+"&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171%20HTTP/1.1%20HTTP/1.1"));
+                                                wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com//ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A1%2C%22page_index%22%3A0%2C%22page%22%3A334873533267523%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A334873533267523%2C%22start%22%3A0%2C%22end%22%3A1406876399%2C%22query_type%22%3A36%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A0%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A3%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171%20HTTP/1.1%20HTTP/1.1"));
                                                 //string[] LikeUnlike = Regex.Split(wallPageSrc, "fbTimelineUFI uiCommentContainer");
 
                                                 if (wallPageSrc.Contains("ftentidentifier"))
@@ -5509,7 +6530,7 @@ namespace Pages
                                             {
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
-                                             wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl)); 
+                                            wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));
 
                                             if (wallPageSrc.Contains("setAdsTracking"))
                                             {
@@ -6570,7 +7591,7 @@ namespace Pages
                                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
 
-                                 
+
                                         feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params");
                                         if (!string.IsNullOrEmpty(feedback_params))
                                         {
@@ -6841,7 +7862,7 @@ namespace Pages
                                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                 }
 
-                                           
+
                                                 continue;
                                             }
 
@@ -6959,8 +7980,8 @@ namespace Pages
                 //JS, CSS, Image Requests
                 //RequestsJSCSSIMG.RequestJSCSSIMG(pageSource1, ref HttpHelper);
                 string Keys = string.Empty;
-                string Dc = string.Empty;                
-               
+                string Dc = string.Empty;
+
                 if (ResponseLogin.Contains("fb_dtsg"))
                 {
                     fb_dtsg = GlobusHttpHelper.GetParamValue(ResponseLogin, "fb_dtsg");
@@ -7000,7 +8021,7 @@ namespace Pages
                         continue;
                     }
                     string pageId = string.Empty;
-                    pageId=Utils.getBetween(FanPageSrc,"pageID\":",",");
+                    pageId = Utils.getBetween(FanPageSrc, "pageID\":", ",");
                     fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(FanPageSrc);
                     string[] splitFanUrl = FanUrl.Split('/');
                     FanName = splitFanUrl[splitFanUrl.Length - 1].Split('?')[0];
@@ -7031,85 +8052,86 @@ namespace Pages
                     int postLoaded = 1;
                     if (NoOfPostFanPageLikercount <= lstPostID.Count)
                     {
-                        
+
                         //while (true)
-                            for (int i = 1; i <= 5;i++ )
-                            {
-                                string paginationUrl = "https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A1%2C%22page_index%22%3A0%2C%22page%22%3A344128252278047%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A"+pageId+"%2C%22start%22%3A0%2C%22end%22%3A1425196799%2C%22query_type%22%3A36%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A0%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A" + i + "%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyG8EihUtCxO4p9GgSmEZ9LFwxBxCbzESu49UJ6K4Qmmey8szoyfwgo&__req=d&__rev=1583304";
-                               
-                                String PaginationSrc = HttpHelper.getHtmlfromUrl(new Uri(paginationUrl));
-                                
-                                PaginationSrc = PaginationSrc.Replace("\\", string.Empty);
-                                splitFanUrl = FanUrl.Split('/');
-                                FanName = splitFanUrl[splitFanUrl.Length - 1].Split('?')[0];
-                                fanDetails = Regex.Split(FanPageSrc, "href=");
-                                foreach (string item in fanDetails)
-                                {
-                                    try
-                                    {
-                                        if (item.Contains(FanName + "/photos"))
-                                        {
-                                            string[] itemSplits = item.Split('/');
-                                            lstPostID.Add(itemSplits[4]);
-                                        }
+                        for (int i = 1; i <= 5; i++)
+                        {
+                            string paginationUrl = "https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A1%2C%22page_index%22%3A0%2C%22page%22%3A344128252278047%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A" + pageId + "%2C%22start%22%3A0%2C%22end%22%3A1425196799%2C%22query_type%22%3A36%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A0%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A" + i + "%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyG8EihUtCxO4p9GgSmEZ9LFwxBxCbzESu49UJ6K4Qmmey8szoyfwgo&__req=d&__rev=1583304";
 
-                                        if (item.Contains(FanName + "/posts"))
-                                        {
-                                            string[] itemSplits = item.Split('/');
-                                            lstPostID.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
-                                        }
-                                    }
-                                    catch (Exception ex)
+                            String PaginationSrc = HttpHelper.getHtmlfromUrl(new Uri(paginationUrl));
+
+                            PaginationSrc = PaginationSrc.Replace("\\", string.Empty);
+                            splitFanUrl = FanUrl.Split('/');
+                            FanName = splitFanUrl[splitFanUrl.Length - 1].Split('?')[0];
+                            fanDetails = Regex.Split(FanPageSrc, "href=");
+                            foreach (string item in fanDetails)
+                            {
+                                try
+                                {
+                                    if (item.Contains(FanName + "/photos"))
                                     {
-                                        GlobusLogHelper.log.Error(ex.Message);
+                                        string[] itemSplits = item.Split('/');
+                                        lstPostID.Add(itemSplits[4]);
+                                    }
+
+                                    if (item.Contains(FanName + "/posts"))
+                                    {
+                                        string[] itemSplits = item.Split('/');
+                                        lstPostID.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
                                     }
                                 }
-                                lstPostID = lstPostID.Distinct().ToList();
-
-                            }
-
-                            for (int i = 1; i <= 5; i++)
-                            {
-                                string paginationUrl = "https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A1%2C%22page_index%22%3A0%2C%22page%22%3A344128252278047%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A"+pageId+"%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%2C%22filter_after_timestamp%22%3A1417691399%7D%2C%22section_index%22%3A1%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A"+i+"%2C%22show_all_posts%22%3Afalse%7D&__user="+__user+"&__a=1&__dyn=7nmajEyl2qm9udDgDxyG8EihUtCxO4p9GgSmEZ9LFwxBxCbzESu49UJ6K4Qmmey8szoyfwgo&__req=1g&__rev=1583304";
-
-                                String PaginationSrc = HttpHelper.getHtmlfromUrl(new Uri(paginationUrl));
-
-                                PaginationSrc = PaginationSrc.Replace("\\", string.Empty);
-                                splitFanUrl = FanUrl.Split('/');
-                                FanName = splitFanUrl[splitFanUrl.Length - 1].Split('?')[0];
-                                fanDetails = Regex.Split(FanPageSrc, "href=");
-                                foreach (string item in fanDetails)
+                                catch (Exception ex)
                                 {
-                                    try
-                                    {
-                                        if (item.Contains(FanName + "/photos"))
-                                        {
-                                            string[] itemSplits = item.Split('/');
-                                            lstPostID.Add(itemSplits[4]);
-                                        }
+                                    GlobusLogHelper.log.Error(ex.Message);
+                                }
+                            }
+                            lstPostID = lstPostID.Distinct().ToList();
 
-                                        if (item.Contains(FanName + "/posts"))
-                                        {
-                                            string[] itemSplits = item.Split('/');
-                                            lstPostID.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
-                                        }
-                                    }
-                                    catch (Exception ex)
+                        }
+
+                        for (int i = 1; i <= 5; i++)
+                        {
+                            string paginationUrl = "https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A1%2C%22page_index%22%3A0%2C%22page%22%3A344128252278047%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A" + pageId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%2C%22filter_after_timestamp%22%3A1417691399%7D%2C%22section_index%22%3A1%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A" + i + "%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyG8EihUtCxO4p9GgSmEZ9LFwxBxCbzESu49UJ6K4Qmmey8szoyfwgo&__req=1g&__rev=1583304";
+
+                            String PaginationSrc = HttpHelper.getHtmlfromUrl(new Uri(paginationUrl));
+
+                            PaginationSrc = PaginationSrc.Replace("\\", string.Empty);
+                            splitFanUrl = FanUrl.Split('/');
+                            FanName = splitFanUrl[splitFanUrl.Length - 1].Split('?')[0];
+                            fanDetails = Regex.Split(FanPageSrc, "href=");
+                            foreach (string item in fanDetails)
+                            {
+                                try
+                                {
+                                    if (item.Contains(FanName + "/photos"))
                                     {
-                                        GlobusLogHelper.log.Error(ex.Message);
+                                        string[] itemSplits = item.Split('/');
+                                        lstPostID.Add(itemSplits[4]);
+                                    }
+
+                                    if (item.Contains(FanName + "/posts"))
+                                    {
+                                        string[] itemSplits = item.Split('/');
+                                        lstPostID.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
                                     }
                                 }
-                                lstPostID = lstPostID.Distinct().ToList();
-
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error(ex.Message);
+                                }
                             }
+                            lstPostID = lstPostID.Distinct().ToList();
 
-                      
-                        
-                    
+                        }
+
+
+
+
                     }
 
                     string likeUrl = "https://www.facebook.com/ajax/ufi/like.php";
                     string likeResp = string.Empty;
+                    int count = 1;
                     if (lstPostID.Count < NoOfPostFanPageLikercount)
                     {
                         foreach (string postId in lstPostID)
@@ -7123,8 +8145,8 @@ namespace Pages
 
                             if (likeResp.Contains("UFI\\/LikeActive"))
                             {
-                                GlobusLogHelper.log.Info("Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + postId);
-                                GlobusLogHelper.log.Debug("Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + postId);
+                                GlobusLogHelper.log.Info(count + "]Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + postId);
+                                GlobusLogHelper.log.Debug(count + "]Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + postId);
                             }
 
                             int delay = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
@@ -7146,17 +8168,23 @@ namespace Pages
 
                             if (likeResp.Contains("UFI\\/LikeActive"))
                             {
-                                GlobusLogHelper.log.Info("Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + lstPostID[k]);
-                                GlobusLogHelper.log.Debug("Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + lstPostID[k]);
+                                GlobusLogHelper.log.Info((k + 1) + "]Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + lstPostID[k]);
+                                GlobusLogHelper.log.Debug((k + 1) + "]Like Post On the URL : " + FanPageUrl + "  with " + fbUser.username + " With Post Id : " + lstPostID[k]);
+                                int delay = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
+                                GlobusLogHelper.log.Info("Like Post, Delaying For " + delay + " Seconds");
+                                GlobusLogHelper.log.Debug("Like Post, Delaying For " + delay + " Seconds");
+                                Thread.Sleep(delay * 1000);
+                            }
+                            else if (likeResp.Contains("errorSummar"))
+                            {
+                                NoOfPostFanPageLikercount++;
                             }
 
-                            int delay = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
-                            GlobusLogHelper.log.Info("Like Post, Delaying For " + delay + " Seconds");
-                            GlobusLogHelper.log.Debug("Like Post, Delaying For " + delay + " Seconds");
-                            Thread.Sleep(delay * 1000);
                         }
                     }
                 }
+                GlobusLogHelper.log.Info("Process Complted With User with " + fbUser.username);
+                GlobusLogHelper.log.Debug("Process Complted With User with " + fbUser.username);
             }
             catch (Exception ex)
             {
@@ -7170,11 +8198,11 @@ namespace Pages
         {
             string __user = string.Empty;
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-            
+
             string ResponseLogin = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
             __user = GlobusHttpHelper.GetParamValue(ResponseLogin, "user");
 
-            string fb_dtsg=Get_fb_dtsg(ResponseLogin);
+            string fb_dtsg = Get_fb_dtsg(ResponseLogin);
             if (string.IsNullOrEmpty(__user))
             {
                 __user = GlobusHttpHelper.ParseJson(ResponseLogin, "user");
@@ -7185,50 +8213,69 @@ namespace Pages
                 GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
                 return;
             }
-           
+
             string pageSource1 = ResponseLogin;
             string FriendId = string.Empty;
 
             while (queueFriendsUrlFriendsPostLiker.Count != 0)
             {
-                List<string> lstPostsId = new List<string>();
-                string FriendUrl = queueFriendsUrlFriendsPostLiker.Dequeue();
-                GlobusLogHelper.log.Info("Start Like Posts  with " + FriendUrl);
-                GlobusLogHelper.log.Debug("Start Like Post  with " + FriendUrl);
-                FriendId = GetFriendUserId(ref fbUser, FriendUrl);
-                string ajaxpipe_token = string.Empty;
-                string FreindPageResponse = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/profile.php?id=" + FriendId));
-                string Pagelet = Utils.getBetween(FreindPageResponse, "ProfileTimelineSectionPagelet\\\",", "}");
-                Pagelet = Pagelet.Replace(" ", string.Empty);
-                Pagelet = Pagelet + "}";
-                Pagelet = Pagelet.Replace("\\", string.Empty);
-                Pagelet = Uri.EscapeDataString(Pagelet);
-
-                string end = Utils.getBetween(FreindPageResponse, "\"end\":", ",");
-                ajaxpipe_token = Utils.getBetween(FreindPageResponse, "ajaxpipe_token\":\"", "\"");
-                string[] splitmainhtml = System.Text.RegularExpressions.Regex.Split(FreindPageResponse, "feedbacktargets");
-                string postid = string.Empty;
-                bool isValidUrl = true;
-                foreach (string html in splitmainhtml)
+                try
                 {
-                    if (html.Contains("targetfbid"))
+                    List<string> lstPostsId = new List<string>();
+                    string FriendUrl = queueFriendsUrlFriendsPostLiker.Dequeue();
+                    GlobusLogHelper.log.Info("Start Like Posts  with " + FriendUrl);
+                    GlobusLogHelper.log.Debug("Start Like Post  with " + FriendUrl);
+                    FriendId = GetFriendUserId(ref fbUser, FriendUrl);
+                    string ajaxpipe_token = string.Empty;
+                    string FreindPageResponse = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/profile.php?id=" + FriendId));
+                    string Pagelet = Utils.getBetween(FreindPageResponse, "ProfileTimelineSectionPagelet\\\",", "}");
+                    Pagelet = Pagelet.Replace(" ", string.Empty);
+                    Pagelet = Pagelet + "}";
+                    Pagelet = Pagelet.Replace("\\", string.Empty);
+                    Pagelet = Uri.EscapeDataString(Pagelet);
+
+                    string end = Utils.getBetween(FreindPageResponse, "\"end\":", ",");
+                    ajaxpipe_token = Utils.getBetween(FreindPageResponse, "ajaxpipe_token\":\"", "\"");
+                    string[] splitmainhtml = System.Text.RegularExpressions.Regex.Split(FreindPageResponse, "href");
+                    string postid = string.Empty;
+                    bool isValidUrl = true;
+                    foreach (string html in splitmainhtml)
                     {
-                        try
+                        if (html.Contains("posts/"))
                         {
-                            postid = Utils.getBetween(html, "targetfbid\":\"", "\",\"entidentifier");
-                            lstPostsId.Add(postid);
+                            try
+                            {
+                                string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                string[] splitPosturl = PostUrl.Split('/');
+                                postid = splitPosturl[splitPosturl.Length - 1];
+                                postid = postid.Replace("?fref=nf", string.Empty);
+                                lstPostsId.Add(postid);
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
                         }
-                        catch (Exception ex)
+                        if (html.Contains("photo.php"))
                         {
-                            postid = Utils.getBetween(html, "targetfbid\":\"","\"");
-                            lstPostsId.Add(postid);
-                            GlobusLogHelper.log.Error(ex.Message);
+                            if (!html.Contains("coverPhotoImg photo img") && !html.Contains("profilePic img"))
+                                try
+                                {
+                                    string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                    string fbId = Utils.getBetween(PostUrl, "fbid=", "&");
+                                    fbId = fbId.Replace("?fref=nf", string.Empty);
+                                    lstPostsId.Add(fbId);
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
                         }
+
                     }
 
-                }
-                #region commented
-                /*for (int i = 2; i < 8; i++)
+                    #region commented
+                    /*for (int i = 2; i < 8; i++)
                 {
                     string pageletUrl = "https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=" + Pagelet + "%2C%22num_visible_units%22%3A5%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_8&__rev=1537314&__adt="+i;
                     pageletUrl = pageletUrl.Replace("%20", string.Empty);
@@ -7262,123 +8309,139 @@ namespace Pages
                 
                 } */
 
-                #endregion
-                List<string> pageletList = new List<string>();
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A2%2C%22rc%22%3A5%2C%22vc%22%3A5%7D%2C%22num_visible_units%22%3A5%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxembzESu49UJ6K59poW8xHzoyfw&__req=jsonp_2&__rev=1538717&__adt=2");
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A2%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A6%2C%22rc%22%3A18%2C%22vc%22%3A20%7D%2C%22num_visible_units%22%3A20%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_3&__rev=1538717&__adt=3");
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A3%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A250%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A10%2C%22rc%22%3A18%2C%22vc%22%3A44%7D%2C%22num_visible_units%22%3A44%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_4&__rev=1538717&__adt=4");
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A4%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A250%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A14%2C%22rc%22%3A18%2C%22vc%22%3A92%7D%2C%22num_visible_units%22%3A92%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_5&__rev=1538717&__adt=5");
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22load_immediately%22%3Afalse%2C%22force_no_friend_activity%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_6&__rev=1538717&__adt=6");
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A8%2C%22rc%22%3A5%2C%22vc%22%3A11%7D%2C%22num_visible_units%22%3A11%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_7&__rev=1538717&__adt=7");
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A2%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A16%2C%22rc%22%3A5%2C%22vc%22%3A30%7D%2C%22num_visible_units%22%3A30%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_8&__rev=1538717&__adt=8");
-                pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A3%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A24%2C%22rc%22%3A5%2C%22vc%22%3A68%7D%2C%22num_visible_units%22%3A68%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_9&__rev=1538717&__adt=9");
-                foreach (string pageletUrl in pageletList)
-                {
-                    try
-                    {
-                        //string pageletUrl1 = "https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A2%2C%22rc%22%3A5%2C%22vc%22%3A5%7D%2C%22num_visible_units%22%3A5%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxembzESu49UJ6K59poW8xHzoyfw&__req=jsonp_2&__rev=1538717&__adt=2";
-                        string pageletUrl1Response = HttpHelper.getHtmlfromUrl(new Uri(pageletUrl));
-                        string[] pageletUrl1html = System.Text.RegularExpressions.Regex.Split(pageletUrl1Response, "feedbacktargets");
-                        string postid1 = string.Empty;
-                        foreach (string html in pageletUrl1html)
-                        {
-                            if (html.Contains("targetfbid"))
-                            {
-                                try
-                                {
-                                    postid1 = Utils.getBetween(html, "targetfbid\":\"", "\",\"entidentifier");
-                                    lstPostsId.Add(postid1);
-                                }
-                                catch (Exception ex)
-                                {
-                                    postid1 = Utils.getBetween(html,"targetfbid\":\"","\"");
-                                    lstPostsId.Add(postid1);
-                                    GlobusLogHelper.log.Error(ex.Message);
-                                }
-                            }
-
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        GlobusLogHelper.log.Error(ex.Message);
-                    }
-                }
-                lstPostsId = lstPostsId.Distinct().ToList();
-
-                if (NoOfPostFanPageLikercount > lstPostsId.Count)
-                {
-                    foreach (string post in lstPostsId)
+                    #endregion
+                    List<string> pageletList = new List<string>();
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A2%2C%22rc%22%3A5%2C%22vc%22%3A5%7D%2C%22num_visible_units%22%3A5%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxembzESu49UJ6K59poW8xHzoyfw&__req=jsonp_2&__rev=1538717&__adt=2");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A2%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A6%2C%22rc%22%3A18%2C%22vc%22%3A20%7D%2C%22num_visible_units%22%3A20%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_3&__rev=1538717&__adt=3");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A3%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A250%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A10%2C%22rc%22%3A18%2C%22vc%22%3A44%7D%2C%22num_visible_units%22%3A44%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_4&__rev=1538717&__adt=4");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A4%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A250%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A14%2C%22rc%22%3A18%2C%22vc%22%3A92%7D%2C%22num_visible_units%22%3A92%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_5&__rev=1538717&__adt=5");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22load_immediately%22%3Afalse%2C%22force_no_friend_activity%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_6&__rev=1538717&__adt=6");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A8%2C%22rc%22%3A5%2C%22vc%22%3A11%7D%2C%22num_visible_units%22%3A11%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_7&__rev=1538717&__adt=7");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A2%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A16%2C%22rc%22%3A5%2C%22vc%22%3A30%7D%2C%22num_visible_units%22%3A30%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_8&__rev=1538717&__adt=8");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A3%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A24%2C%22rc%22%3A5%2C%22vc%22%3A68%7D%2C%22num_visible_units%22%3A68%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_9&__rev=1538717&__adt=9");
+                    foreach (string pageletUrl in pageletList)
                     {
                         try
                         {
-                            string likePostData = "like_action=true&ft_ent_identifier=" + post + "&source=1&client_id=1419011576345%3A3587685310&rootid=u_jsonp_9_g&ft[tn]=%3E]&ft[fbfeed_location]=10&nctr[_mod]=pagelet_timeline_year_current&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=21&fb_dtsg=" + fb_dtsg + "&ttstamp=265816911712210666955511773100&__rev=1538717";
-                            string postDataResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/ufi/like.php"), likePostData);
-                            GlobusLogHelper.log.Info("Like Post Id " + post);
-                            GlobusLogHelper.log.Debug("Like Post Id " + post);
-                            try
+                            //string pageletUrl1 = "https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A2%2C%22rc%22%3A5%2C%22vc%22%3A5%7D%2C%22num_visible_units%22%3A5%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxembzESu49UJ6K59poW8xHzoyfw&__req=jsonp_2&__rev=1538717&__adt=2";
+                            string pageletUrl1Response = HttpHelper.getHtmlfromUrl(new Uri(pageletUrl));
+                            pageletUrl1Response = pageletUrl1Response.Replace("\\", string.Empty);
+                            string[] pageletUrl1html = System.Text.RegularExpressions.Regex.Split(pageletUrl1Response, "href");
+                            string postid1 = string.Empty;
+                            foreach (string html in pageletUrl1html)
                             {
-                                int ran = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
-                                GlobusLogHelper.log.Info("Delaying For " + ran);
-                                GlobusLogHelper.log.Debug("Delaying For " + ran);
-                                Thread.Sleep(ran*1000);
-                                
+                                if (html.Contains("posts/"))
+                                {
+                                    try
+                                    {
+                                        string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                        string[] splitPosturl = PostUrl.Split('/');
+                                        postid1 = splitPosturl[splitPosturl.Length - 1];
+                                        postid1 = postid1.Replace("?fref=nf", string.Empty);
+                                        lstPostsId.Add(postid);
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }
+                                if (html.Contains("photo.php"))
+                                {
+                                    try
+                                    {
+                                        string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                        string fbId = Utils.getBetween(PostUrl, "fbid=", "&");
+                                        fbId = fbId.Replace("?fref=nf", string.Empty);
+                                        lstPostsId.Add(fbId);
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }
+
                             }
-                            catch { }
+
                         }
                         catch (Exception ex)
                         {
                             GlobusLogHelper.log.Error(ex.Message);
                         }
                     }
-                }
-                else
-                {
-                    for (int i = 0; i < NoOfPostFanPageLikercount; i++)
+                    lstPostsId = lstPostsId.Distinct().ToList();
+                    lstPostsId.Remove("");
+                    if (NoOfPostFanPageLikercount > lstPostsId.Count)
                     {
-                        try
+                        foreach (string post in lstPostsId)
                         {
-                            string likePostData = "like_action=true&ft_ent_identifier=" + lstPostsId[i] + "&source=1&client_id=1419011576345%3A3587685310&rootid=u_jsonp_9_g&ft[tn]=%3E]&ft[fbfeed_location]=10&nctr[_mod]=pagelet_timeline_year_current&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=21&fb_dtsg=" + fb_dtsg + "&ttstamp=265816911712210666955511773100&__rev=1538717";
-                            string postDataResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/ufi/like.php"), likePostData);
-                            GlobusLogHelper.log.Info("Like Post Id " + lstPostsId[i]);
-                            GlobusLogHelper.log.Debug("Like Post Id " + lstPostsId[i]);
                             try
                             {
+                                string likePostData = "like_action=true&ft_ent_identifier=" + post + "&source=1&client_id=1419011576345%3A3587685310&rootid=u_jsonp_9_g&ft[tn]=%3E]&ft[fbfeed_location]=10&nctr[_mod]=pagelet_timeline_year_current&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=21&fb_dtsg=" + fb_dtsg + "&ttstamp=265816911712210666955511773100&__rev=1538717";
+                                string postDataResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/ufi/like.php"), likePostData);
+                                GlobusLogHelper.log.Info("Like Post Id " + post);
+                                GlobusLogHelper.log.Debug("Like Post Id " + post);
+                                try
+                                {
+                                    int ran = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
+                                    GlobusLogHelper.log.Info("Delaying For " + ran);
+                                    GlobusLogHelper.log.Debug("Delaying For " + ran);
+                                    Thread.Sleep(ran * 1000);
 
+                                }
+                                catch { }
                             }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error(ex.Message);
                             }
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < NoOfPostFanPageLikercount; i++)
+                        {
                             try
                             {
-                                int ran = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
-                                GlobusLogHelper.log.Info("Delaying For " + ran);
-                                GlobusLogHelper.log.Debug("Delaying For " + ran);
-                                Thread.Sleep(ran*1000);
+                                string likePostData = "like_action=true&ft_ent_identifier=" + lstPostsId[i] + "&source=1&client_id=1419011576345%3A3587685310&rootid=u_jsonp_9_g&ft[tn]=%3E]&ft[fbfeed_location]=10&nctr[_mod]=pagelet_timeline_year_current&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=21&fb_dtsg=" + fb_dtsg + "&ttstamp=265816911712210666955511773100&__rev=1538717";
+                                string postDataResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/ufi/like.php"), likePostData);
+                                GlobusLogHelper.log.Info("Like Post Id " + lstPostsId[i]);
+                                GlobusLogHelper.log.Debug("Like Post Id " + lstPostsId[i]);
 
+                                try
+                                {
+                                    int ran = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
+                                    GlobusLogHelper.log.Info("Delaying For " + ran);
+                                    GlobusLogHelper.log.Debug("Delaying For " + ran);
+                                    Thread.Sleep(ran * 1000);
+
+                                }
+                                catch { }
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error(ex.Message);
+                            }
+
                         }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error(ex.Message);
-                        }
-                    
+
                     }
-                
+                    GlobusLogHelper.log.Info("Finish Like Posts  with " + FriendUrl);
+                    GlobusLogHelper.log.Debug("Finish Like Post  with " + FriendUrl);
                 }
-                GlobusLogHelper.log.Info("Finish Like Posts  with " + FriendUrl);
-                GlobusLogHelper.log.Debug("Finish Like Post  with " + FriendUrl);
+                catch (Exception ex)
+                {
+
+                }
+
             }
-         
+
         }
 
 
         public string GetFriendUserId(ref FacebookUser fbUser, string profileUrl)
         {
             string FriendsId = string.Empty;
+            string TempProfileUrl = profileUrl;
             try
             {
 
@@ -7394,6 +8457,7 @@ namespace Pages
                 }
                 pageSource = HttpHelper.getHtmlfromUrl(new Uri(profileUrl));
 
+
                 FriendsId = getBetween(pageSource, "\"id\": \"", "\",\n");
                 if (string.IsNullOrEmpty(FriendsId) || !Utils.IsNumeric(FriendsId))
                 {
@@ -7401,6 +8465,13 @@ namespace Pages
                     ProfileNewUrl = "https://graph.facebook.com/" + FriendsId;
                     pageSource = HttpHelper.getHtmlfromUrl(new Uri(ProfileNewUrl));
                     FriendsId = getBetween(pageSource, "\"id\": \"", "\",\n");
+                }
+
+                if (string.IsNullOrEmpty(FriendsId))
+                {
+                    string FriendsPage = HttpHelper.getHtmlfromUrl(new Uri(TempProfileUrl));
+                    FriendsId = Utils.getBetween(FriendsPage, "\"profile_id\":", ",");
+
 
                 }
             }
@@ -7537,8 +8608,8 @@ namespace Pages
 
                 int countMessagePost = 0;
                 bool isTimeLine = false;
-                int page_index=0;
-                int segment_index=0;
+                int page_index = 0;
+                int segment_index = 0;
                 int start = 0;
                 int end = 1406876399;
                 int section_index = 0;
@@ -7559,7 +8630,7 @@ namespace Pages
                                     GlobusLogHelper.log.Info("All URLs used up for posting");
                                     GlobusLogHelper.log.Debug("All URLs used up for posting");
 
-                                   // return;
+                                    // return;
                                 }
                             }
                             FanpageUrl = queFanPageURLsFanPageLiker.Dequeue();
@@ -7603,7 +8674,7 @@ namespace Pages
                     {
                         wallFilterNo = 2;
                     }
-                    
+
                     //FanpageUrl = lstFanPageURLsitem;
                     for (int i = 1; i < wallFilterNo; i++)
                     {
@@ -7625,7 +8696,7 @@ namespace Pages
                             string wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));               //HttpHelper.getHtmlfromUrlProxy(new Uri(FanpageUrl), proxyAddress, intProxyPort, proxyUserName, proxyPassword);
 
                             string[] ArrFrom = Regex.Split(wallPageSrc, "uiUnifiedStory uiStreamStory genericStreamStory aid_Array uiListItem uiListLight uiListVerticalItemBorder");
-                            ArrFrom = Regex.Split(wallPageSrc, "timelineUnitContainer"); 
+                            ArrFrom = Regex.Split(wallPageSrc, "timelineUnitContainer");
                             List<string> FanpgeData = new List<string>();
                             foreach (string itemFan in ArrFrom)
                             {
@@ -7689,7 +8760,7 @@ namespace Pages
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
-                            
+
                             try
                             {
                                 profile_id = Utils.getBetween(wallPageSrc, "profile_id=", "&amp");
@@ -7700,7 +8771,7 @@ namespace Pages
                             }
                             string HomePageSource = wallPageSrc;
                             wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl + pageID));
-                            string[] ArrFrom1 = Regex.Split(wallPageSrc, "PagePostsSectionPagelet-"+pageID.ToString()+"-0");
+                            string[] ArrFrom1 = Regex.Split(wallPageSrc, "PagePostsSectionPagelet-" + pageID.ToString() + "-0");
                             if (ArrFrom1[2].Contains("/posts/"))
                             {
                                 string[] ArrTemp = Regex.Split(ArrFrom1[2], "/posts/");
@@ -7711,17 +8782,17 @@ namespace Pages
                                         if (!itemFan.Contains("<div class=\"_1k4h _5ay5\">"))
                                         {
                                             try
-                                                {
-                                                    string tempFan = itemFan;
-                                                    tempFan = itemFan.Substring(0, itemFan.IndexOf("\""));
-                                                    tempFan = tempFan.Replace("&amp", string.Empty).Replace("&id", string.Empty).Replace("=", string.Empty);
-                                                    FanpgeData.Add(tempFan);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
+                                            {
+                                                string tempFan = itemFan;
+                                                tempFan = itemFan.Substring(0, itemFan.IndexOf("\""));
+                                                tempFan = tempFan.Replace("&amp", string.Empty).Replace("&id", string.Empty).Replace("=", string.Empty);
+                                                FanpgeData.Add(tempFan);
                                             }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
@@ -7729,7 +8800,7 @@ namespace Pages
                                     }
                                 }
                             }
-                            if(ArrFrom1[2].Contains("target_fbid="))
+                            if (ArrFrom1[2].Contains("target_fbid="))
                             {
                                 string[] ArrTemp = Regex.Split(ArrFrom1[2], "target_fbid=");
                                 foreach (string itemFan in ArrTemp)
@@ -7739,17 +8810,17 @@ namespace Pages
                                         if (!itemFan.Contains("<div class=\"_1k4h _5ay5\">"))
                                         {
                                             try
-                                                {
-                                                    string tempFan = itemFan;
-                                                    tempFan = itemFan.Substring(0, itemFan.IndexOf("\""));
-                                                    tempFan = tempFan.Replace("&amp", string.Empty).Replace("&id", string.Empty).Replace("=", string.Empty);
-                                                    FanpgeData.Add(tempFan);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
+                                            {
+                                                string tempFan = itemFan;
+                                                tempFan = itemFan.Substring(0, itemFan.IndexOf("\""));
+                                                tempFan = tempFan.Replace("&amp", string.Empty).Replace("&id", string.Empty).Replace("=", string.Empty);
+                                                FanpgeData.Add(tempFan);
                                             }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
@@ -7767,17 +8838,17 @@ namespace Pages
                                         if (!itemFan.Contains("<div class=\"_1k4h _5ay5\">"))
                                         {
                                             try
-                                                {
-                                                    string tempFan = itemFan;
-                                                    tempFan = itemFan.Substring(0, itemFan.IndexOf("&"));
-                                                    tempFan = tempFan.Replace("&amp", string.Empty).Replace("&id", string.Empty).Replace("=", string.Empty);
-                                                    FanpgeData.Add(tempFan);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
+                                            {
+                                                string tempFan = itemFan;
+                                                tempFan = itemFan.Substring(0, itemFan.IndexOf("&"));
+                                                tempFan = tempFan.Replace("&amp", string.Empty).Replace("&id", string.Empty).Replace("=", string.Empty);
+                                                FanpgeData.Add(tempFan);
                                             }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
@@ -7786,18 +8857,18 @@ namespace Pages
                                 }
                             }
                             int count = 0;
-                            while(true)
+                            while (true)
                             {
-                                
-                                wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A" + segment_index.ToString() + "%2C%22page_index%22%3A" + page_index.ToString() + "%2C%22page%22%3A" + pageID + "%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A" + profile_id + "%2C%22start%22%3A" + start.ToString() + "%2C%22end%22%3A" + end.ToString() + "%2C%22query_type%22%3A"+query_type.ToString()+"%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A"+section_index.ToString()+"%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A"+count.ToString()+"%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171%20HTTP/1.1"));
-                                if (wallPageSrc.Contains("/posts\\/")||wallPageSrc.Contains("story_fbid=")||wallPageSrc.Contains("target_fbid="))
+
+                                wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A" + segment_index.ToString() + "%2C%22page_index%22%3A" + page_index.ToString() + "%2C%22page%22%3A" + pageID + "%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A" + profile_id + "%2C%22start%22%3A" + start.ToString() + "%2C%22end%22%3A" + end.ToString() + "%2C%22query_type%22%3A" + query_type.ToString() + "%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A" + section_index.ToString() + "%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A" + count.ToString() + "%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171%20HTTP/1.1"));
+                                if (wallPageSrc.Contains("/posts\\/") || wallPageSrc.Contains("story_fbid=") || wallPageSrc.Contains("target_fbid="))
                                 {
                                     ArrFrom1 = Regex.Split(wallPageSrc, "timelineUnitContainer");
-                                     foreach (string itemFan in ArrFrom1)
+                                    foreach (string itemFan in ArrFrom1)
                                     {
                                         try
                                         {
-                                            
+
                                             if (!itemFan.Contains("for (;;)"))
                                             {
                                                 if (itemFan.Contains("/posts\\/"))
@@ -7814,7 +8885,7 @@ namespace Pages
                                                         }
                                                         FanpgeData.Add(tempFan);
                                                         FanpgeData = FanpgeData.Distinct().ToList();
-                                                        
+
                                                     }
                                                     catch (Exception ex)
                                                     {
@@ -7828,7 +8899,7 @@ namespace Pages
                                                         string tempFan = itemFan;
                                                         //tempFan = tempFan.Substring(tempFan.IndexOf("target_fbid="), tempFan.IndexOf("\\\""));
                                                         tempFan = Utils.getBetween(tempFan, "target_fbid=", "\\\"");
-                                                        
+
                                                         tempFan = tempFan.Replace("&amp", string.Empty).Replace("&id", string.Empty).Replace("=", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty);
                                                         if (!FanpgeData.Contains(tempFan) && !tempFan.Equals(""))
                                                         {
@@ -7881,7 +8952,7 @@ namespace Pages
                                 {
                                     page_index++;
                                     segment_index = 0;
-                                    if(page_index>1)
+                                    if (page_index > 1)
                                     {
                                         page_index = 0;
                                         start = 1388563200;
@@ -7914,111 +8985,111 @@ namespace Pages
                                         {
                                             //itemModified =  
                                         }
-                                       string item111=item.Replace("\\\"","\"");
+                                        string item111 = item.Replace("\\\"", "\"");
 
-                                       if (!item.Contains("\\\" data-gt="))
-                                       {
-                                           int startIndx = item.IndexOf("data-ft=\"&#123;") + "data-ft=\"&#123;".Length;
-                                           int endIndx = item.IndexOf("&#125;", startIndx);
+                                        if (!item.Contains("\\\" data-gt="))
+                                        {
+                                            int startIndx = item.IndexOf("data-ft=\"&#123;") + "data-ft=\"&#123;".Length;
+                                            int endIndx = item.IndexOf("&#125;", startIndx);
 
-                                           //link_data = item.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"");
-                                           link_data = "{" + link_data + "}";
-                                           link_data = Uri.EscapeDataString(link_data);
+                                            //link_data = item.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"");
+                                            link_data = "{" + link_data + "}";
+                                            link_data = Uri.EscapeDataString(link_data);
 
-                                          // string timeline_log_data = string.Empty;
-                                           timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data");
-
-
-                                           //string feedback_params = string.Empty;
-                                           feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params");
-
-                                           if (!string.IsNullOrEmpty(feedback_params))
-                                           {
-                                               try
-                                               {
-                                                   timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data").Replace("&quot;", "\"");
-                                                   timeline_log_data = timeline_log_data.Replace("&#123;", "");
-                                                   timeline_log_data = timeline_log_data.Replace("&#125;", "");
-                                                   timeline_log_data = "{" + timeline_log_data + "}";
-                                                   timeline_log_data = Uri.EscapeDataString(timeline_log_data);
-                                               }
-                                               catch (Exception ex)
-                                               {
-                                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                               }
-                                           }
-                                           if (!string.IsNullOrEmpty(feedback_params))
-                                           {
-                                               try
-                                               {
-                                                   feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params").Replace("&quot;", "\"");
-                                                   feedback_params = feedback_params.Replace("&#123;", "");
-                                                   feedback_params = feedback_params.Replace("&#125;", "");
-                                                   feedback_params = "{" + feedback_params + "}";
-                                                   feedback_params = Uri.EscapeDataString(feedback_params);
-                                               }
-                                               catch (Exception ex)
-                                               {
-                                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                               }
-                                           }
-                                           else
-                                           {
-                                               //continue;
-                                           }
-
-                                       }
-                                       else
-                                       {
-                                           int startIndx = item111.IndexOf("data-ft=\"&#123;") + "data-ft=\"&#123;".Length;
-                                           int endIndx = item111.IndexOf("&#125;", startIndx);
-
-                                           //link_data = item111.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"");
-                                           link_data = "{" + link_data + "}";
-                                           link_data = Uri.EscapeDataString(link_data);
-
-                                        
-                                           timeline_log_data = GlobusHttpHelper.GetParamValue(item111, "timeline_log_data");
+                                            // string timeline_log_data = string.Empty;
+                                            timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data");
 
 
-                                         
-                                           feedback_params = GlobusHttpHelper.GetParamValue(item111, "feedback_params");
+                                            //string feedback_params = string.Empty;
+                                            feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params");
 
-                                           if (!string.IsNullOrEmpty(feedback_params))
-                                           {
-                                               try
-                                               {
-                                                   timeline_log_data = GlobusHttpHelper.GetParamValue(item111, "timeline_log_data").Replace("&quot;", "\"");
-                                                   timeline_log_data = timeline_log_data.Replace("&#123;", "");
-                                                   timeline_log_data = timeline_log_data.Replace("&#125;", "");
-                                                   timeline_log_data = "{" + timeline_log_data + "}";
-                                                   timeline_log_data = Uri.EscapeDataString(timeline_log_data);
-                                               }
-                                               catch (Exception ex)
-                                               {
-                                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                               }
-                                           }
-                                           if (!string.IsNullOrEmpty(feedback_params))
-                                           {
-                                               try
-                                               {
-                                                   feedback_params = GlobusHttpHelper.GetParamValue(item111, "feedback_params").Replace("&quot;", "\"");
-                                                   feedback_params = feedback_params.Replace("&#123;", "");
-                                                   feedback_params = feedback_params.Replace("&#125;", "");
-                                                   feedback_params = "{" + feedback_params + "}";
-                                                   feedback_params = Uri.EscapeDataString(feedback_params);
-                                               }
-                                               catch (Exception ex)
-                                               {
-                                                   GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                               }
-                                           }
-                                           else
-                                           {
-                                               continue;
-                                           }
-                                       }
+                                            if (!string.IsNullOrEmpty(feedback_params))
+                                            {
+                                                try
+                                                {
+                                                    timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data").Replace("&quot;", "\"");
+                                                    timeline_log_data = timeline_log_data.Replace("&#123;", "");
+                                                    timeline_log_data = timeline_log_data.Replace("&#125;", "");
+                                                    timeline_log_data = "{" + timeline_log_data + "}";
+                                                    timeline_log_data = Uri.EscapeDataString(timeline_log_data);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                            if (!string.IsNullOrEmpty(feedback_params))
+                                            {
+                                                try
+                                                {
+                                                    feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params").Replace("&quot;", "\"");
+                                                    feedback_params = feedback_params.Replace("&#123;", "");
+                                                    feedback_params = feedback_params.Replace("&#125;", "");
+                                                    feedback_params = "{" + feedback_params + "}";
+                                                    feedback_params = Uri.EscapeDataString(feedback_params);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                //continue;
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            int startIndx = item111.IndexOf("data-ft=\"&#123;") + "data-ft=\"&#123;".Length;
+                                            int endIndx = item111.IndexOf("&#125;", startIndx);
+
+                                            //link_data = item111.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"");
+                                            link_data = "{" + link_data + "}";
+                                            link_data = Uri.EscapeDataString(link_data);
+
+
+                                            timeline_log_data = GlobusHttpHelper.GetParamValue(item111, "timeline_log_data");
+
+
+
+                                            feedback_params = GlobusHttpHelper.GetParamValue(item111, "feedback_params");
+
+                                            if (!string.IsNullOrEmpty(feedback_params))
+                                            {
+                                                try
+                                                {
+                                                    timeline_log_data = GlobusHttpHelper.GetParamValue(item111, "timeline_log_data").Replace("&quot;", "\"");
+                                                    timeline_log_data = timeline_log_data.Replace("&#123;", "");
+                                                    timeline_log_data = timeline_log_data.Replace("&#125;", "");
+                                                    timeline_log_data = "{" + timeline_log_data + "}";
+                                                    timeline_log_data = Uri.EscapeDataString(timeline_log_data);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                            if (!string.IsNullOrEmpty(feedback_params))
+                                            {
+                                                try
+                                                {
+                                                    feedback_params = GlobusHttpHelper.GetParamValue(item111, "feedback_params").Replace("&quot;", "\"");
+                                                    feedback_params = feedback_params.Replace("&#123;", "");
+                                                    feedback_params = feedback_params.Replace("&#125;", "");
+                                                    feedback_params = "{" + feedback_params + "}";
+                                                    feedback_params = Uri.EscapeDataString(feedback_params);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                continue;
+                                            }
+                                        }
                                         if (LikeSelectedFanPageLiker)
                                         {
                                             tempCounter_LikeSelected++;
@@ -8092,9 +9163,9 @@ namespace Pages
                                                             {
                                                                 if (!arrftentidentifier_item.Contains("<!DOCTYPE html>"))
                                                                 {
-                                                                      //ftentidentifier = arrftentidentifier_item.Substring(arrftentidentifier_item.IndexOf(":"), (arrftentidentifier_item.IndexOf(",", arrftentidentifier_item.IndexOf(":")) - arrftentidentifier_item.IndexOf(":"))).Replace(":", string.Empty).Replace("\"", string.Empty).Replace("}","").Trim();
-                                                                      ftentidentifierList.Add(ftentidentifier);
-                                                                      ftentidentifierList = ftentidentifierList.Distinct().ToList();
+                                                                    //ftentidentifier = arrftentidentifier_item.Substring(arrftentidentifier_item.IndexOf(":"), (arrftentidentifier_item.IndexOf(",", arrftentidentifier_item.IndexOf(":")) - arrftentidentifier_item.IndexOf(":"))).Replace(":", string.Empty).Replace("\"", string.Empty).Replace("}","").Trim();
+                                                                    ftentidentifierList.Add(ftentidentifier);
+                                                                    ftentidentifierList = ftentidentifierList.Distinct().ToList();
                                                                 }
 
                                                             }
@@ -8102,7 +9173,7 @@ namespace Pages
                                                             {
                                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                             }
-                                                            
+
                                                         }
                                                         #region MyRegion
                                                         //try
@@ -8120,7 +9191,7 @@ namespace Pages
                                                         //{
                                                         //} 
                                                         #endregion
-                                                  
+
                                                         //ftentidentifier = ftentidentifierList[CounterLikePost];
                                                         //CounterLikePost = CounterLikePost + 1;
                                                     }
@@ -8135,7 +9206,7 @@ namespace Pages
                                             string postData1 = "__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816798981224510745"; //__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=165816798981224510745
 
                                             string postResponse1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse1 + item + "&comment_from=" + __user + "&seen_user_fbids=true"), postData1);
-                                            string postResponse3 = string.Empty;                                
+                                            string postResponse3 = string.Empty;
 
                                             string postData2 = "like_action=true&ft_ent_identifier=" + item + "&source=0&&ft[tn]=%3E%3D&ft[type]=20&__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=265817255451007849104778751";
                                             postResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse2), postData2);
@@ -8402,7 +9473,7 @@ namespace Pages
                                             return;
                                         }
 
-                                      // string link_data = string.Empty;
+                                        // string link_data = string.Empty;
 
                                         try
                                         {
@@ -8419,7 +9490,7 @@ namespace Pages
                                         }
 
                                         //string modifiedItem = "name=\"feedback_params" + item;
-                                      //  string feedback_params = string.Empty;
+                                        //  string feedback_params = string.Empty;
                                         feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params");
                                         if (!string.IsNullOrEmpty(feedback_params))
                                         {
@@ -8437,7 +9508,7 @@ namespace Pages
                                             }
                                         }
 
-                                      //  string timeline_log_data = string.Empty;
+                                        //  string timeline_log_data = string.Empty;
                                         timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data");
                                         if (!string.IsNullOrEmpty(feedback_params))
                                         {
@@ -8823,8 +9894,8 @@ namespace Pages
                 }
                 int countMessagePost = 0;
                 string pageSource1 = ResponseLogin;
-                // Again started the processs . Use goto for that statement.
-                StartAgain:
+            // Again started the processs . Use goto for that statement.
+            StartAgain:
                 //JS, CSS, Image Requests
                 //RequestsJSCSSIMG.RequestJSCSSIMG(pageSource1, ref HttpHelper);
 
@@ -8879,7 +9950,7 @@ namespace Pages
                 {
                     wallFilterNo = 3;
                 }
-             
+
                 bool isTimeLine = false;
                 int page_index = 0;
                 int segment_index = 0;
@@ -8901,8 +9972,8 @@ namespace Pages
                                 {
                                     GlobusLogHelper.log.Info("All URLs used up for posting");
                                     GlobusLogHelper.log.Debug("All URLs used up for posting");
-                                     
-                                   return;
+
+                                    return;
                                 }
                             }
                             FanpageUrl = queFanPageURLsFanPageLiker.Dequeue();
@@ -9229,8 +10300,8 @@ namespace Pages
                             if (lstFanpageMessages.Count < noOfPosts)
                             {
                                 queFanPageMessagesFanPageLiker.Clear();
-                                int remaining = FanpgeData.Count-lstFanpageMessages.Count;
-                                for(int c =0;c<remaining;c++)
+                                int remaining = FanpgeData.Count - lstFanpageMessages.Count;
+                                for (int c = 0; c < remaining; c++)
                                 {
                                     lstFanpageMessages.Add(lstFanpageMessages[c]);
                                 }
@@ -9246,7 +10317,7 @@ namespace Pages
                             //{
                             //    int tempCounter_LikeSelected = 0;
 
-         
+
                             //    foreach (string item in FanpgeData)
                             //    {
                             //        try
@@ -9503,7 +10574,7 @@ namespace Pages
                             //                ////postResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse2), postData2);
 
                             //                //Commneted By ajay yadav
-                                       
+
                             //                //string postData1 = "__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816798981224510745"; //__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=165816798981224510745
                             //                //string postResponse1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse1 + ftentidentifier + "&comment_from=" + __user + "&seen_user_fbids=true"), postData1);
 
@@ -9761,27 +10832,133 @@ namespace Pages
                             //{
                             #endregion
                             int tempCounter_LikeSelected = 0;
-                                foreach (string item in FanpgeData)
+                            foreach (string item in FanpgeData)
+                            {
+                                try
                                 {
+                                    lock (lockrqueFanPageMessagesFanPageLiker)
+                                    {
+                                        try
+                                        {
+                                            if (lstFanPageCommentsFanPageLiker.Count >= 1)
+                                            {
+                                                if (queFanPageMessagesFanPageLiker.Count == 0)
+                                                {
+                                                    Monitor.Wait(lockrqueFanPageMessagesFanPageLiker, 1 * 1000 * 45); //Wait for 90 secs
+                                                    if (queFanPageMessagesFanPageLiker.Count == 0)
+                                                    {
+                                                        GlobusLogHelper.log.Info("All Messages used up for posting");
+                                                        GlobusLogHelper.log.Debug("All Messages used up for posting");
+                                                        return;
+                                                    }
+                                                }
+                                                message = queFanPageMessagesFanPageLiker.Dequeue();
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                                try
+                                {
+                                    if (countMessagePost >= noOfPosts)
+                                    {
+                                        GlobusLogHelper.log.Info("Process accomplished with : " + fbUser.username);
+                                        return;
+                                    }
+
+                                    // string link_data = string.Empty;
+
                                     try
                                     {
-                                        lock (lockrqueFanPageMessagesFanPageLiker)
+                                        int startIndx = item.IndexOf("data-ft=\"&#123;") + "data-ft=\"&#123;".Length;
+                                        int endIndx = item.IndexOf("&#125;", startIndx);
+                                        link_data = item.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"");
+                                        link_data = "{" + link_data + "}";
+                                        link_data = Uri.EscapeDataString(link_data);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                    //string modifiedItem = "name=\"feedback_params" + item;
+                                    //  string feedback_params = string.Empty;
+                                    feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params");
+                                    if (!string.IsNullOrEmpty(feedback_params))
+                                    {
+                                        try
+                                        {
+                                            feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params").Replace("&quot;", "\"");
+                                            feedback_params = feedback_params.Replace("&#123;", "");
+                                            feedback_params = feedback_params.Replace("&#125;", "");
+                                            feedback_params = "{" + feedback_params + "}";
+                                            feedback_params = Uri.EscapeDataString(feedback_params);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    //  string timeline_log_data = string.Empty;
+                                    timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data");
+                                    if (!string.IsNullOrEmpty(feedback_params))
+                                    {
+                                        try
+                                        {
+                                            timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data").Replace("&quot;", "\"");
+                                            timeline_log_data = timeline_log_data.Replace("&#123;", "");
+                                            timeline_log_data = timeline_log_data.Replace("&#125;", "");
+                                            timeline_log_data = "{" + timeline_log_data + "}";
+                                            timeline_log_data = Uri.EscapeDataString(timeline_log_data);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    if (string.IsNullOrEmpty(timeline_log_data))
+                                    {
+                                        //continue;
+                                    }
+
+                                    if (LikeSelectedFanPageLiker)
+                                    {
+                                        tempCounter_LikeSelected++;
+                                        if (!lstLikeSelectedFanPageLiker.Contains(tempCounter_LikeSelected))
+                                        {
+                                            //continue;
+                                        }
+                                    }
+
+                                    string ftentidentifier = string.Empty;
+                                    string postResponse = string.Empty;
+                                    ///Like
+                                    try
+                                    {
+                                        //Thread.Sleep(10 * 1000);
+                                        ///By Ajay Due to Post data change...
+
+                                        if (wallPageSrc.Contains("ftentidentifier"))
                                         {
                                             try
                                             {
-                                                if (lstFanPageCommentsFanPageLiker.Count >= 1)
+                                                string[] arrftentidentifier = Regex.Split(wallPageSrc, "ftentidentifier");
+                                                if (arrftentidentifier.Count() > 1)
                                                 {
-                                                    if (queFanPageMessagesFanPageLiker.Count == 0)
+                                                    if (arrftentidentifier[1].Contains(":"))
                                                     {
-                                                        Monitor.Wait(lockrqueFanPageMessagesFanPageLiker, 1 * 1000 * 45); //Wait for 90 secs
-                                                        if (queFanPageMessagesFanPageLiker.Count == 0)
-                                                        {
-                                                            GlobusLogHelper.log.Info("All Messages used up for posting");
-                                                            GlobusLogHelper.log.Debug("All Messages used up for posting");
-                                                            return;
-                                                        }
+                                                        ftentidentifier = arrftentidentifier[1].Substring(arrftentidentifier[1].IndexOf(":"), (arrftentidentifier[1].IndexOf(",", arrftentidentifier[1].IndexOf(":")) - arrftentidentifier[1].IndexOf(":"))).Replace(":", string.Empty).Replace("\"", string.Empty).Trim();
                                                     }
-                                                    message = queFanPageMessagesFanPageLiker.Dequeue();
                                                 }
                                             }
                                             catch (Exception ex)
@@ -9789,104 +10966,54 @@ namespace Pages
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
                                         }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                    try
-                                    {
-                                        if (countMessagePost >= noOfPosts)
-                                        {
-                                            GlobusLogHelper.log.Info("Process accomplished with : " + fbUser.username);
-                                            return;
-                                        }
-
-                                        // string link_data = string.Empty;
-
                                         try
                                         {
-                                            int startIndx = item.IndexOf("data-ft=\"&#123;") + "data-ft=\"&#123;".Length;
-                                            int endIndx = item.IndexOf("&#125;", startIndx);
-                                            link_data = item.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"");
-                                            link_data = "{" + link_data + "}";
-                                            link_data = Uri.EscapeDataString(link_data);
+                                            string postData1 = "__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816798981224510745"; //__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=165816798981224510745
+                                            string postResponse1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse1 + item + "&comment_from=" + __user + "&seen_user_fbids=true"), postData1);
+
+                                            //string postData2 = "like_action=true&ft_ent_identifier=" + ftentidentifier + "&source=0&&ft[tn]=%3E%3D&ft[type]=20&__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=1658167989812245107166";//like_action=true&ft_ent_identifier=348874178538877&source=0&client_id=1347961309895%3A42929564&ft[tn]=%3E%3D&ft[type]=20&__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=1658167989812245107166
+                                            string postData2 = "like_action=true&ft_ent_identifier=" + item + "&source=0&&ft[tn]=%3E%3D&ft[type]=20&__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=16581668085704579248";//like_action=true&ft_ent_identifier=348874178538877&source=0&client_id=1347961309895%3A42929564&ft[tn]=%3E%3D&ft[type]=20&__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=1658167989812245107166
+
+                                            postResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse2), postData2);
                                         }
                                         catch (Exception ex)
                                         {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            GlobusLogHelper.log.Error("Error :" + ex.StackTrace);
                                         }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
 
-                                        //string modifiedItem = "name=\"feedback_params" + item;
-                                        //  string feedback_params = string.Empty;
-                                        feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params");
-                                        if (!string.IsNullOrEmpty(feedback_params))
-                                        {
-                                            try
-                                            {
-                                                feedback_params = GlobusHttpHelper.GetParamValue(item, "feedback_params").Replace("&quot;", "\"");
-                                                feedback_params = feedback_params.Replace("&#123;", "");
-                                                feedback_params = feedback_params.Replace("&#125;", "");
-                                                feedback_params = "{" + feedback_params + "}";
-                                                feedback_params = Uri.EscapeDataString(feedback_params);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-
-                                        //  string timeline_log_data = string.Empty;
-                                        timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data");
-                                        if (!string.IsNullOrEmpty(feedback_params))
-                                        {
-                                            try
-                                            {
-                                                timeline_log_data = GlobusHttpHelper.GetParamValue(item, "timeline_log_data").Replace("&quot;", "\"");
-                                                timeline_log_data = timeline_log_data.Replace("&#123;", "");
-                                                timeline_log_data = timeline_log_data.Replace("&#125;", "");
-                                                timeline_log_data = "{" + timeline_log_data + "}";
-                                                timeline_log_data = Uri.EscapeDataString(timeline_log_data);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-
-                                        if (string.IsNullOrEmpty(timeline_log_data))
-                                        {
-                                            //continue;
-                                        }
-
-                                        if (LikeSelectedFanPageLiker)
-                                        {
-                                            tempCounter_LikeSelected++;
-                                            if (!lstLikeSelectedFanPageLiker.Contains(tempCounter_LikeSelected))
-                                            {
-                                                //continue;
-                                            }
-                                        }
-
-                                        string ftentidentifier = string.Empty;
-                                        string postResponse = string.Empty;
-                                        ///Like
+                                    if (wallPageSrc.Contains("setAdsTracking"))
+                                    {
                                         try
                                         {
-                                            //Thread.Sleep(10 * 1000);
-                                            ///By Ajay Due to Post data change...
-
-                                            if (wallPageSrc.Contains("ftentidentifier"))
+                                            string setAdsTracking = wallPageSrc.Substring(wallPageSrc.IndexOf("setAdsTracking"), (wallPageSrc.IndexOf("}]]]}", wallPageSrc.IndexOf("setAdsTracking")) - wallPageSrc.IndexOf("setAdsTracking"))).Replace("setAdsTracking", string.Empty).Trim();
+                                            string[] arrsetAdsTracking = Regex.Split(setAdsTracking, ":");
+                                            foreach (string item1 in arrsetAdsTracking)
                                             {
                                                 try
                                                 {
-                                                    string[] arrftentidentifier = Regex.Split(wallPageSrc, "ftentidentifier");
-                                                    if (arrftentidentifier.Count() > 1)
+                                                    if (item1.Length > 30)
                                                     {
-                                                        if (arrftentidentifier[1].Contains(":"))
+                                                        try
                                                         {
-                                                            ftentidentifier = arrftentidentifier[1].Substring(arrftentidentifier[1].IndexOf(":"), (arrftentidentifier[1].IndexOf(",", arrftentidentifier[1].IndexOf(":")) - arrftentidentifier[1].IndexOf(":"))).Replace(":", string.Empty).Replace("\"", string.Empty).Trim();
+                                                            string partRequest = string.Empty;
+                                                            if (item1.Contains(","))
+                                                            {
+                                                                partRequest = item1.Substring(0, item1.IndexOf(",")).Replace("\"", string.Empty).Trim();
+                                                            }
+                                                            else
+                                                            {
+                                                                partRequest = item1.Replace("\"", string.Empty).Trim();
+                                                            }
+                                                            string response = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.PageManagerFanPageLikerGetResponse + partRequest));
+                                                        }
+                                                        catch (Exception ex)
+                                                        {
+                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                         }
                                                     }
                                                 }
@@ -9895,25 +11022,49 @@ namespace Pages
                                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                                 }
                                             }
-                                            try
-                                            {
-                                                string postData1 = "__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816798981224510745"; //__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=165816798981224510745
-                                                string postResponse1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse1 + item + "&comment_from=" + __user + "&seen_user_fbids=true"), postData1);
-
-                                                //string postData2 = "like_action=true&ft_ent_identifier=" + ftentidentifier + "&source=0&&ft[tn]=%3E%3D&ft[type]=20&__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=1658167989812245107166";//like_action=true&ft_ent_identifier=348874178538877&source=0&client_id=1347961309895%3A42929564&ft[tn]=%3E%3D&ft[type]=20&__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=1658167989812245107166
-                                                string postData2 = "like_action=true&ft_ent_identifier=" + item + "&source=0&&ft[tn]=%3E%3D&ft[type]=20&__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=16581668085704579248";//like_action=true&ft_ent_identifier=348874178538877&source=0&client_id=1347961309895%3A42929564&ft[tn]=%3E%3D&ft[type]=20&__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=1658167989812245107166
-
-                                                postResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostpostResponse2), postData2);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error :" + ex.StackTrace);
-                                            }
                                         }
                                         catch (Exception ex)
                                         {
                                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
+                                    }
+                                    if (postResponse.Contains("Security Check Required"))
+                                    {
+                                        bool IsLoginError = true;
+                                        string content = fbUser.username + ":" + fbUser.password;
+                                        GlobusLogHelper.log.Info("Security Check Required " + FanpageUrl + "  with " + fbUser.username);
+
+                                        lock (lockrqueFanPageURLsFanPageLiker)
+                                        {
+                                            //queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
+                                            Monitor.Pulse(lockrqueFanPageURLsFanPageLiker);
+                                        }
+
+                                        lock (lockrqueFanPageMessagesFanPageLiker)
+                                        {
+                                            //queFanPageMessagesFanPageLiker.Enqueue(message);
+                                            Monitor.Pulse(lockrqueFanPageMessagesFanPageLiker);
+                                        }
+
+                                        return;
+                                    }
+                                    countMessagePost++;
+                                    TotalFanPagelikeCounter++;
+                                    if (countMessagePost > NoOfPostFanPageLikercount)
+                                    {
+                                        break;
+                                    }
+
+                                    GlobusLogHelper.log.Info(countMessagePost + " Like with " + fbUser.username + " on Wall : " + FanpageUrl);
+                                    GlobusLogHelper.log.Debug(countMessagePost + " Like with " + fbUser.username + " on Wall : " + FanpageUrl);
+
+
+                                    ///Comment
+                                    if (!string.IsNullOrEmpty(message))
+                                    {
+
+                                        string postDataComment = "ft_ent_identifier=" + item + "&comment_text=" + message + "&source=0&client_id=1351148351031%3A2449121619&reply_fbid&parent_comment_id&timeline_log_data=" + timeline_log_data + "&ft[tn]=[]&nctr[_mod]=pagelet_timeline_recent&__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816610967529969716";
+                                        string commentResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostcommentResponse), postDataComment);
 
                                         if (wallPageSrc.Contains("setAdsTracking"))
                                         {
@@ -9957,190 +11108,110 @@ namespace Pages
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
                                         }
-                                        if (postResponse.Contains("Security Check Required"))
-                                        {
-                                            bool IsLoginError = true;
-                                            string content = fbUser.username + ":" + fbUser.password;
-                                            GlobusLogHelper.log.Info("Security Check Required " + FanpageUrl + "  with " + fbUser.username);
 
+                                        if (commentResponse.Contains("errorSummary") && commentResponse.Contains("Not Logged In"))
+                                        {
+                                            //FanPagePosterLogger("Not Logged in with : " + Username);
+                                            bool IsLoginError = true;
+                                            string summary = string.Empty;
+                                            try
+                                            {
+                                                summary = GlobusHttpHelper.ParseJson(commentResponse, "errorSummary");
+                                                string errorDescription = GlobusHttpHelper.ParseJson(commentResponse, "errorDescription");
+                                                GlobusLogHelper.log.Info("Error Description: " + errorDescription + " with : " + fbUser.username);
+                                                GlobusLogHelper.log.Debug("Error Description: " + errorDescription + " with : " + fbUser.username);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
                                             lock (lockrqueFanPageURLsFanPageLiker)
                                             {
-                                               //queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
+                                                queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
                                                 Monitor.Pulse(lockrqueFanPageURLsFanPageLiker);
                                             }
-
                                             lock (lockrqueFanPageMessagesFanPageLiker)
                                             {
-                                                //queFanPageMessagesFanPageLiker.Enqueue(message);
+                                                queFanPageMessagesFanPageLiker.Enqueue(message);
                                                 Monitor.Pulse(lockrqueFanPageMessagesFanPageLiker);
                                             }
-
                                             return;
                                         }
-                                        countMessagePost++;
-                                        TotalFanPagelikeCounter++;
-                                        if (countMessagePost > NoOfPostFanPageLikercount)
+                                        if (commentResponse.Contains("errorSummary"))
                                         {
-                                            break;
-                                        }
-
-                                        GlobusLogHelper.log.Info(countMessagePost + " Like with " + fbUser.username + " on Wall : " + FanpageUrl);
-                                        GlobusLogHelper.log.Debug(countMessagePost + " Like with " + fbUser.username + " on Wall : " + FanpageUrl);
-
-
-                                        ///Comment
-                                        if (!string.IsNullOrEmpty(message))
-                                        {
-
-                                            string postDataComment = "ft_ent_identifier=" + item + "&comment_text=" + message + "&source=0&client_id=1351148351031%3A2449121619&reply_fbid&parent_comment_id&timeline_log_data=" + timeline_log_data + "&ft[tn]=[]&nctr[_mod]=pagelet_timeline_recent&__user=" + __user + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=165816610967529969716";
-                                            string commentResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerFanPageLikerPostcommentResponse), postDataComment);
-
-                                            if (wallPageSrc.Contains("setAdsTracking"))
+                                            try
                                             {
-                                                try
-                                                {
-                                                    string setAdsTracking = wallPageSrc.Substring(wallPageSrc.IndexOf("setAdsTracking"), (wallPageSrc.IndexOf("}]]]}", wallPageSrc.IndexOf("setAdsTracking")) - wallPageSrc.IndexOf("setAdsTracking"))).Replace("setAdsTracking", string.Empty).Trim();
-                                                    string[] arrsetAdsTracking = Regex.Split(setAdsTracking, ":");
-                                                    foreach (string item1 in arrsetAdsTracking)
-                                                    {
-                                                        try
-                                                        {
-                                                            if (item1.Length > 30)
-                                                            {
-                                                                try
-                                                                {
-                                                                    string partRequest = string.Empty;
-                                                                    if (item1.Contains(","))
-                                                                    {
-                                                                        partRequest = item1.Substring(0, item1.IndexOf(",")).Replace("\"", string.Empty).Trim();
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        partRequest = item1.Replace("\"", string.Empty).Trim();
-                                                                    }
-                                                                    string response = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.PageManagerFanPageLikerGetResponse + partRequest));
-                                                                }
-                                                                catch (Exception ex)
-                                                                {
-                                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                                }
-                                                            }
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
+                                                string summary = GlobusHttpHelper.ParseJson(commentResponse, "errorSummary");
+                                                string errorDescription = GlobusHttpHelper.ParseJson(commentResponse, "errorDescription");
+
+                                                GlobusLogHelper.log.Info("Posting Error: " + summary + " | Error Description: " + errorDescription + " with: " + fbUser.username);
+                                                GlobusLogHelper.log.Debug("Posting Error: " + summary + " | Error Description: " + errorDescription + " with: " + fbUser.username);
+
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
 
-                                            if (commentResponse.Contains("errorSummary") && commentResponse.Contains("Not Logged In"))
-                                            {
-                                                //FanPagePosterLogger("Not Logged in with : " + Username);
-                                                bool IsLoginError = true;
-                                                string summary = string.Empty;
-                                                try
-                                                {
-                                                    summary = GlobusHttpHelper.ParseJson(commentResponse, "errorSummary");
-                                                    string errorDescription = GlobusHttpHelper.ParseJson(commentResponse, "errorDescription");
-                                                    GlobusLogHelper.log.Info("Error Description: " + errorDescription + " with : " + fbUser.username);
-                                                    GlobusLogHelper.log.Debug("Error Description: " + errorDescription + " with : " + fbUser.username);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-                                                lock (lockrqueFanPageURLsFanPageLiker)
-                                                {
-                                                    queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
-                                                    Monitor.Pulse(lockrqueFanPageURLsFanPageLiker);
-                                                }
-                                                lock (lockrqueFanPageMessagesFanPageLiker)
-                                                {
-                                                    queFanPageMessagesFanPageLiker.Enqueue(message);
-                                                    Monitor.Pulse(lockrqueFanPageMessagesFanPageLiker);
-                                                }
-                                                return;
-                                            }
-                                            if (commentResponse.Contains("errorSummary"))
-                                            {
-                                                try
-                                                {
-                                                    string summary = GlobusHttpHelper.ParseJson(commentResponse, "errorSummary");
-                                                    string errorDescription = GlobusHttpHelper.ParseJson(commentResponse, "errorDescription");
-
-                                                    GlobusLogHelper.log.Info("Posting Error: " + summary + " | Error Description: " + errorDescription + " with: " + fbUser.username);
-                                                    GlobusLogHelper.log.Debug("Posting Error: " + summary + " | Error Description: " + errorDescription + " with: " + fbUser.username);
-
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-
-                                                lock (lockrqueFanPageURLsFanPageLiker)
-                                                {
-                                                   // queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
-                                                    Monitor.Pulse(lockrqueFanPageURLsFanPageLiker);
-                                                }
-
-                                                lock (lockrqueFanPageMessagesFanPageLiker)
-                                                {
-                                                   // queFanPageMessagesFanPageLiker.Enqueue(message);
-                                                    Monitor.Pulse(lockrqueFanPageMessagesFanPageLiker);
-                                                }
-
-                                                countMessagePost++;
-                                                continue;
-                                            }
-
-                                            //Write to csv
-                                            string CSVHeader = "UserName" + "," + "FanpageUrl" + "Message";
-                                            string CSV_Content = fbUser.username + "," + FanpageUrl + "," + message.Replace(",", ";");
-                                            //CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.path_LikedComments);
-                                            GlobusLogHelper.log.Info("Posted on " + (countMessagePost) + " comments with " + fbUser.username + " on Wall : " + FanpageUrl);
-                                            GlobusLogHelper.log.Debug("Posted on " + (countMessagePost) + " comments with " + fbUser.username + " on Wall : " + FanpageUrl);
-
-                                        
-                                            //countMessagePost++;
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        try
-                                        {
                                             lock (lockrqueFanPageURLsFanPageLiker)
                                             {
-                                                //queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
+                                                // queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
                                                 Monitor.Pulse(lockrqueFanPageURLsFanPageLiker);
                                             }
 
                                             lock (lockrqueFanPageMessagesFanPageLiker)
                                             {
-                                              // queFanPageMessagesFanPageLiker.Enqueue(message);
+                                                // queFanPageMessagesFanPageLiker.Enqueue(message);
                                                 Monitor.Pulse(lockrqueFanPageMessagesFanPageLiker);
                                             }
+
+                                            countMessagePost++;
+                                            continue;
                                         }
-                                        catch (Exception ex)
+
+                                        //Write to csv
+                                        string CSVHeader = "UserName" + "," + "FanpageUrl" + "Message";
+                                        string CSV_Content = fbUser.username + "," + FanpageUrl + "," + message.Replace(",", ";");
+                                        //CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.path_LikedComments);
+                                        GlobusLogHelper.log.Info("Posted on " + (countMessagePost) + " comments with " + fbUser.username + " on Wall : " + FanpageUrl);
+                                        GlobusLogHelper.log.Debug("Posted on " + (countMessagePost) + " comments with " + fbUser.username + " on Wall : " + FanpageUrl);
+
+
+                                        //countMessagePost++;
+                                    }
+                                }
+                                catch
+                                {
+                                    try
+                                    {
+                                        lock (lockrqueFanPageURLsFanPageLiker)
                                         {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            //queFanPageURLsFanPageLiker.Enqueue(FanpageUrl);
+                                            Monitor.Pulse(lockrqueFanPageURLsFanPageLiker);
+                                        }
+
+                                        lock (lockrqueFanPageMessagesFanPageLiker)
+                                        {
+                                            // queFanPageMessagesFanPageLiker.Enqueue(message);
+                                            Monitor.Pulse(lockrqueFanPageMessagesFanPageLiker);
                                         }
                                     }
-
-
-                                    int delayInSeconds1 = Utils.GenerateRandom(minDelayFanPageLiker * 1000, maxDelayFanPageLiker * 1000);
-                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds1 / 1000 + " Seconds With UserName : " + fbUser.username);
-                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds1 / 1000 + " Seconds With UserName : " + fbUser.username);
-                                    Thread.Sleep(delayInSeconds1);
-
-                                    goto StartAgain;
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
                                 }
+
+
+                                int delayInSeconds1 = Utils.GenerateRandom(minDelayFanPageLiker * 1000, maxDelayFanPageLiker * 1000);
+                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds1 / 1000 + " Seconds With UserName : " + fbUser.username);
+                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds1 / 1000 + " Seconds With UserName : " + fbUser.username);
+                                Thread.Sleep(delayInSeconds1);
+
+                                goto StartAgain;
                             }
-                            //countMessagePost = 0;
+                        }
+                        //countMessagePost = 0;
                         catch (Exception ex)
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
@@ -10355,9 +11426,9 @@ namespace Pages
                             string[] ArrFrom = Regex.Split(wallPageSrc, "uiUnifiedStory uiStreamStory genericStreamStory aid_Array uiListItem uiListLight uiListVerticalItemBorder");
                             ArrFrom = Regex.Split(wallPageSrc, "timelineUnitContainer");
                             List<string> FanpgeData = new List<string>();
-                           
 
-                           
+
+
                             //Code changes made by Lijo
                             string pageID = string.Empty;
                             string profile_id = string.Empty;
@@ -10411,21 +11482,21 @@ namespace Pages
                                 }
                             }
                             FanpgeData = FanpgeData.Distinct().ToList();
-                         
+
                             int count = 0;
                             while (true)
                             {
 
-                               // wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A" + segment_index.ToString() + "%2C%22page_index%22%3A" + page_index.ToString() + "%2C%22page%22%3A" + pageID + "%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A" + profile_id + "%2C%22start%22%3A" + start.ToString() + "%2C%22end%22%3A" + end.ToString() + "%2C%22query_type%22%3A" + query_type.ToString() + "%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A" + section_index.ToString() + "%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A" + count.ToString() + "%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171%20HTTP/1.1"));
+                                // wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A" + segment_index.ToString() + "%2C%22page_index%22%3A" + page_index.ToString() + "%2C%22page%22%3A" + pageID + "%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A" + profile_id + "%2C%22start%22%3A" + start.ToString() + "%2C%22end%22%3A" + end.ToString() + "%2C%22query_type%22%3A" + query_type.ToString() + "%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A" + section_index.ToString() + "%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A" + count.ToString() + "%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171%20HTTP/1.1"));
                                 wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/ajax/pagelet/generic.php/PagePostsSectionPagelet?data=%7B%22segment_index%22%3A" + segment_index.ToString() + "%2C%22page_index%22%3A" + page_index.ToString() + "%2C%22page%22%3A" + pageID + "%2C%22column%22%3A%22main%22%2C%22post_section%22%3A%7B%22profile_id%22%3A" + profile_id + "%2C%22start%22%3A" + start.ToString() + "%2C%22end%22%3A" + end.ToString() + "%2C%22query_type%22%3A" + query_type.ToString() + "%2C%22filter%22%3A1%2C%22is_pages_redesign%22%3Atrue%7D%2C%22section_index%22%3A" + section_index.ToString() + "%2C%22hidden%22%3Afalse%2C%22posts_loaded%22%3A" + count.ToString() + "%2C%22show_all_posts%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7n8ahyj2qm9udDgDxyKAEWy6zECiq78hACF3qGEVFLFwxBxCbzESu49UJ0&__req=9&__rev=1330171"));
-                               
-                                
-                                if (wallPageSrc.Contains("/posts\\/") || wallPageSrc.Contains("story_fbid=") || wallPageSrc.Contains("target_fbid=")||wallPageSrc.Contains("\\/photos\\/"))
+
+
+                                if (wallPageSrc.Contains("/posts\\/") || wallPageSrc.Contains("story_fbid=") || wallPageSrc.Contains("target_fbid=") || wallPageSrc.Contains("\\/photos\\/"))
                                 {
 
                                     ArrFrom1 = Regex.Split(wallPageSrc, "timelineUnitContainer");
                                     #region Commented Old Code
-                                  /*  foreach (string itemFan in ArrFrom1)
+                                    /*  foreach (string itemFan in ArrFrom1)
                                     {
                                         try
                                         {
@@ -10505,7 +11576,7 @@ namespace Pages
                                     }*/
                                     #endregion
 
-                                    wallPageSrc = wallPageSrc.Replace("\\",string.Empty);
+                                    wallPageSrc = wallPageSrc.Replace("\\", string.Empty);
 
                                     ArrFrom1 = Regex.Split(wallPageSrc, "href=");
                                     foreach (string hrefElement in ArrFrom1)
@@ -10517,7 +11588,7 @@ namespace Pages
                                                 string[] itemSplits = hrefElement.Split('/');
                                                 if (rxValidateNumber.IsMatch(itemSplits[4]) && !rxSymbol.IsMatch(itemSplits[4]))
                                                 {
-                                                FanpgeData.Add(itemSplits[4]);
+                                                    FanpgeData.Add(itemSplits[4]);
                                                 }
                                             }
 
@@ -10526,7 +11597,7 @@ namespace Pages
                                                 string[] itemSplits = hrefElement.Split('/');
                                                 if (rxValidateNumber.IsMatch(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"'))) && !rxSymbol.IsMatch(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"'))))
                                                 {
-                                                FanpgeData.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
+                                                    FanpgeData.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
                                                 }
                                             }
                                         }
@@ -10534,7 +11605,7 @@ namespace Pages
                                         {
                                             GlobusLogHelper.log.Error(ex.Message);
                                         }
-                                    
+
                                     }
 
                                     FanpgeData = FanpgeData.Distinct().ToList();
@@ -10575,7 +11646,7 @@ namespace Pages
                                 }
                             }
                             string feedback_params = string.Empty;
-                           
+
                             int tempCounter_LikeSelected = 0;
                             foreach (string item in FanpgeData)
                             {
@@ -10974,7 +12045,7 @@ namespace Pages
         {
             try
             {
-              
+
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
                 int noOfPosts = NoOfPostFanPageLikercount;
@@ -10997,12 +12068,12 @@ namespace Pages
 
                 //noOfPosts = intNoOfPost;
 
-               
+
 
 
                 lstFanPageUrlsFanPageLiker = lstFanPageUrlsFanPageLiker.Distinct().ToList();
                 List<string> lstFanPagePostURLs = lstFanPageCommentsFanPageLiker.Distinct().ToList();
-             
+
 
                 GlobusLogHelper.log.Info("Please Wait------------!");
                 GlobusLogHelper.log.Debug("Please Wait------------!");
@@ -11055,7 +12126,7 @@ namespace Pages
                             continue;
                         }
 
-                       // string[] ArrFrom = Regex.Split(wallPageSrc, "uiUnifiedStory uiStreamStory genericStreamStory aid_Array uiListItem uiListLight uiListVerticalItemBorder");
+                        // string[] ArrFrom = Regex.Split(wallPageSrc, "uiUnifiedStory uiStreamStory genericStreamStory aid_Array uiListItem uiListLight uiListVerticalItemBorder");
                         string[] ArrFrom = Regex.Split(wallPageSrc, "timelineUnitContainer");
                         if (ArrFrom.Length == 1)
                         {
@@ -11127,8 +12198,8 @@ namespace Pages
                         }
                         if (string.IsNullOrEmpty(post_form_id))
                         {
-                            post_form_id = Utils.getBetween(wallPageSrc, "post_fbid", "}").Replace("\"","").Replace(":","");
-                          
+                            post_form_id = Utils.getBetween(wallPageSrc, "post_fbid", "}").Replace("\"", "").Replace(":", "");
+
                         }
 
                         //if (FanpgeData.Count < intNoOfPost)
@@ -11234,7 +12305,7 @@ namespace Pages
                                 string postResponse = string.Empty;
                                 string link_data = string.Empty;
 
-                                if (CountPostWall > noOfPosts || CountPostWall==1)
+                                if (CountPostWall > noOfPosts || CountPostWall == 1)
                                 {
                                     break;
                                 }
@@ -11242,13 +12313,13 @@ namespace Pages
                                 try
                                 {
                                     add_comment_text_text = Uri.EscapeDataString(lstFanPageCommentsFanPageLiker[new Random().Next(0, lstFanPageCommentsFanPageLiker.Count)]);
-                                    add_comment_text = add_comment_text_text.Replace(" ",string.Empty);
+                                    add_comment_text = add_comment_text_text.Replace(" ", string.Empty);
                                 }
                                 catch (Exception ex)
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-                                
+
                                 if (item.Contains("data-ft="))
                                 {
                                     try
@@ -11548,7 +12619,7 @@ namespace Pages
 
                                         //continue;
                                         break;
-                                       
+
                                     }
                                     catch (Exception ex)
                                     {
@@ -11586,7 +12657,7 @@ namespace Pages
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-                               
+
                             }
                             catch (Exception ex)
                             {
@@ -11607,8 +12678,10 @@ namespace Pages
             ///  ProcessCompleted
         }
 
-       
+
         int FanUrlCounter = 0;
+        public string CommentonRecentPostExportFilePath = string.Empty;
+        public string LikePostExportFilePath = string.Empty;
         public void CommentOnRescentPost(ref FacebookUser fbUser, List<string> lstFanPageUrlsFanPageLiker, List<string> lstFanPageCommentsFanPageLiker)
         {
             try
@@ -11635,114 +12708,164 @@ namespace Pages
                     return;
                 }
 
-                foreach (string FanPageUrl in queFanPageURLsFanPageLiker)
+                foreach (string FanPageUrl in lstFanPageUrlsFanPageLiker)
+                // string FanPageUrl = queFanPageURLsFanPageLiker.Dequeue();
                 {
-                    GlobusLogHelper.log.Info("Start Comment On Post On the URL : " + FanPageUrl + "  with " + fbUser.username);
-                    GlobusLogHelper.log.Debug("Start Comment On Post On the URL : " + FanPageUrl + "  with " + fbUser.username);
-                    string FanUrl = string.Empty;
-                    string FanName = string.Empty;
-                    List<string> lstPostID = new List<string>();
-                    FanUrl = FanPageUrl;
-                    FanUrlCounter++;
-
-                    
-                    if (FanUrl.Contains("?sk=wall"))
+                    try
                     {
-                        FanUrl = FanUrl.Remove(FanUrl.IndexOf("?sk=wall"));
-                    }
+                        GlobusLogHelper.log.Info("Start Comment On Post On the URL : " + FanPageUrl + "  with " + fbUser.username);
+                        GlobusLogHelper.log.Debug("Start Comment On Post On the URL : " + FanPageUrl + "  with " + fbUser.username);
+                        string FanUrl = string.Empty;
+                        string FanName = string.Empty;
+                        List<string> lstPostID = new List<string>();
+                        FanUrl = FanPageUrl;
+                        FanUrlCounter++;
 
-                    FanUrl = FanUrl + "?sk=wall";
 
-                    string FanPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanUrl));
-                    if (string.IsNullOrEmpty(FanPageSrc))
-                    {
-                        FanPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanUrl));
-                    }
-
-                    if (string.IsNullOrEmpty(FanPageSrc))
-                    {
-                        GlobusLogHelper.log.Info("The page could not be found :- " + FanPageSrc);
-                        GlobusLogHelper.log.Debug("The page could not be found :- " + FanPageSrc);
-                        continue;
-                    }
-                     fb_dtsg= GlobusHttpHelper.Get_fb_dtsg(FanPageSrc);
-                    string[] splitFanUrl=FanUrl.Split('/');
-                    FanName = splitFanUrl[splitFanUrl.Length - 1].Split('?')[0];
-                    string[] fanDetails = Regex.Split(FanPageSrc, "href=");
-                    foreach (string item in fanDetails)
-                    {
-                        try
+                        if (FanUrl.Contains("?sk=wall"))
                         {
-                            if (item.Contains(FanName + "/photos"))
-                            {
-                                string[] itemSplits = item.Split('/');
-                                lstPostID.Add(itemSplits[4]);
-                            }
+                            FanUrl = FanUrl.Remove(FanUrl.IndexOf("?sk=wall"));
+                        }
 
-                            if (item.Contains(FanName + "/posts"))
+                        FanUrl = FanUrl + "?sk=wall";
+
+                        string FanPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanUrl));
+                        if (string.IsNullOrEmpty(FanPageSrc))
+                        {
+                            FanPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanUrl));
+                        }
+
+                        if (string.IsNullOrEmpty(FanPageSrc))
+                        {
+                            GlobusLogHelper.log.Info("The page could not be found :- " + FanPageSrc);
+                            GlobusLogHelper.log.Debug("The page could not be found :- " + FanPageSrc);
+                            //continue;  updated for Client task
+                        }
+                        fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(FanPageSrc);
+                        string[] splitFanUrl = FanUrl.Split('/');
+                        FanName = splitFanUrl[splitFanUrl.Length - 1].Split('?')[0];
+                        string[] fanDetails = Regex.Split(FanPageSrc, "href=");
+                        Regex regex = new Regex(@"^\d+$");
+                        foreach (string item in fanDetails)
+                        {
+                            try
                             {
-                                string[] itemSplits = item.Split('/');
-                                lstPostID.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
+                                if (item.Contains(FanName + "/photos"))
+                                {
+                                    if (!item.Contains("Cover Photo") && !item.Contains("profilePic img"))
+                                    {
+                                        string[] itemSplits = item.Split('/');
+                                        if (regex.IsMatch(itemSplits[4]))
+                                        {
+                                            lstPostID.Add(itemSplits[4]);
+                                        }
+                                    }
+                                }
+
+                                if (item.Contains(FanName + "/posts"))
+                                {
+                                    if (!item.Contains("profilePic img"))
+                                    {
+                                        string[] itemSplits = item.Split('/');
+                                        if (regex.IsMatch(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"'))))
+                                        {
+                                            lstPostID.Add(itemSplits[3].Substring(0, itemSplits[3].IndexOf('"')));
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error(ex.Message);
                             }
                         }
-                        catch (Exception ex)
+                        lstPostID = lstPostID.Distinct().ToList();
+                        // lstPostID.RemoveAt(0);
+                        // lstPostID.RemoveAt(1);
+
+
+
+                        //foreach (string id in lstPostID)
+                        int noofPost = 5;
+                        if (lstPostID.Count < NoOfPostFanPageLikercount)
                         {
-                            GlobusLogHelper.log.Error(ex.Message);
-                        }
-                    }
-                    lstPostID = lstPostID.Distinct().ToList();
-                    //foreach (string id in lstPostID)
-                    for (int id = 0; id<5; id++)
-                    {
-                        if (queFanPageMessagesFanPageLiker.Count > 0)
-                        {
-                            comment = queFanPageMessagesFanPageLiker.Dequeue();
+                            noofPost = lstPostID.Count;
                         }
                         else
                         {
-                            comment = lstFanPageCommentsFanPageLiker[new Random().Next(0, lstFanPageCommentsFanPageLiker.Count - 1)];
+                            noofPost = NoOfPostFanPageLikercount;
                         }
-                        try
+                        string CommentedIDs = string.Empty;
+                        for (int id = 0; id < noofPost; id++)
                         {
-                            comment = Uri.EscapeDataString(comment);
-                            postData = "ft_ent_identifier=" + lstPostID[id] + "&comment_text=" + comment + "&source=1&client_id=1420196209519%3A3472907667&reply_fbid&parent_comment_id&rootid=u_ps_0_0_i&clp=&attached_sticker_fbid=0&attached_photo_fbid=0&&&ft[tn]=[]&ft[fbfeed_location]=36&nctr[_mod]=pagelet_timeline_main_column&av=" + userId + "&__user=" + userId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxCbzESu49UJ6K4Qmmey8qUS8zU&__req=h&fb_dtsg=" + fb_dtsg + "&ttstamp=" + phstamp + "&__rev=1547526";
-                            postresp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/ufi/add_comment.php"), postData);
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error(ex.Message);
-                        }
-                        if (postresp.Contains("\"comments\":[{\"id\""))
-                        {
-                            GlobusLogHelper.log.Info("Commented with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
-                            GlobusLogHelper.log.Debug("Commented with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
-                        }
-                        else
-                        {
-                            GlobusLogHelper.log.Info("Unable To Comment with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
-                            GlobusLogHelper.log.Debug("Unable To Comment with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
-                        }
-                        try
-                        {
-                            int randomdelay = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
-                            GlobusLogHelper.log.Info("Delaying For " + randomdelay + " Seconds");
-                            GlobusLogHelper.log.Debug("Delaying For " + randomdelay + " Seconds");
-                            Thread.Sleep(randomdelay * 1000);
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error(ex.Message);
-                        }
+                            if (queFanPageCommentsFanPageLiker.Count > 0)
+                            {
+                                comment = queFanPageCommentsFanPageLiker.Dequeue();
+                            }
+                            else
+                            {
+                                comment = lstFanPageCommentsFanPageLiker[new Random().Next(0, lstFanPageCommentsFanPageLiker.Count - 1)];
+                            }
+                            try
+                            {
+                                comment = Uri.EscapeDataString(comment);
+                                postData = "ft_ent_identifier=" + lstPostID[id] + "&comment_text=" + comment + "&source=1&client_id=1420196209519%3A3472907667&reply_fbid&parent_comment_id&rootid=u_ps_0_0_i&clp=&attached_sticker_fbid=0&attached_photo_fbid=0&&&ft[tn]=[]&ft[fbfeed_location]=36&nctr[_mod]=pagelet_timeline_main_column&av=" + userId + "&__user=" + userId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxCbzESu49UJ6K4Qmmey8qUS8zU&__req=h&fb_dtsg=" + fb_dtsg + "&ttstamp=" + phstamp + "&__rev=1547526";
+                                postresp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/ufi/add_comment.php"), postData);
+                                CommentedIDs = CommentedIDs + "<>" + lstPostID[id];
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error(ex.Message);
+                            }
+                            if (postresp.Contains(comment) || postresp.Contains("\"comments\":[{\"body\":"))
+                            {
+                                GlobusLogHelper.log.Info("Commented with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
+                                GlobusLogHelper.log.Debug("Commented with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
 
+                            }
+                            else
+                            {
+                                GlobusLogHelper.log.Info("Unable To Comment with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
+                                GlobusLogHelper.log.Debug("Unable To Comment with : " + fbUser.username + "on Fan Page " + FanPageUrl + "On Post Id" + lstPostID[id]);
+                            }
+                            try
+                            {
+                                int randomdelay = new Random().Next(minDelayFanPageLiker, maxDelayFanPageLiker);
+                                GlobusLogHelper.log.Info("Delaying For " + randomdelay + " Seconds");
+                                GlobusLogHelper.log.Debug("Delaying For " + randomdelay + " Seconds");
+                                Thread.Sleep(randomdelay * 1000);
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error(ex.Message);
+                            }
+
+
+                        }
+                        try
+                        {
+
+                            string CSVHeader = "UserAccount" + "," + "FanPageUrl" + "," + "Comment" + "," + "On Post" + "," + "DateTime";
+                            string CSV_Content = fbUser.username + "," + FanPageUrl + "," + Uri.UnescapeDataString(comment) + "," + CommentedIDs + "," + DateTime.Now;
+                            Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, CommentonRecentPostExportFilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error  >>>" + ex.StackTrace);
+                        }
+                        if ((NoOfPostFanPageLikercount / FanUrlCounter) == 1)
+                        {
+                            FanUrlCounter = 0;
+                            //break;
+                        }
                     }
-                    if ((NoOfPostFanPageLikercount / FanUrlCounter) == 1)
+                    catch (Exception ex)
                     {
-                        FanUrlCounter = 0;
-                        break;
+                        GlobusLogHelper.log.Error(ex.Message);
                     }
-                
                 }
-            
+
+
             }
             catch (Exception ex)
             {
@@ -11837,7 +12960,7 @@ namespace Pages
             set;
         }
 
-        
+
 
         #endregion
 
@@ -11984,7 +13107,7 @@ namespace Pages
             {
                 try
                 {
-                    
+
 
                     //if (!isStopWallPoster)
                     {
@@ -12887,7 +14010,7 @@ namespace Pages
                                 ResponseWallPost2 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), postDataWalllpost1112, "");
 
                                 int length2 = ResponseWallPost2.Length;
-                              
+
                                 if (length > 11000 && ResponseWallPost.Contains("jsmods") && ResponseWallPost.Contains("XHPTemplate"))
                                 {
                                     TotalNoOfWallPoster_Counter++;
@@ -13342,7 +14465,7 @@ namespace Pages
                             ResponseWallPost2 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.WallPosterPostAjaxUpdateStatusUrl), postDataWalllpost1112, "");
 
                             int length2 = ResponseWallPost2.Length;
-                          
+
 
                             if (length > 11000 && ResponseWallPost.Contains("jsmods") && ResponseWallPost.Contains("XHPTemplate"))
                             {
@@ -13757,7 +14880,7 @@ namespace Pages
                                 Dialogposturl = FBGlobals.Instance.PostPicOnWallPostAjaxComposeUriHashUrl;
                                 res = HttpHelper.postFormData(new Uri(Dialogposturl), DialogPostData);
                             }
-                           
+
                         }
                         catch (Exception ex)
                         {
@@ -14182,7 +15305,7 @@ namespace Pages
             }
         }
 
-        
+
         public void StartMultiThreadsCommentLiker(object parameters)
         {
             try
@@ -14221,7 +15344,7 @@ namespace Pages
                         }
 
                         if (objFacebookUser.isloggedin)
-                        {                            
+                        {
                             //Like  and Post Comment
                             //TargetedLike Comment
 
@@ -14256,7 +15379,7 @@ namespace Pages
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                }        
+                }
             }
             catch (Exception ex)
             {
@@ -14267,7 +15390,7 @@ namespace Pages
             {
                 try
                 {
-                  //  if (!isStopPostPicOnWall)
+                    //  if (!isStopPostPicOnWall)
                     {
                         lock (lockrThreadControllerPostPicOnWall)
                         {
@@ -14293,16 +15416,16 @@ namespace Pages
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
-        }       
+        }
 
         public void PostOnFanPageCommentWithURLAndItsImage(ref FacebookUser fbUser)
         {
             string Username = fbUser.username;
             string Password = fbUser.password;
             try
-            {              
+            {
 
-                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;                
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
 
                 GlobusLogHelper.log.Info("Please Wait....");
@@ -14310,416 +15433,433 @@ namespace Pages
 
                 lstFanPageURLs = lstFanPageURLs.Distinct().ToList();
 
-               List<string> lstPostMsg = lstMessageCollectionCommentLiker.Distinct().ToList();
+                List<string> lstPostMsg = lstMessageCollectionCommentLiker.Distinct().ToList();
 
-               string user = "";
-               string fdUserDesignation = "";
-               string feedbackParams = "";
-               #region MyRegion
-               string timelineUfi = "";
-               string timelineLogData = "";
-               string translate_on_load = "";
-               string add_comment_text_text = "";
-               string add_comment_text = "";
-               string comment_replace = "";
-               string comment = "1";
-               string __a = "1";
-               string UsreId = "";
-               string charset_test = ""; 
-               #endregion
-               string post_form_id = string.Empty;
-               string phstamp = Utils.GenerateTimeStamp();
+                string user = "";
+                string fdUserDesignation = "";
+                string feedbackParams = "";
+                #region MyRegion
+                string timelineUfi = "";
+                string timelineLogData = "";
+                string translate_on_load = "";
+                string add_comment_text_text = "";
+                string add_comment_text = "";
+                string comment_replace = "";
+                string comment = "1";
+                string __a = "1";
+                string UsreId = "";
+                string charset_test = "";
+                #endregion
+                string post_form_id = string.Empty;
+                string phstamp = Utils.GenerateTimeStamp();
 
 
-               int postsCount = 0;
- 
-                foreach (string pageUrl in lstFanPageUrlCollectionCommentLiker )
+                int postsCount = 0;
+
+                foreach (string pageUrl in lstFanPageUrlCollectionCommentLiker)
                 {
-                  
-                        try
+
+                    try
+                    {
+                        int CountPostWall = 1;
+                        string FanpageUrl = pageUrl;
+
+
+                        if (FanpageUrl.Contains("?sk=wall"))
                         {
-                            int CountPostWall = 1;
-                            string FanpageUrl = pageUrl;
-
-
-                            if (FanpageUrl.Contains("?sk=wall"))
+                            try
                             {
-                                try
-                                {
-                                    FanpageUrl = FanpageUrl.Remove(FanpageUrl.IndexOf("?sk=wall"));
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
+                                FanpageUrl = FanpageUrl.Remove(FanpageUrl.IndexOf("?sk=wall"));
                             }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
 
-                            FanpageUrl = FanpageUrl + "?sk=wall";
+                        FanpageUrl = FanpageUrl + "?sk=wall";
 
-                            string wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));
+                        string wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));
+                        if (string.IsNullOrEmpty(wallPageSrc))
+                        {
+                            wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));
                             if (string.IsNullOrEmpty(wallPageSrc))
                             {
+                                FanpageUrl = FanpageUrl.Replace("?sk=wall", "");
                                 wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));
-                                if (string.IsNullOrEmpty(wallPageSrc))
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(wallPageSrc))
+                        {
+                            GlobusLogHelper.log.Debug("The page could not be found :- " + pageUrl);
+                            GlobusLogHelper.log.Info("The page could not be found :- " + pageUrl);
+                            continue;
+                        }
+
+
+                        List<string> FanpgeData = new List<string>();
+
+                        //    To Find all post data of a page
+
+                        //******************************************************************
+                        string[] Arraggregation_id = Regex.Split(wallPageSrc, "aggregation_id");
+
+                        foreach (string itemFan in Arraggregation_id)
+                        {
+                            try
+                            {
+                                if (!itemFan.Contains("<!DOCTYPE"))
                                 {
-                                    FanpageUrl = FanpageUrl.Replace("?sk=wall", "");
-                                    wallPageSrc = HttpHelper.getHtmlfromUrl(new Uri(FanpageUrl));
+                                    if (itemFan.Contains("/form") || itemFan.Contains("aggregation_id"))
+                                    {
+                                        string tempFan = itemFan;
+
+                                        FanpgeData.Add(tempFan);
+                                    }
                                 }
                             }
-
-                            if (string.IsNullOrEmpty(wallPageSrc))
+                            catch (Exception ex)
                             {
-                                GlobusLogHelper.log.Debug("The page could not be found :- " + pageUrl);
-                                GlobusLogHelper.log.Info("The page could not be found :- " + pageUrl);
-                                continue;
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
+                        }
 
 
-                            List<string> FanpgeData = new List<string>();
+                        // ****************************************************************** 
 
-                            //    To Find all post data of a page
+                        string[] ArrFrom = Regex.Split(wallPageSrc, "uiUnifiedStory uiStreamStory genericStreamStory aid");
 
-                            //******************************************************************
-                            string[] Arraggregation_id = Regex.Split(wallPageSrc, "aggregation_id");
 
-                            foreach (string itemFan in Arraggregation_id)
+                        foreach (string itemFan in ArrFrom)
+                        {
+                            try
                             {
-                                try
+                                if (!itemFan.Contains("<!DOCTYPE"))
                                 {
-                                    if (!itemFan.Contains("<!DOCTYPE"))
+                                    if (itemFan.Contains("/form"))
                                     {
-                                        if (itemFan.Contains("/form") || itemFan.Contains("aggregation_id"))
+                                        try
                                         {
                                             string tempFan = itemFan;
-
+                                            tempFan = tempFan.Substring(0, tempFan.IndexOf("/form"));
                                             FanpgeData.Add(tempFan);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
                                     }
                                 }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
                             }
-
-
-                            // ****************************************************************** 
-
-                            string[] ArrFrom = Regex.Split(wallPageSrc, "uiUnifiedStory uiStreamStory genericStreamStory aid");
-
-
-                            foreach (string itemFan in ArrFrom)
+                            catch (Exception ex)
                             {
-                                try
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+
+                        if (ArrFrom.Length == 1)
+                        {
+                            try
+                            {
+
+                                ArrFrom = Regex.Split(wallPageSrc, "<li ");
+                                foreach (string itemFan in ArrFrom)
                                 {
                                     if (!itemFan.Contains("<!DOCTYPE"))
                                     {
-                                        if (itemFan.Contains("/form"))
+                                        try
                                         {
-                                            try
+
+                                            if (itemFan.Contains("fbTimelineUnit fbTimelineTwoColumn clearfix") || itemFan.Contains("fbTimelineUnit lastCapsule fbTimelineTwoColumn clearfix")
+                                                || itemFan.Contains("fbTimelineUnit firstUnit fbTimelineTwoColumn clearfix") || itemFan.Contains("fbTimelineUnit firstUnit lastCapsule fbTimelineTwoColumn clearfix")
+                                                || itemFan.Contains("fbTimelineUnit lastCapsule fbTimelineTwoColumn clearfix"))
                                             {
-                                                string tempFan = itemFan;
-                                                tempFan = tempFan.Substring(0, tempFan.IndexOf("/form"));
-                                                FanpgeData.Add(tempFan);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+
+                                                FanpgeData.Add(itemFan);
                                             }
                                         }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
                                     }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+
+                        user = GlobusHttpHelper.Get_UserID(wallPageSrc);
+
+
+
+                        if (wallPageSrc.Contains("post_form_id"))
+                        {
+                            post_form_id = GlobusHttpHelper.GetParamValue(wallPageSrc, "post_form_id");
+                        }
+
+                        //if (FanpgeData.Count < intNoOfPost)
+                        {
+                            try
+                            {
+                                //find otherpost from JavaScript
+
+                                string profileId = string.Empty;
+                                string End = string.Empty;
+                                string AjaxPip_token = string.Empty;
+                                string OtherData = string.Empty;
+
+                                //Break string from profile id where we find page posts.
+                                try
+                                {
+                                    OtherData = System.Text.RegularExpressions.Regex.Split(wallPageSrc, "{\"profile_id\":")[1];
+                                }
+                                catch (Exception ex)
+                                {
+                                    //  OtherData = System.Text.RegularExpressions.Regex.Split(wallPageSrc, "profile_id")[1];
+                                }
+
+                                try
+                                {
+                                    //get profile Id 
+                                    profileId = OtherData.Substring(0, OtherData.IndexOf("start")).Replace(",\"", string.Empty);
                                 }
                                 catch (Exception ex)
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
-                            }
 
-                            if (ArrFrom.Length == 1)
-                            {
                                 try
                                 {
+                                    //get end of search query 
+                                    End = OtherData.Substring(OtherData.IndexOf("end"), OtherData.IndexOf("query_type") - OtherData.IndexOf("end")).Replace(",\"", string.Empty).Replace("end\":", string.Empty);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
 
-                                    ArrFrom = Regex.Split(wallPageSrc, "<li ");
-                                    foreach (string itemFan in ArrFrom)
+                                try
+                                {
+                                    //get ajax pip token key
+                                    AjaxPip_token = System.Text.RegularExpressions.Regex.Split(wallPageSrc, "ajaxpipe_token\":")[1];
+                                    AjaxPip_token = AjaxPip_token.Substring(0, AjaxPip_token.IndexOf("\",\"")).Replace("\"", string.Empty);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
+                                //Face book script Url Where we find Data 
+
+                                string ScripUrl = FBGlobals.Instance.CommentLikerPostajaxGenricUrl + AjaxPip_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + profileId + "%2C%22start%22%3A0%2C%22end%22%3A" + End + "%2C%22query_type%22%3A36%2C%22sk%22%3A%22wall%22%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_13%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_12%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22time_cutoff%22%3Anull%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22num_visible_units%22%3A6%2C%22remove_dupes%22%3Atrue%2C%22pager_fired_on_init%22%3Atrue%7D&__user=" + user + "&__a=1&__dyn=798aD5z5ynU&__req=jsonp_2&__adt=2";
+
+                                string html = HttpHelper.getHtmlfromUrl(new Uri(ScripUrl));
+
+                                //break string from fbtimeline ....
+                                string[] FbTimelineUnit = System.Text.RegularExpressions.Regex.Split(html, "fbTimelineUnit");
+
+                                //FanpgeData.Clear();
+
+                                //Skip Ist index of string ..
+                                List<string> FbTimelineUnit1 = new List<string>(FbTimelineUnit);
+                                try
+                                {
+                                    FbTimelineUnit1.Remove(FbTimelineUnit1[0]);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
+                                //shorting and store in FanpgeData List of page Posts
+                                foreach (string FbTimelineUnit_item in FbTimelineUnit1)
+                                {
+                                    try
                                     {
-                                        if (!itemFan.Contains("<!DOCTYPE"))
+                                        if (FbTimelineUnit_item.Contains("fbTimelineTwoColumn clearfix") || FbTimelineUnit_item.Contains("lastCapsule fbTimelineTwoColumn clearfix")
+                                                                            || FbTimelineUnit_item.Contains("firstUnit fbTimelineTwoColumn clearfix") || FbTimelineUnit_item.Contains("firstUnit lastCapsule fbTimelineTwoColumn clearfix")
+                                                                            || FbTimelineUnit_item.Contains("lastCapsule fbTimelineTwoColumn clearfix"))
                                         {
-                                            try
+                                            FanpgeData.Add(FbTimelineUnit_item);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+
+
+                        // For targeted 
+
+                        if (!IsCommentLikerPostTargeted)
+                        {
+                            FanpgeData.Clear();
+                            FanpgeData.Add(wallPageSrc);
+                        }
+
+                        int tempCounter_LikeSelected = 0;
+                        foreach (string item in FanpgeData)
+                        {
+                            try
+                            {
+                                string ftentidentifier = string.Empty;
+
+                                string postResponse = string.Empty;
+                                string link_data = string.Empty;
+
+
+                                add_comment_text_text = Uri.EscapeDataString(lstMessageCollectionCommentLiker[new Random().Next(0, lstMessageCollectionCommentLiker.Count)]);
+                                add_comment_text = add_comment_text_text;
+                                if (item.Contains("data-ft="))
+                                {
+                                    try
+                                    {
+                                        int startIndx = item.IndexOf("data-ft=");
+                                        int endIndx = item.IndexOf("&#125;", startIndx);
+
+                                        link_data = item.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"").Replace("data-ft=\\\"&#123;\"", string.Empty);
+                                        link_data = "{" + link_data + "}";
+                                        link_data = Uri.EscapeDataString(link_data);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+
+                                //string modifiedItem = "name=\"feedback_params" + item;
+                                feedbackParams = string.Empty;
+                                feedbackParams = GlobusHttpHelper.GetParamValue(item, "feedback_params");
+                                if (!string.IsNullOrEmpty(feedbackParams))
+                                {
+                                    feedbackParams = GlobusHttpHelper.GetParamValue(item, "feedback_params").Replace("&quot;", "\"");
+                                    feedbackParams = feedbackParams.Replace("&#123;", "");
+                                    feedbackParams = feedbackParams.Replace("&#125;", "");
+                                    feedbackParams = "{" + feedbackParams + "}";
+                                    feedbackParams = Uri.EscapeDataString(feedbackParams);
+                                }
+
+                                timelineLogData = string.Empty;
+                                timelineLogData = GlobusHttpHelper.GetParamValue(item, "timeline_log_data");
+                                if (!string.IsNullOrEmpty(feedbackParams))
+                                {
+                                    try
+                                    {
+                                        timelineLogData = GlobusHttpHelper.GetParamValue(item, "timeline_log_data").Replace("&quot;", "\"");
+                                        timelineLogData = timelineLogData.Replace("&#123;", "");
+                                        timelineLogData = timelineLogData.Replace("&#125;", "");
+                                        //timeline_log_data = "{" + timeline_log_data + "}";
+                                        timelineLogData = timelineLogData;
+
+                                        timelineLogData = Uri.EscapeDataString(timelineLogData);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+                                if (string.IsNullOrEmpty(timelineLogData))
+                                {
+                                    //  continue;
+                                }
+
+
+
+                                fdUserDesignation = GlobusHttpHelper.Get_fb_dtsg(wallPageSrc);
+
+                                //Get Values Of identitifire
+                                #region Get Value Of identitifire
+
+                                try
+                                {
+                                    //By Ajay Due to Post data change...
+                                    if (item.Contains("ftentidentifier"))
+                                    {
+                                        try
+                                        {
+                                            string[] arrftentidentifier = Regex.Split(item, "ftentidentifier");
+                                            if (arrftentidentifier.Count() > 1)
                                             {
-
-                                                if (itemFan.Contains("fbTimelineUnit fbTimelineTwoColumn clearfix") || itemFan.Contains("fbTimelineUnit lastCapsule fbTimelineTwoColumn clearfix")
-                                                    || itemFan.Contains("fbTimelineUnit firstUnit fbTimelineTwoColumn clearfix") || itemFan.Contains("fbTimelineUnit firstUnit lastCapsule fbTimelineTwoColumn clearfix")
-                                                    || itemFan.Contains("fbTimelineUnit lastCapsule fbTimelineTwoColumn clearfix"))
+                                                if (arrftentidentifier[1].Contains(":"))
                                                 {
-
-                                                    FanpgeData.Add(itemFan);
+                                                    ftentidentifier = arrftentidentifier[1].Substring(arrftentidentifier[1].IndexOf(":"), (arrftentidentifier[1].IndexOf(",", arrftentidentifier[1].IndexOf(":")) - arrftentidentifier[1].IndexOf(":"))).Replace(":", string.Empty).Replace("\"", string.Empty).Trim();
                                                 }
                                             }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-                            }
-
-                            user = GlobusHttpHelper.Get_UserID(wallPageSrc);
-
-
-
-                            if (wallPageSrc.Contains("post_form_id"))
-                            {
-                                post_form_id = GlobusHttpHelper.GetParamValue(wallPageSrc, "post_form_id");
-                            }
-
-                            //if (FanpgeData.Count < intNoOfPost)
-                            {
-                                try
-                                {
-                                    //find otherpost from JavaScript
-
-                                    string profileId = string.Empty;
-                                    string End = string.Empty;
-                                    string AjaxPip_token = string.Empty;
-                                    string OtherData = string.Empty;
-
-                                    //Break string from profile id where we find page posts.
-                                    try
-                                    {
-                                        OtherData = System.Text.RegularExpressions.Regex.Split(wallPageSrc, "{\"profile_id\":")[1];
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        //  OtherData = System.Text.RegularExpressions.Regex.Split(wallPageSrc, "profile_id")[1];
-                                    }
-
-                                    try
-                                    {
-                                        //get profile Id 
-                                        profileId = OtherData.Substring(0, OtherData.IndexOf("start")).Replace(",\"", string.Empty);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-
-                                    try
-                                    {
-                                        //get end of search query 
-                                        End = OtherData.Substring(OtherData.IndexOf("end"), OtherData.IndexOf("query_type") - OtherData.IndexOf("end")).Replace(",\"", string.Empty).Replace("end\":", string.Empty);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-
-                                    try
-                                    {
-                                        //get ajax pip token key
-                                        AjaxPip_token = System.Text.RegularExpressions.Regex.Split(wallPageSrc, "ajaxpipe_token\":")[1];
-                                        AjaxPip_token = AjaxPip_token.Substring(0, AjaxPip_token.IndexOf("\",\"")).Replace("\"", string.Empty);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-
-                                    //Face book script Url Where we find Data 
-
-                                    string ScripUrl = FBGlobals.Instance.CommentLikerPostajaxGenricUrl + AjaxPip_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + profileId + "%2C%22start%22%3A0%2C%22end%22%3A" + End + "%2C%22query_type%22%3A36%2C%22sk%22%3A%22wall%22%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_13%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_12%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22time_cutoff%22%3Anull%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22num_visible_units%22%3A6%2C%22remove_dupes%22%3Atrue%2C%22pager_fired_on_init%22%3Atrue%7D&__user=" + user + "&__a=1&__dyn=798aD5z5ynU&__req=jsonp_2&__adt=2";
-
-                                    string html = HttpHelper.getHtmlfromUrl(new Uri(ScripUrl));
-
-                                    //break string from fbtimeline ....
-                                    string[] FbTimelineUnit = System.Text.RegularExpressions.Regex.Split(html, "fbTimelineUnit");
-
-                                    //FanpgeData.Clear();
-
-                                    //Skip Ist index of string ..
-                                    List<string> FbTimelineUnit1 = new List<string>(FbTimelineUnit);
-                                    try
-                                    {
-                                        FbTimelineUnit1.Remove(FbTimelineUnit1[0]);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-
-                                    //shorting and store in FanpgeData List of page Posts
-                                    foreach (string FbTimelineUnit_item in FbTimelineUnit1)
-                                    {
-                                        try
-                                        {
-                                            if (FbTimelineUnit_item.Contains("fbTimelineTwoColumn clearfix") || FbTimelineUnit_item.Contains("lastCapsule fbTimelineTwoColumn clearfix")
-                                                                                || FbTimelineUnit_item.Contains("firstUnit fbTimelineTwoColumn clearfix") || FbTimelineUnit_item.Contains("firstUnit lastCapsule fbTimelineTwoColumn clearfix")
-                                                                                || FbTimelineUnit_item.Contains("lastCapsule fbTimelineTwoColumn clearfix"))
-                                            {
-                                                FanpgeData.Add(FbTimelineUnit_item);
-                                            }
                                         }
                                         catch (Exception ex)
                                         {
                                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
                                     }
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-                            }
-
-
-                            // For targeted 
-
-                            if (!IsCommentLikerPostTargeted)
-                            {
-                                FanpgeData.Clear();
-                                FanpgeData.Add(wallPageSrc);
-                            }
-
-                            int tempCounter_LikeSelected = 0;
-                            foreach (string item in FanpgeData)
-                            {
-                                try
-                                {
-                                    string ftentidentifier = string.Empty;
-
-                                    string postResponse = string.Empty;
-                                    string link_data = string.Empty;
-
-
-                                    add_comment_text_text = Uri.EscapeDataString(lstMessageCollectionCommentLiker[new Random().Next(0, lstMessageCollectionCommentLiker.Count)]);
-                                    add_comment_text = add_comment_text_text;
-                                    if (item.Contains("data-ft="))
+                                    else if (item.Contains("identifier"))
                                     {
                                         try
                                         {
-                                            int startIndx = item.IndexOf("data-ft=");
-                                            int endIndx = item.IndexOf("&#125;", startIndx);
-
-                                            link_data = item.Substring(startIndx, endIndx - startIndx).Replace("&quot;", "\"").Replace("data-ft=\\\"&#123;\"", string.Empty);
-                                            link_data = "{" + link_data + "}";
-                                            link_data = Uri.EscapeDataString(link_data);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                    }
-
-
-                                    //string modifiedItem = "name=\"feedback_params" + item;
-                                    feedbackParams = string.Empty;
-                                    feedbackParams = GlobusHttpHelper.GetParamValue(item, "feedback_params");
-                                    if (!string.IsNullOrEmpty(feedbackParams))
-                                    {
-                                        feedbackParams = GlobusHttpHelper.GetParamValue(item, "feedback_params").Replace("&quot;", "\"");
-                                        feedbackParams = feedbackParams.Replace("&#123;", "");
-                                        feedbackParams = feedbackParams.Replace("&#125;", "");
-                                        feedbackParams = "{" + feedbackParams + "}";
-                                        feedbackParams = Uri.EscapeDataString(feedbackParams);
-                                    }
-
-                                    timelineLogData = string.Empty;
-                                    timelineLogData = GlobusHttpHelper.GetParamValue(item, "timeline_log_data");
-                                    if (!string.IsNullOrEmpty(feedbackParams))
-                                    {
-                                        try
-                                        {
-                                            timelineLogData = GlobusHttpHelper.GetParamValue(item, "timeline_log_data").Replace("&quot;", "\"");
-                                            timelineLogData = timelineLogData.Replace("&#123;", "");
-                                            timelineLogData = timelineLogData.Replace("&#125;", "");
-                                            //timeline_log_data = "{" + timeline_log_data + "}";
-                                            timelineLogData = timelineLogData;
-
-                                            timelineLogData = Uri.EscapeDataString(timelineLogData);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                    }
-
-                                    if (string.IsNullOrEmpty(timelineLogData))
-                                    {
-                                        //  continue;
-                                    }
-
-
-
-                                    fdUserDesignation = GlobusHttpHelper.Get_fb_dtsg(wallPageSrc);
-
-                                    //Get Values Of identitifire
-                                    #region Get Value Of identitifire
-
-                                    try
-                                    {
-                                        //By Ajay Due to Post data change...
-                                        if (item.Contains("ftentidentifier"))
-                                        {
-                                            try
+                                            string[] arrftentidentifier = Regex.Split(item, "identifier");
+                                            if (arrftentidentifier.Count() > 1)
                                             {
-                                                string[] arrftentidentifier = Regex.Split(item, "ftentidentifier");
-                                                if (arrftentidentifier.Count() > 1)
+                                                if (arrftentidentifier[1].Contains("="))
                                                 {
-                                                    if (arrftentidentifier[1].Contains(":"))
+                                                    try
+                                                    {
+                                                        ftentidentifier = arrftentidentifier[1].Substring(arrftentidentifier[1].IndexOf("="), (arrftentidentifier[1].IndexOf("&amp;") - arrftentidentifier[1].IndexOf("="))).Replace(":", string.Empty).Replace("\"", string.Empty).Replace("=", string.Empty).Trim();
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
+                                                }
+                                                else if (arrftentidentifier[1].Contains(":"))
+                                                {
+                                                    try
                                                     {
                                                         ftentidentifier = arrftentidentifier[1].Substring(arrftentidentifier[1].IndexOf(":"), (arrftentidentifier[1].IndexOf(",", arrftentidentifier[1].IndexOf(":")) - arrftentidentifier[1].IndexOf(":"))).Replace(":", string.Empty).Replace("\"", string.Empty).Trim();
                                                     }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
                                                 }
                                             }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
                                         }
-                                        else if (item.Contains("identifier"))
+                                        catch (Exception ex)
                                         {
-                                            try
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                    else if (item.Contains("target_fbid"))
+                                    {
+                                        string[] arrftentidentifier = Regex.Split(item, "target_fbid");
+                                        try
+                                        {
+                                            if (arrftentidentifier.Count() > 1)
                                             {
-                                                string[] arrftentidentifier = Regex.Split(item, "identifier");
-                                                if (arrftentidentifier.Count() > 1)
+                                                if (arrftentidentifier[1].Contains("="))
                                                 {
-                                                    if (arrftentidentifier[1].Contains("="))
-                                                    {
-                                                        try
-                                                        {
-                                                            ftentidentifier = arrftentidentifier[1].Substring(arrftentidentifier[1].IndexOf("="), (arrftentidentifier[1].IndexOf("&amp;") - arrftentidentifier[1].IndexOf("="))).Replace(":", string.Empty).Replace("\"", string.Empty).Replace("=", string.Empty).Trim();
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
-                                                    }
-                                                    else if (arrftentidentifier[1].Contains(":"))
-                                                    {
-                                                        try
-                                                        {
-                                                            ftentidentifier = arrftentidentifier[1].Substring(arrftentidentifier[1].IndexOf(":"), (arrftentidentifier[1].IndexOf(",", arrftentidentifier[1].IndexOf(":")) - arrftentidentifier[1].IndexOf(":"))).Replace(":", string.Empty).Replace("\"", string.Empty).Trim();
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
-                                                    }
+                                                    string datastr = arrftentidentifier[arrftentidentifier.Count() - 1];
+                                                    ftentidentifier = System.Text.RegularExpressions.Regex.Split(datastr.Substring(datastr.IndexOf("="), (datastr.IndexOf("><i>") - datastr.IndexOf("="))), " rel")[0].Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
                                                 }
                                             }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
                                         }
-                                        else if (item.Contains("target_fbid"))
+                                        catch (Exception ex)
                                         {
-                                            string[] arrftentidentifier = Regex.Split(item, "target_fbid");
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                        if (string.IsNullOrEmpty(ftentidentifier))
+                                        {
                                             try
                                             {
                                                 if (arrftentidentifier.Count() > 1)
@@ -14727,7 +15867,7 @@ namespace Pages
                                                     if (arrftentidentifier[1].Contains("="))
                                                     {
                                                         string datastr = arrftentidentifier[arrftentidentifier.Count() - 1];
-                                                        ftentidentifier = System.Text.RegularExpressions.Regex.Split(datastr.Substring(datastr.IndexOf("="), (datastr.IndexOf("><i>") - datastr.IndexOf("="))), " rel")[0].Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
+                                                        ftentidentifier = System.Text.RegularExpressions.Regex.Split(datastr.Substring(datastr.IndexOf("="), (datastr.IndexOf("\"") - datastr.IndexOf("=") - 1)), "rel")[0].Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
                                                     }
                                                 }
                                             }
@@ -14735,73 +15875,38 @@ namespace Pages
                                             {
                                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                             }
-                                            if (string.IsNullOrEmpty(ftentidentifier))
-                                            {
-                                                try
-                                                {
-                                                    if (arrftentidentifier.Count() > 1)
-                                                    {
-                                                        if (arrftentidentifier[1].Contains("="))
-                                                        {
-                                                            string datastr = arrftentidentifier[arrftentidentifier.Count() - 1];
-                                                            ftentidentifier = System.Text.RegularExpressions.Regex.Split(datastr.Substring(datastr.IndexOf("="), (datastr.IndexOf("\"") - datastr.IndexOf("=") - 1)), "rel")[0].Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
-                                                        }
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-                                            }
-
-                                            if (string.IsNullOrEmpty(ftentidentifier))
-                                            {
-                                                try
-                                                {
-                                                    if (arrftentidentifier.Count() > 1)
-                                                    {
-                                                        if (arrftentidentifier[1].Contains("target_profile_id"))
-                                                        {
-                                                            string datastr = arrftentidentifier[arrftentidentifier.Count() - 1];
-
-                                                            ftentidentifier = (datastr.Substring(0, (datastr.IndexOf("target_profile_id")))).Replace(",", string.Empty).Replace("&quot;", string.Empty).Replace(":", string.Empty).Replace("target_profile_id", string.Empty).Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
-
-                                                        }
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-                                            }
-
-                                            if (string.IsNullOrEmpty(ftentidentifier))
-                                            {
-                                                try
-                                                {
-                                                    if (item.Contains("aggregation_id"))
-                                                    {
-                                                        ftentidentifier = item.Substring(0, item.IndexOf(",")).Replace(",", string.Empty).Replace("&quot;", string.Empty).Replace(":", string.Empty).Replace("aggregation_id", string.Empty).Replace("=", string.Empty).Replace("\"", string.Empty).Trim(); ;
-
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-                                            }
-                                        }
-                                        else if (item.Contains("aggregation_id") && item.Contains("aggregation_time"))
-                                        {
-                                            string identitifier = item.Substring(item.IndexOf("aggregation_id"), item.IndexOf("aggregation_time") - item.IndexOf("aggregation_id")).Replace("&quot;", string.Empty).Replace(",", string.Empty).Replace("aggregation_id", string.Empty).Replace("aggregation_time", string.Empty).Replace(":", string.Empty).Trim();
-                                            ftentidentifier = identitifier;
                                         }
 
-                                        if (string.IsNullOrEmpty(ftentidentifier) && wallPageSrc.Contains("target_profile_id"))
+                                        if (string.IsNullOrEmpty(ftentidentifier))
                                         {
                                             try
                                             {
-                                                ftentidentifier = (wallPageSrc.Substring(wallPageSrc.IndexOf("target_profile_id"), (wallPageSrc.IndexOf(",", wallPageSrc.IndexOf("target_profile_id")) - wallPageSrc.IndexOf("target_profile_id")))).Replace(",", string.Empty).Replace("&quot;", string.Empty).Replace(":", string.Empty).Replace("target_profile_id", string.Empty).Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
+                                                if (arrftentidentifier.Count() > 1)
+                                                {
+                                                    if (arrftentidentifier[1].Contains("target_profile_id"))
+                                                    {
+                                                        string datastr = arrftentidentifier[arrftentidentifier.Count() - 1];
+
+                                                        ftentidentifier = (datastr.Substring(0, (datastr.IndexOf("target_profile_id")))).Replace(",", string.Empty).Replace("&quot;", string.Empty).Replace(":", string.Empty).Replace("target_profile_id", string.Empty).Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
+
+                                                    }
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+
+                                        if (string.IsNullOrEmpty(ftentidentifier))
+                                        {
+                                            try
+                                            {
+                                                if (item.Contains("aggregation_id"))
+                                                {
+                                                    ftentidentifier = item.Substring(0, item.IndexOf(",")).Replace(",", string.Empty).Replace("&quot;", string.Empty).Replace(":", string.Empty).Replace("aggregation_id", string.Empty).Replace("=", string.Empty).Replace("\"", string.Empty).Trim(); ;
+
+                                                }
                                             }
                                             catch (Exception ex)
                                             {
@@ -14809,172 +15914,190 @@ namespace Pages
                                             }
                                         }
                                     }
-                                    catch (Exception ex)
+                                    else if (item.Contains("aggregation_id") && item.Contains("aggregation_time"))
                                     {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        string identitifier = item.Substring(item.IndexOf("aggregation_id"), item.IndexOf("aggregation_time") - item.IndexOf("aggregation_id")).Replace("&quot;", string.Empty).Replace(",", string.Empty).Replace("aggregation_id", string.Empty).Replace("aggregation_time", string.Empty).Replace(":", string.Empty).Trim();
+                                        ftentidentifier = identitifier;
                                     }
 
-                                    #endregion
-
-                                    try
-                                    {
-                                        // Post Like 
-                                        string postData1 = "__user=" + user + "&__a=1&fb_dtsg=" + fdUserDesignation + "&phstamp=165816798981224510745"; //__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=165816798981224510745
-                                        string postResponse1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookLikeCommentUrl + ftentidentifier + "&comment_from=" + user + "&seen_user_fbids=true"), postData1);
-
-                                        string postData2 = "like_action=true&ft_ent_identifier=" + ftentidentifier + "&source=0&&ft[tn]=%3E%3D&ft[type]=20&__user=" + user + "&__a=1&fb_dtsg=" + fdUserDesignation + "&phstamp=1658167989812245107166";//like_action=true&ft_ent_identifier=348874178538877&source=0&client_id=1347961309895%3A42929564&ft[tn]=%3E%3D&ft[type]=20&__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=1658167989812245107166
-                                        string postResponse2 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookLikeUrl), postData2);
-                                        //-------------------------------
-                                        string postData = "charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&post_form_id=" + post_form_id + "&fb_dtsg=" + fdUserDesignation + "&feedback_params=" + feedbackParams + "&timeline_ufi=1&timeline_log_data=" + timelineLogData + "&translate_on_load=&add_comment_text=&like=&nctr[_mod]=pagelet_timeline_recent&lsd&post_form_id_source=AsyncRequest&__user=" + user + "&phstamp=16581651065011769561080";
-                                        postResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookModifyUrl), postData);
-
-                                        if (postResponse.Contains("Security Check Required"))
-                                        {
-                                            //IsLoginError = true;
-                                            string content = Username + ":" + Password;
-                                            GlobusLogHelper.log.Info("Security Check Required " + FanpageUrl + "  with " + Username);
-                                            GlobusLogHelper.log.Debug("Security Check Required " + FanpageUrl + "  with " + Username);
-
-                                        }
-
-                                        if (!postResponse.Contains("Security Check Required"))// && !postResponse.Contains("errorSummary")
-                                        {
-                                            string CSVHeader = "UserName" + "," + "FanpageUrl";
-                                            string CSV_Content = Username + "," + FanpageUrl;
-                                            // TotalFanPagelike_Counter++;
-                                            GlobusLogHelper.log.Info(" Like Comment with " + Username + " on Wall : " + FanpageUrl);
-                                            GlobusLogHelper.log.Debug(" Like Comment with " + Username + " on Wall : " + FanpageUrl);
-                                            //   CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.path_LikedComments);
-
-
-                                            int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
-                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            Thread.Sleep(delayInSeconds);
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-
-
-                                    string postcommnetPageData = "ft_ent_identifier=" + ftentidentifier.Replace("}", "") + "&comment_text=" + add_comment_text_text + "&source=0&client_id=1364464472423%3A4032021415&reply_fbid&parent_comment_id&timeline_log_data=" + timelineLogData + "&rootid=u_0_2l&attached_photo_fbid=0&ft[tn]=[]&nctr[_mod]=pagelet_timeline_recent&__user=" + user + "&__a=1&__dyn=798aD5z5ynU&__req=a&fb_dtsg=" + fdUserDesignation + "&phstamp=16581679711910210969710";
-                                    string commentResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookAddCommentUrl), postcommnetPageData);
-
-                                    if (wallPageSrc.Contains("setAdsTracking"))
+                                    if (string.IsNullOrEmpty(ftentidentifier) && wallPageSrc.Contains("target_profile_id"))
                                     {
                                         try
                                         {
-                                            string setAdsTracking = wallPageSrc.Substring(wallPageSrc.IndexOf("setAdsTracking"), (wallPageSrc.IndexOf("}]]]}", wallPageSrc.IndexOf("setAdsTracking")) - wallPageSrc.IndexOf("setAdsTracking"))).Replace("setAdsTracking", string.Empty).Trim();
-                                            string[] arrsetAdsTracking = Regex.Split(setAdsTracking, ":");
-                                            foreach (string item1 in arrsetAdsTracking)
-                                            {
-                                                try
-                                                {
-                                                    if (item1.Length > 30)
-                                                    {
-                                                        try
-                                                        {
-                                                            string partRequest = string.Empty;
-                                                            if (item1.Contains(","))
-                                                            {
-                                                                partRequest = item1.Substring(0, item1.IndexOf(",")).Replace("\"", string.Empty).Trim();
-                                                            }
-                                                            else
-                                                            {
-                                                                partRequest = item1.Replace("\"", string.Empty).Trim();
-                                                            }
-                                                            string response = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.CommentLikerGetFbAIUrl + partRequest));
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-                                            }
+                                            ftentidentifier = (wallPageSrc.Substring(wallPageSrc.IndexOf("target_profile_id"), (wallPageSrc.IndexOf(",", wallPageSrc.IndexOf("target_profile_id")) - wallPageSrc.IndexOf("target_profile_id")))).Replace(",", string.Empty).Replace("&quot;", string.Empty).Replace(":", string.Empty).Replace("target_profile_id", string.Empty).Replace("=", string.Empty).Replace("\"", string.Empty).Trim();
                                         }
                                         catch (Exception ex)
                                         {
                                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                         }
                                     }
-
-                                    if (commentResponse.Contains("errorSummary") && commentResponse.Contains("Not Logged In"))
-                                    {
-                                        GlobusLogHelper.log.Info("Not Logged in with : " + Username);
-                                        GlobusLogHelper.log.Debug("Not Logged in with : " + Username);
-                                        return;
-                                    }
-                                    if (commentResponse.Contains("errorSummary"))
-                                    {
-                                        try
-                                        {
-                                            string summary = GlobusHttpHelper.ParseJson(commentResponse, "errorSummary");
-                                            string errorDescription = GlobusHttpHelper.ParseJson(commentResponse, "errorDescription");
-                                            GlobusLogHelper.log.Info("Posting Error: " + summary + " | Error Description: " + errorDescription);
-                                            GlobusLogHelper.log.Debug("Posting Error: " + summary + " | Error Description: " + errorDescription);
-
-
-                                            int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, minDelayFanPagePoster * 1000);
-                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                            Thread.Sleep(delayInSeconds);
-                                            continue;
-                                            // break;
-
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error(ex.Message);
-                                            return;
-                                        }
-                                    }
-
-                                    string get1 = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.CommentLikerGetSafeImageUrl));
-                                    string get2 = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.CommentLikerGetFbsdnImageUrl));
-
-                                    GlobusLogHelper.log.Info("Posted on " + CountPostWall + "  Posted URL :" + Uri.UnescapeDataString(add_comment_text_text) + " comments with " + Username + " on Wall : " + FanpageUrl);
-                                    GlobusLogHelper.log.Debug("Posted on " + CountPostWall + "  Posted URL :" + Uri.UnescapeDataString(add_comment_text_text) + " comments with " + Username + " on Wall : " + FanpageUrl);
-
-                                    try
-                                    {
-                                        string CSVHeaders = "UserName" + "," + "PostUrl" + "," + "PostMessage";
-                                        string CSV_Contents = Username + "," + FanpageUrl + "," + Uri.UnescapeDataString(add_comment_text_text);
-                                        //    Utils.ExportDataCSVFile(CSVHeaders, CSV_Contents, Globals.path_PostComments);                                  
-
-                                        int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, minDelayFanPagePoster * 1000);
-                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                        Thread.Sleep(delayInSeconds);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                    CountPostWall++;
-
-                                    break;
                                 }
                                 catch (Exception ex)
                                 {
                                     GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                 }
+
+                                #endregion
+
+                                try
+                                {
+                                    // Post Like 
+                                    string postData1 = "__user=" + user + "&__a=1&fb_dtsg=" + fdUserDesignation + "&phstamp=165816798981224510745"; //__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=165816798981224510745
+                                    string postResponse1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookLikeCommentUrl + ftentidentifier + "&comment_from=" + user + "&seen_user_fbids=true"), postData1);
+
+                                    string postData2 = "like_action=true&ft_ent_identifier=" + ftentidentifier + "&source=0&&ft[tn]=%3E%3D&ft[type]=20&__user=" + user + "&__a=1&fb_dtsg=" + fdUserDesignation + "&phstamp=1658167989812245107166";//like_action=true&ft_ent_identifier=348874178538877&source=0&client_id=1347961309895%3A42929564&ft[tn]=%3E%3D&ft[type]=20&__user=100004223172781&__a=1&fb_dtsg=AQCbbz-k&phstamp=1658167989812245107166
+                                    string postResponse2 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookLikeUrl), postData2);
+                                    //-------------------------------
+                                    string postData = "charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&post_form_id=" + post_form_id + "&fb_dtsg=" + fdUserDesignation + "&feedback_params=" + feedbackParams + "&timeline_ufi=1&timeline_log_data=" + timelineLogData + "&translate_on_load=&add_comment_text=&like=&nctr[_mod]=pagelet_timeline_recent&lsd&post_form_id_source=AsyncRequest&__user=" + user + "&phstamp=16581651065011769561080";
+                                    postResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookModifyUrl), postData);
+
+                                    if (postResponse.Contains("Security Check Required"))
+                                    {
+                                        //IsLoginError = true;
+                                        string content = Username + ":" + Password;
+                                        GlobusLogHelper.log.Info("Security Check Required " + FanpageUrl + "  with " + Username);
+                                        GlobusLogHelper.log.Debug("Security Check Required " + FanpageUrl + "  with " + Username);
+
+                                    }
+
+                                    if (!postResponse.Contains("Security Check Required"))// && !postResponse.Contains("errorSummary")
+                                    {
+                                        string CSVHeader = "UserName" + "," + "FanpageUrl";
+                                        string CSV_Content = Username + "," + FanpageUrl;
+                                        // TotalFanPagelike_Counter++;
+                                        GlobusLogHelper.log.Info(" Like Comment with " + Username + " on Wall : " + FanpageUrl);
+                                        GlobusLogHelper.log.Debug(" Like Comment with " + Username + " on Wall : " + FanpageUrl);
+                                        //   CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.path_LikedComments);
+
+
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
+
+                                string postcommnetPageData = "ft_ent_identifier=" + ftentidentifier.Replace("}", "") + "&comment_text=" + add_comment_text_text + "&source=0&client_id=1364464472423%3A4032021415&reply_fbid&parent_comment_id&timeline_log_data=" + timelineLogData + "&rootid=u_0_2l&attached_photo_fbid=0&ft[tn]=[]&nctr[_mod]=pagelet_timeline_recent&__user=" + user + "&__a=1&__dyn=798aD5z5ynU&__req=a&fb_dtsg=" + fdUserDesignation + "&phstamp=16581679711910210969710";
+                                string commentResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.CommentLikerPostAjaxFacbookAddCommentUrl), postcommnetPageData);
+
+                                if (wallPageSrc.Contains("setAdsTracking"))
+                                {
+                                    try
+                                    {
+                                        string setAdsTracking = wallPageSrc.Substring(wallPageSrc.IndexOf("setAdsTracking"), (wallPageSrc.IndexOf("}]]]}", wallPageSrc.IndexOf("setAdsTracking")) - wallPageSrc.IndexOf("setAdsTracking"))).Replace("setAdsTracking", string.Empty).Trim();
+                                        string[] arrsetAdsTracking = Regex.Split(setAdsTracking, ":");
+                                        foreach (string item1 in arrsetAdsTracking)
+                                        {
+                                            try
+                                            {
+                                                if (item1.Length > 30)
+                                                {
+                                                    try
+                                                    {
+                                                        string partRequest = string.Empty;
+                                                        if (item1.Contains(","))
+                                                        {
+                                                            partRequest = item1.Substring(0, item1.IndexOf(",")).Replace("\"", string.Empty).Trim();
+                                                        }
+                                                        else
+                                                        {
+                                                            partRequest = item1.Replace("\"", string.Empty).Trim();
+                                                        }
+                                                        string response = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.CommentLikerGetFbAIUrl + partRequest));
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+                                if (commentResponse.Contains("errorSummary") && commentResponse.Contains("Not Logged In"))
+                                {
+                                    GlobusLogHelper.log.Info("Not Logged in with : " + Username);
+                                    GlobusLogHelper.log.Debug("Not Logged in with : " + Username);
+                                    return;
+                                }
+                                if (commentResponse.Contains("errorSummary"))
+                                {
+                                    try
+                                    {
+                                        string summary = GlobusHttpHelper.ParseJson(commentResponse, "errorSummary");
+                                        string errorDescription = GlobusHttpHelper.ParseJson(commentResponse, "errorDescription");
+                                        GlobusLogHelper.log.Info("Posting Error: " + summary + " | Error Description: " + errorDescription);
+                                        GlobusLogHelper.log.Debug("Posting Error: " + summary + " | Error Description: " + errorDescription);
+
+
+                                        int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, minDelayFanPagePoster * 1000);
+                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                        Thread.Sleep(delayInSeconds);
+                                        continue;
+                                        // break;
+
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error(ex.Message);
+                                        return;
+                                    }
+                                }
+
+                                string get1 = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.CommentLikerGetSafeImageUrl));
+                                string get2 = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.CommentLikerGetFbsdnImageUrl));
+
+                                GlobusLogHelper.log.Info("Posted on " + CountPostWall + "  Posted URL :" + Uri.UnescapeDataString(add_comment_text_text) + " comments with " + Username + " on Wall : " + FanpageUrl);
+                                GlobusLogHelper.log.Debug("Posted on " + CountPostWall + "  Posted URL :" + Uri.UnescapeDataString(add_comment_text_text) + " comments with " + Username + " on Wall : " + FanpageUrl);
+
+                                try
+                                {
+                                    string CSVHeaders = "UserName" + "," + "PostUrl" + "," + "PostMessage";
+                                    string CSV_Contents = Username + "," + FanpageUrl + "," + Uri.UnescapeDataString(add_comment_text_text);
+                                    //    Utils.ExportDataCSVFile(CSVHeaders, CSV_Contents, Globals.path_PostComments);                                  
+
+                                    int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, minDelayFanPagePoster * 1000);
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                                CountPostWall++;
+
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                        postsCount++;
-                  
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                    postsCount++;
+
                 }
-               
+
             }
             catch (Exception ex)
             {
@@ -14989,7 +16112,7 @@ namespace Pages
         Queue<string> QueuePostUrls = new Queue<string>();
         Queue<string> QueueMessages = new Queue<string>();
         private void StartActionOneToOneComment(ref FacebookUser fbUser)
-        {            
+        {
             try
             {
                 foreach (string PostUrl in lstFanPageUrlCollectionCommentLiker)
@@ -15017,25 +16140,25 @@ namespace Pages
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
                 GlobusLogHelper.log.Info("Please Wait....");
                 GlobusLogHelper.log.Debug("Please Wait...");
-                string UserId=string.Empty;
+                string UserId = string.Empty;
                 string fb_dtsg = string.Empty;
                 try
                 {
-                  string HomePageSrc=HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/"));
-                  UserId=Utils.getBetween(HomePageSrc,"\"USER_ID\":\"","\"");
-                  fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(HomePageSrc);
+                    string HomePageSrc = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/"));
+                    UserId = Utils.getBetween(HomePageSrc, "\"USER_ID\":\"", "\"");
+                    fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(HomePageSrc);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                 }
                 if (QueuePostUrls.Count != 0)
                 {
                     string PostUrl = QueuePostUrls.Dequeue();
                     string PostResp = HttpHelper.getHtmlfromUrl(new Uri(PostUrl));
-                    string[] containerData = Regex.Split(PostResp,"uiUfi UFIContainer");
+                    string[] containerData = Regex.Split(PostResp, "uiUfi UFIContainer");
                     string containerID = string.Empty;
                     containerID = Utils.getBetween(containerData[1], "id=\"", "\"");
-                   
+
                     string PostId = string.Empty;
                     if (PostUrl.Contains("posts"))
                     {
@@ -15046,9 +16169,9 @@ namespace Pages
                     {
                         PostId = Utils.getBetween(PostUrl, "fbid=", "&");
                     }
-                    else if(string.IsNullOrEmpty(PostId))
+                    else if (string.IsNullOrEmpty(PostId))
                     {
-                       string[] postData=Regex.Split(PostUrl,"/");
+                        string[] postData = Regex.Split(PostUrl, "/");
                         PostId = postData[postData.Length - 2];
                     }
 
@@ -15062,7 +16185,7 @@ namespace Pages
                         message = lstMessageCollectionCommentLiker[new Random().Next(0, lstMessageCollectionCommentLiker.Count - 1)];
                     }
                     string PostCommentUrl = "https://www.facebook.com/ajax/ufi/add_comment.php";
-                    string CommentData = "ft_ent_identifier=" + PostId + "&comment_text=" + message + "&source=2&client_id=1419601165176%3A2502448833&reply_fbid&parent_comment_id&rootid=" + containerID + "&clp=&attached_sticker_fbid=0&attached_photo_fbid=0&&&ft[tn]=[]&av=" + UserId + "&__user="+UserId+"&__a=1&__dyn=7nmajEyl2qm9udDgDxyG8EihUtCxO4p9GgSmEZ9LFwxBxCbzElx2ubhHximmey8OdUS8zU&__req=l&fb_dtsg="+fb_dtsg+"&ttstamp=265817253854997122907682122&__rev=1543964";
+                    string CommentData = "ft_ent_identifier=" + PostId + "&comment_text=" + message + "&source=2&client_id=1419601165176%3A2502448833&reply_fbid&parent_comment_id&rootid=" + containerID + "&clp=&attached_sticker_fbid=0&attached_photo_fbid=0&&&ft[tn]=[]&av=" + UserId + "&__user=" + UserId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyG8EihUtCxO4p9GgSmEZ9LFwxBxCbzElx2ubhHximmey8OdUS8zU&__req=l&fb_dtsg=" + fb_dtsg + "&ttstamp=265817253854997122907682122&__rev=1543964";
                     string CommentResp = string.Empty;
                     try
                     {
@@ -15078,7 +16201,7 @@ namespace Pages
                     }
                     else
                     {
-                        GlobusLogHelper.log.Info("Sorry !! Unable To Comment On Post Id=" + PostId + " With User =" + fbUser.username + " Message=" + message + "");                    
+                        GlobusLogHelper.log.Info("Sorry !! Unable To Comment On Post Id=" + PostId + " With User =" + fbUser.username + " Message=" + message + "");
                     }
 
                 }
@@ -15088,7 +16211,7 @@ namespace Pages
                 }
 
                 int Delay = new Random().Next(minDelayFanPagePoster, maxDelayFanPagePoster);
-                GlobusLogHelper.log.Info("Delaying For "+Delay+" Seconds");
+                GlobusLogHelper.log.Info("Delaying For " + Delay + " Seconds");
                 Thread.Sleep(Delay * 1000);
 
             }
@@ -15119,7 +16242,7 @@ namespace Pages
         // Global variable for PanPageCommentLiker
 
         public bool isStopFanPageCommentLiker = false;
-        
+
 
         #endregion
 
@@ -15132,7 +16255,7 @@ namespace Pages
             set;
         }
 
-        public static int noOfPicsPerURL 
+        public static int noOfPicsPerURL
         {
             get;
             set;
@@ -15300,35 +16423,40 @@ namespace Pages
         }
 
         public bool isPostMessageWithUrl = false;
+        public Queue<string> queueSiteUrls = new Queue<string>();
         private void StartActionFanPagePoster(ref FacebookUser fbUser)
-        {           
+        {
+
+
             try
             {
-               if (StartProcessUsingFanPagePoster == "Post Urls")
-               {
-                  PostOnFanPageWallWithURLAndItsImage(ref fbUser);
-               }
-               else if (StartProcessUsingFanPagePoster == "Post Simple Message")
-               {
-                   if (isPostMessageWithUrl)
-                   {
-                       PostOnFanPageWallWithURLAndItsImage(ref fbUser);
-                   }
-                   else
-                   {
-                       PostFanPageMessageUsingUrls(ref fbUser);
-                   }
-                   GlobusLogHelper.log.Info("Process completed With : " + fbUser.username);
-                   GlobusLogHelper.log.Debug("Process completed With : " + fbUser.username);
-               }
-               else if (StartProcessUsingFanPagePoster == "Post Picture On Own Page ")
-               {
-                   UploadImage(ref fbUser);
-               }
-               else if (StartProcessUsingFanPagePoster == "Post Picture On Fan Page")
-               {
-                   UploadImageOnPage(ref fbUser);
-               }
+                if (StartProcessUsingFanPagePoster == "Post Urls")
+                {
+                    PostOnFanPageWallWithURLAndItsImage(ref fbUser);
+                    // PostOnFanPageWallWithURLAndItsImageNew(ref fbUser);
+                    //PostOnFanPageWallWithURLAndItsMessage(ref fbUser); 
+                }
+                else if (StartProcessUsingFanPagePoster == "Post Simple Message")
+                {
+                    // if (isPostMessageWithUrl)
+                    {
+                        PostOnFanPageWallWithURLAndItsImage(ref fbUser);
+                    }
+                    // else
+                    // {
+                    //    PostFanPageMessageUsingUrls(ref fbUser);
+                    //}
+                    GlobusLogHelper.log.Info("Process completed With : " + fbUser.username);
+                    GlobusLogHelper.log.Debug("Process completed With : " + fbUser.username);
+                }
+                else if (StartProcessUsingFanPagePoster == "Post Picture On Own Page ")
+                {
+                    UploadImage(ref fbUser);
+                }
+                else if (StartProcessUsingFanPagePoster == "Post Picture On Fan Page")
+                {
+                    UploadImageOnPage(ref fbUser);
+                }
             }
             catch (Exception ex)
             {
@@ -15337,356 +16465,6 @@ namespace Pages
         }
 
         public void PostOnFanPageWallWithURLAndItsImage(ref FacebookUser fbUser)
-        {
-            try
-            {
-                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
-
-                string Username = string.Empty;
-                string Password = string.Empty;
-
-                GlobusLogHelper.log.Debug("Please Wait------------!");
-                GlobusLogHelper.log.Info("Please Wait------------!");
-
-                Array paramArray = new object[10];            
-                string Userss = fbUser.username;
-
-                int CountPostWall = 1;
-                //string FanpageUrl = (string)paramArray.GetValue(6);
-                lstFanPageUrlCollectionFanPagePoster = lstFanPageUrlCollectionFanPagePoster.Distinct().ToList();
-                lstFanPageURLs = lstFanPageUrlCollectionFanPagePoster;
-                lstFanPageUrlCollectionFanPagePostUrl = lstFanPageUrlCollectionFanPagePostUrl.Distinct().ToList();
-                lstFanPagePostURLs = lstFanPageUrlCollectionFanPagePostUrl;              
-
-                string composer_session_id = "";
-                string fb_dtsg = "";
-                string xhpc_composerid = "";
-                string xhpc_targetid = "";
-                string xhpc_context = "";
-                string xhpc_fbx = "";
-                string xhpc_timeline = "";
-                string xhpc_ismeta = "";
-                string xhpc_message_text = "";    
-                string xhpc_message = "";
-
-                #region MyRegion
-                string uithumbpager_width = "128";
-                string uithumbpager_height = "128";
-                string composertags_place = "";
-                string composertags_place_name = "";
-                string composer_predicted_city = "";
-                string is_explicit_place = "";
-                string composertags_city = "";
-                string disable_location_sharing = "false";
-                string audiencevalue = "80";
-                string nctr_mod = "pagelet_timeline_recent";
-                string UsreId = "";
-                string __a = "1";
-                string phstamp = "";
-                string pageId = string.Empty;
-                #endregion
-
-                Username = Userss;
-
-                GlobusLogHelper.log.Info("Start Process of Wall Posting With Username.... >>> " + Username);
-                GlobusLogHelper.log.Debug("Start Process of Wall Posting With Username.... >>> " + Username);
-
-
-                int Counter = 0;
-                foreach (var lstFanPageURLsitem in lstFanPageURLs)
-                {
-                   
-                    while (true)
-                    {
-
-                        Counter = Counter + 1;
-                            try
-                            {
-                                //Counter = Counter + 1;
-                                if (Counter>noOfPicsPerURL)
-                                {
-                                    break;
-                                }
-                           
-                                string strFanPageURL = lstFanPageURLsitem;
-                                strFanPageURL = strFanPageURL.Replace("?ref=hl", "/");
-                                strFanPageURL = strFanPageURL.Replace("?fref=ts", "/");
-                                string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(strFanPageURL));
-                                pageId = Utils.getBetween(strPageSource, "PageAuxContentPagelet_", "\"");
-                                if (strPageSource.Contains("xhpc_composerid") && strPageSource.Contains("xhpc_targetid") && strPageSource.Contains("xhpc_context")) //&& strPageSource.Contains("xhpc_fbx")
-                                {
-                                    UsreId = GlobusHttpHelper.Get_UserID(strPageSource);
-                                    fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
-
-                                    xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_composerid");
-                                    xhpc_targetid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_targetid");
-                                    xhpc_context = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
-                                    xhpc_fbx = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_fbx");
-                                    xhpc_timeline = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_timeline");
-                                    xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
-
-                                    xhpc_message_text = lstFanPagePostURLs[new Random().Next(0, lstFanPagePostURLs.Count)];
-                                    xhpc_message = xhpc_message_text;
-                                    //lstFanPagePostURLs.Remove(xhpc_message);
-                                    //xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
-                                    //xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
-
-
-                                    if (string.IsNullOrEmpty(UsreId))
-                                    {
-                                        UsreId = GlobusHttpHelper.ParseJson(strPageSource, "user");
-                                    }
-
-                                    string composer_session_idSource = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.pageFanPageAjaxMetaComposerTargetidUrl + UsreId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1"));//Convert.ToInt32(ConvertToUnixTimestamp(DateTime.Now)).ToString();
-                                    if (composer_session_idSource.Contains("composer_session_id"))
-                                    {
-                                        composer_session_id = (composer_session_idSource.Substring(composer_session_idSource.IndexOf("composer_session_id"), composer_session_idSource.IndexOf("/>", composer_session_idSource.IndexOf("composer_session_id")) - composer_session_idSource.IndexOf("composer_session_id")).Replace("composer_session_id", string.Empty).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
-
-                                    }
-
-                                    string strImageValue = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.pageFanPageUrlAjaxMetacomposerLinkUrl + Uri.EscapeDataString(xhpc_message_text) + "&alt_scrape_url=" + Uri.EscapeDataString(xhpc_message_text) + "&targetid=" + UsreId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1"));   //https://www.facebook.com/ajax/metacomposer/attachment/link/scraper.php?scrape_url=http%253A%252F%252Fwww.google.co.in%252F&alt_scrape_url=http%253A%252F%252Fwww.google.co.in%252F&targetid=100003798185175&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=100003798185175&__a=1
-
-                                    string imageURL = xhpc_message_text;
-                                    try
-                                    {
-                                        imageURL = HttpHelper.GetHrefsFromString(xhpc_message_text)[0];
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                    string post_URL_GetImageParams = faceboardpro.FBGlobals.Instance.PageFanPageUrlComposeLinkScraper + imageURL + "&composerurihash=3";
-                                    string post_Data_GetImageParams = "fb_dtsg=" + fb_dtsg + "&composerid=" + composer_session_id + "&targetid=" + xhpc_targetid + "&istimeline=1&composercontext=composer&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=maininput&loaded_components[3]=mainprivacywidget&loaded_components[4]=explicitplaceinput&loaded_components[5]=hiddenplaceinput&loaded_components[6]=placenameinput&loaded_components[7]=hiddensessionid&loaded_components[8]=withtagger&loaded_components[9]=placetagger&loaded_components[10]=withtaggericon&loaded_components[11]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n8ahyj2tVBoeVag&__req=4n&phstamp=165816886688048122625";
-
-                                    string res_post_GetImageParams = HttpHelper.postFormData(new Uri(post_URL_GetImageParams), post_Data_GetImageParams);
-                                    strImageValue = res_post_GetImageParams;
-
-                                    Dictionary<string, string> dicNameValue = new Dictionary<string, string>();
-                                    string attachment_params_summary = string.Empty;
-                                    string attachment_params_images = string.Empty;
-                                    if (strImageValue.Contains("name=") && strImageValue.Contains("value="))
-                                    {
-                                        try
-                                        {
-                                            string[] strNameValue = Regex.Split(strImageValue, "name=");
-                                            foreach (var strNameValueitem in strNameValue)
-                                            {
-                                                try
-                                                {
-                                                    if (strNameValueitem.Contains("value="))
-                                                    {
-                                                        string strSplit = strNameValueitem.Substring(0, strNameValueitem.IndexOf("/>"));
-                                                        if (strSplit.Contains("value="))
-                                                        {
-
-                                                            string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("value=") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
-                                                            strName = strName.Replace(">u003Coption", "");
-                                                            if (strName == "fb_dtsg")
-                                                            {
-
-                                                                continue;
-                                                            }
-                                                            string strValue = (strNameValueitem.Substring(strNameValueitem.IndexOf("value="), strNameValueitem.IndexOf("/>", strNameValueitem.IndexOf("value=")) - strNameValueitem.IndexOf("value=")).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
-                                                            if (strValue.Contains(">Year:u003C/option>"))
-                                                            {
-                                                                strValue = strValue.Replace("u003C", "<");
-                                                                if (strValue.Contains("</option>"))
-                                                                {
-                                                                    strValue = Utils.getBetween(strValue, "<option 2014>", "</option>");
-                                                                }
-                                                            }
-                                                            if (strValue.Contains("Month:u003C/option>"))
-                                                            {
-                                                                strValue = strValue.Replace("u003C", "<");
-                                                                if (strValue.Contains("</option>"))
-                                                                {
-                                                                    strValue = Utils.getBetween(strValue, "<option 12>", "</option>");
-                                                                }
-                                                            }
-                                                            strValue = (strValue);
-
-                                                            if (strNameValueitem.Contains("attachment[params][summary]"))
-                                                            {
-                                                                attachment_params_summary = strValue;
-                                                            }
-                                                            if (strNameValueitem.Contains("attachment[params][images]"))
-                                                            {
-                                                                attachment_params_images = strValue;
-                                                            }
-
-                                                            dicNameValue.Add(strName, strValue);
-                                                        }
-                                                        else
-                                                        {
-                                                            string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("/>") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
-                                                            if (strName == "fb_dtsg")
-                                                            {
-                                                                continue;
-                                                            }
-                                                            string strValue = "0";
-                                                            strValue = (strValue);
-                                                            dicNameValue.Add(strName, strValue);
-                                                        }
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-                                            }
-
-
-                                            string partPostData = string.Empty;
-                                            foreach (var dicNameValueitem in dicNameValue)
-                                            {
-                                                partPostData = partPostData + dicNameValueitem.Key + "=" + dicNameValueitem.Value + "&";
-                                            }
-
-                                            string strPostData = ("fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=" + xhpc_context + "&xhpc_fbx=" + xhpc_fbx + "&xhpc_timeline=" + xhpc_timeline + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message + "&" + partPostData + "uithumbpager_width=320&uithumbpager_height=180&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=" + composer_session_id + "&is_explicit_place=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&phstamp=16581671021075776692083");//fb_dtsg=AQB6MSsa&xhpc_composerid=uv6h8i_132&xhpc_targetid=185980263874&xhpc_context=profile&xhpc_fbx=&xhpc_timeline=1&xhpc_ismeta=1&xhpc_message_text=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&xhpc_message=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&aktion=post&app_id=2309869772&UIThumbPager_Input=0&attachment[params][metaTagMap][0][http-equiv]=content-type&attachment[params][metaTagMap][0][content]=text%2Fhtml%3B%20charset%3Dutf-8&attachment[params][metaTagMap][1][name]=title&attachment[params][metaTagMap][1][content]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTagMap][2][name]=description&attachment[params][metaTagMap][2][content]=&attachment[params][metaTagMap][3][name]=keywords&attachment[params][metaTagMap][3][content]=Devon%2C%20ke%2C%20Dev%2C%20Mahadev%2C%2010th%2C%20July%2C%202012%2C%20Video%2C%20Watch%2C%20Online%2C%20Pt4&attachment[params][metaTagMap][4][property]=og%3Aurl&attachment[params][metaTagMap][4][content]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][metaTagMap][5][property]=og%3Atitle&attachment[params][metaTagMap][5][content]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTagMap][6][property]=og%3Adescription&attachment[params][metaTagMap][6][content]=&attachment[params][metaTagMap][7][property]=og%3Atype&attachment[params][metaTagMap][7][content]=video&attachment[params][metaTagMap][8][property]=og%3Aimage&attachment[params][metaTagMap][8][content]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][metaTagMap][9][property]=og%3Avideo&attachment[params][metaTagMap][9][content]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][10][property]=og%3Avideo%3Atype&attachment[params][metaTagMap][10][content]=application%2Fx-shockwave-flash&attachment[params][metaTagMap][11][property]=og%3Avideo%3Awidth&attachment[params][metaTagMap][11][content]=480&attachment[params][metaTagMap][12][property]=og%3Avideo%3Aheight&attachment[params][metaTagMap][12][content]=360&attachment[params][metaTagMap][13][property]=og%3Asite_name&attachment[params][metaTagMap][13][content]=YouTube&attachment[params][metaTagMap][14][property]=fb%3Aapp_id&attachment[params][metaTagMap][14][content]=87741124305&attachment[params][metaTagMap][15][name]=twitter%3Acard&attachment[params][metaTagMap][15][value]=player&attachment[params][metaTagMap][16][name]=twitter%3Asite&attachment[params][metaTagMap][16][value]=%40youtube&attachment[params][metaTagMap][17][name]=twitter%3Aplayer&attachment[params][metaTagMap][17][value]=https%3A%2F%2Fwww.youtube.com%2Fembed%2Fa1hRe_xGuGw&attachment[params][metaTagMap][18][property]=twitter%3Aplayer%3Awidth&attachment[params][metaTagMap][18][content]=480&attachment[params][metaTagMap][19][property]=twitter%3Aplayer%3Aheight&attachment[params][metaTagMap][19][content]=360&attachment[params][metaTagMap][20][name]=attribution&attachment[params][metaTagMap][20][content]=youtube_none%2F&attachment[params][medium]=103&attachment[params][urlInfo][canonical]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][urlInfo][final]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][urlInfo][user]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&attachment[params][favicon]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][fragment_title]=&attachment[params][external_author]=&attachment[params][summary]=&attachment[params][url]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][video][0][type]=application%2Fx-shockwave-flash&attachment[params][video][0][src]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][video][0][width]=480&attachment[params][video][0][height]=360&attachment[params][video][0][v]=0&attachment[params][video][0][safe]=1&attachment[params][error]=1&attachment[params][og_info][properties][0][0]=og%3Aurl&attachment[params][og_info][properties][0][1]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][og_info][properties][1][0]=og%3Atitle&attachment[params][og_info][properties][1][1]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][og_info][properties][2][0]=og%3Adescription&attachment[params][og_info][properties][2][1]=&attachment[params][og_info][properties][3][0]=og%3Atype&attachment[params][og_info][properties][3][1]=video&attachment[params][og_info][properties][4][0]=og%3Aimage&attachment[params][og_info][properties][4][1]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][og_info][properties][5][0]=og%3Avideo&attachment[params][og_info][properties][5][1]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][og_info][properties][6][0]=og%3Avideo%3Atype&attachment[params][og_info][properties][6][1]=application%2Fx-shockwave-flash&attachment[params][og_info][properties][7][0]=og%3Avideo%3Awidth&attachment[params][og_info][properties][7][1]=480&attachment[params][og_info][properties][8][0]=og%3Avideo%3Aheight&attachment[params][og_info][properties][8][1]=360&attachment[params][og_info][properties][9][0]=og%3Asite_name&attachment[params][og_info][properties][9][1]=YouTube&attachment[params][og_info][properties][10][0]=fb%3Aapp_id&attachment[params][og_info][properties][10][1]=87741124305&attachment[params][og_info][properties][11][0]=twitter%3Aplayer%3Awidth&attachment[params][og_info][properties][11][1]=480&attachment[params][og_info][properties][12][0]=twitter%3Aplayer%3Aheight&attachment[params][og_info][properties][12][1]=360&attachment[params][og_info][guesses][0][0]=og%3Aurl&attachment[params][og_info][guesses][0][1]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][og_info][guesses][1][0]=og%3Atitle&attachment[params][og_info][guesses][1][1]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][og_info][guesses][2][0]=og%3Adescription&attachment[params][og_info][guesses][2][1]=&attachment[params][og_info][guesses][3][0]=og%3Aimage&attachment[params][og_info][guesses][3][1]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][og_info][guesses][4][0]=og%3Alocale&attachment[params][og_info][guesses][4][1]=en&attachment[params][responseCode]=200&attachment[params][redirectPath][0][status]=og%3Aurl&attachment[params][redirectPath][0][url]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][redirectPath][0][ip]=74.125.228.3&attachment[params][metaTags][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTags][keywords]=Devon%2C%20ke%2C%20Dev%2C%20Mahadev%2C%2010th%2C%20July%2C%202012%2C%20Video%2C%20Watch%2C%20Online%2C%20Pt4&attachment[params][metaTags][attribution]=youtube_none%2F&attachment[params][locale]=en&attachment[params][lang]=en&attachment[params][links][0][rel]=search&attachment[params][links][0][type]=application%2Fopensearchdescription%2Bxml&attachment[params][links][0][href]=http%3A%2F%2Fwww.youtube.com%2Fopensearch%3Flocale%3Den_US&attachment[params][links][0][title]=YouTube%20Video%20Search&attachment[params][links][1][rel]=icon&attachment[params][links][1][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][links][1][type]=image%2Fx-icon&attachment[params][links][2][rel]=shortcut%20icon&attachment[params][links][2][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][links][2][type]=image%2Fx-icon&attachment[params][links][3][rel]=canonical&attachment[params][links][3][href]=%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][links][4][rel]=alternate&attachment[params][links][4][media]=handheld&attachment[params][links][4][href]=http%3A%2F%2Fm.youtube.com%2Fwatch%3Fdesktop_uri%3D%252Fwatch%253Fv%253Da1hRe_xGuGw%26v%3Da1hRe_xGuGw%26gl%3DUS&attachment[params][links][5][rel]=shortlink&attachment[params][links][5][href]=http%3A%2F%2Fyoutu.be%2Fa1hRe_xGuGw&attachment[params][links][6][rel]=alternate&attachment[params][links][6][type]=application%2Fjson%2Boembed&attachment[params][links][6][href]=http%3A%2F%2Fwww.youtube.com%2Foembed%3Furl%3Dhttp%253A%252F%252Fwww.youtube.com%252Fwatch%253Fv%253Da1hRe_xGuGw%26format%3Djson&attachment[params][links][6][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][links][7][rel]=alternate&attachment[params][links][7][type]=text%2Fxml%2Boembed&attachment[params][links][7][href]=http%3A%2F%2Fwww.youtube.com%2Foembed%3Furl%3Dhttp%253A%252F%252Fwww.youtube.com%252Fwatch%253Fv%253Da1hRe_xGuGw%26format%3Dxml&attachment[params][links][7][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][links][8][id]=www-core-css&attachment[params][links][8][rel]=stylesheet&attachment[params][links][8][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Fcssbin%2Fwww-core-vflMJW9Qx.css&attachment[params][links][9][itemprop]=url&attachment[params][links][9][href]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][links][10][itemprop]=url&attachment[params][links][10][href]=http%3A%2F%2Fwww.youtube.com%2Fchannel%2FUCpEMCp-RW4JB0RkTROQDWrg&attachment[params][links][11][itemprop]=url&attachment[params][links][11][href]=https%3A%2F%2Fplus.google.com%2F101628430301028857728&attachment[params][links][12][itemprop]=thumbnailUrl&attachment[params][links][12][href]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fhqdefault.jpg&attachment[params][links][13][itemprop]=url&attachment[params][links][13][href]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][links][14][itemprop]=embedURL&attachment[params][links][14][href]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][images][0]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][cache_hit]=1&attachment[type]=100&uithumbpager_width=320&uithumbpager_height=180&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=1342159698&is_explicit_place=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=100003798185175&__a=1&phstamp=16581665477831159710600
-                                            string strResponse = string.Empty;
-                                            try
-                                            {
-                                                strResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupsGroupCampaignManagerPostAjaxUpdateStatusUrl), strPostData);
-
-                                                if (strResponse.Contains("errorSummary"))
-                                                {
-                                                    try
-                                                    {
-                                                        string attachment_params_urlInfo_final = string.Empty;
-                                                        string attachment_params_favicon = string.Empty;
-                                                        string link_metrics_base_domain = string.Empty;
-
-                                                        attachment_params_favicon = Utils.getBetween(res_post_GetImageParams, "attachment[params][favicon]", "\\/>").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "");
-
-                                                        attachment_params_urlInfo_final = Utils.getBetween(res_post_GetImageParams, "attachment[params][urlInfo][final]", "\\/>").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "");
-                                                        string ImagePath = string.Empty;
-                                                        ImagePath = Utils.getBetween(res_post_GetImageParams, "img class=\\\"scaledImageFitWidth img\\\" src=\\\"", "\"").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "").Replace("amp;",string.Empty); 
-                                                        link_metrics_base_domain = Utils.getBetween(res_post_GetImageParams, "link_metrics[base_domain]", "\\/>").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "");
-                                                        xhpc_message_text = Uri.EscapeDataString(xhpc_message_text);
-                                                       // ImagePath = Uri.EscapeDataString(ImagePath);
-                                                        string PostDataa = "composer_session_id=f461bebd-0d21-4555-a46f-81020df04023&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&clp=%7B%22cl_impid%22%3A%22bd5578f5%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_39%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A693901727326724%7D&xhpc_message_text=" + xhpc_message_text + "%20&xhpc_message=" + xhpc_message + "%20&aktion=post&app_id=2309869772&attachment[params][urlInfo][canonical]=" + attachment_params_urlInfo_final + "&attachment[params][urlInfo][final]=" + attachment_params_urlInfo_final + "&attachment[params][urlInfo][user]=" + attachment_params_urlInfo_final + "&attachment[params][favicon]=" + attachment_params_favicon + "&attachment[params][title]=" + link_metrics_base_domain + "&attachment[params][summary]=" + attachment_params_summary + "&attachment[params][images][0]=" + attachment_params_images + "&attachment[params][medium]=106&attachment[params][url]="+ImagePath+"&attachment[type]=100&link_metrics[source]=ShareStageExternal&link_metrics[domain]=www.google.com&link_metrics[base_domain]=google.com&link_metrics[title_len]=6&link_metrics[summary_len]=159&link_metrics[min_dimensions][0]=70&link_metrics[min_dimensions][1]=70&link_metrics[images_with_dimensions]=2&link_metrics[images_pending]=0&link_metrics[images_fetched]=0&link_metrics[image_dimensions][0]=269&link_metrics[image_dimensions][1]=95&link_metrics[images_selected]=2&link_metrics[images_considered]=2&link_metrics[images_cap]=3&link_metrics[images_type]=ranked&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=2&composer_metrics[images_loaded]=2&composer_metrics[images_shown]=2&composer_metrics[load_duration]=2&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&scheduled=0&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&future_dateIntlDisplay=28%2F3%2F2014&future_date=3%2F28%2F2014&future_time=&future_time_display_time=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1395899372&composertags_city=&disable_location_sharing=false&composer_predicted_city=&UITargetedPrivacyWidget=80&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n8ajEAMCBynxl2u6aEyx9CxSq78hAKGgyiGGfJ4WpUpBw&__req=8&ttstamp=2658166727510250104&__rev=1179995";
-                                                      //  PostDataa = "composer_session_id=3b9a614b-eb04-4fe9-a5ef-65a64cc29237&fb_dtsg="+fb_dtsg+"&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid="+xhpc_composerid+"&xhpc_finch=1&xhpc_targetid="+pageId+"&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%226b4fbe0e%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1n%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A1530015940606190%7D&xhpc_message_text="+xhpc_message_text+"&xhpc_message="+xhpc_message_text+"&aktion=post&app_id=2309869772&attachment[params][0]=114443711899061&attachment[type]=18&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1420440363&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&UITargetedPrivacyWidget=80&future_date=&future_time=&scheduled=&draft=&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&hide_from_newsfeed=&nctr[_mod]=pagelet_timeline_main_column&__user="+pageId+"&__a=1&__dyn=aKUOqQu9loAwmgDDx2FbAy9aBxSq78hAJlCDiV8hrWqy8lBxiHGq8GEy5UCAqhB-8pbqDhUKFGx3CUtCw&__req=f&ttstamp=2658171113104861189012051103115&__rev=1549264";
-                                                        strResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av="+pageId), PostDataa);    // "https://www.facebook.com/ajax/updatestatus.php"
-                                                        xhpc_message_text = Uri.UnescapeDataString(xhpc_message_text);
-                                                    }
-                                                    catch (Exception ex)
-                                                    {
-                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                    }
-
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-
-                                            try
-                                            {
-                                                if (string.IsNullOrEmpty(strResponse))
-                                                {
-                                                    try
-                                                    {
-                                                        strResponse = HttpHelper.postFormData(new Uri(faceboardpro.FBGlobals.Instance.PageFanPageUrlComposerPhpUrl), strPostData);
-                                                    }
-                                                    catch (Exception ex)
-                                                    {
-                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                    }
-                                                }
-                                          
-                                            }
-                                            catch (Exception ex)
-
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-
-                                            if (strResponse.Contains("\"errorSummary\":"))
-                                            {
-                                                try
-                                                {
-                                                    string summary = GlobusHttpHelper.ParseJson(strResponse, "errorSummary");
-                                                    string errorDescription = GlobusHttpHelper.ParseJson(strResponse, "errorDescription");
-
-                                                    summary=Utils.getBetween(strResponse,"errorSummary\":\"","\"");
-                                                    errorDescription = Utils.getBetween(strResponse, "errorDescription\":\"", "\"");
-
-                                                    GlobusLogHelper.log.Info("Fan Page Posting Error: " + summary + " | Error Description: " + errorDescription);
-
-                                                    if (summary.Contains("Please verify your account"))
-                                                    {
-                                                        return;
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-                                            }
-
-                                            if (!strResponse.Contains("error") || strResponse.Contains("story_fbid=")|| strResponse.Contains("post_fbid"))
-                                            {
-                                                //string ok = "ok";
-                                                // TotalFanPageWallPoster_Counter++;
-                                                GlobusLogHelper.log.Info(CountPostWall + " Wall Posted With Image URL : " + xhpc_message_text + " On The Fan Page URL : " + strFanPageURL + " With User Name : " + Userss);
-                                                CountPostWall++;
-
-                                                // Write Data in CSV File  
-                                                //  CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, _ExportLocation);                                    
-
-                                                try
-                                                {
-                                                    string CSVHeader = "UserName" + "," + "FanpageUrl" + "," + "Message";
-                                                    string CSV_Content = Username + "," + lstFanPageURLsitem + "," + xhpc_message_text;
-
-                                                    Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, GlobusFileHelper.DesktopFanFilePath);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                }
-
-                                                int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
-                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                                GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                                Thread.Sleep(delayInSeconds);
-                                            }
-                                            else
-                                            {
-                                                GlobusLogHelper.log.Info("Couldn't Wall Post With Image URL : " + xhpc_message_text + " On The Fan Page URL : " + strFanPageURL + " With User Name : " + Userss);
-                                                GlobusLogHelper.log.Debug("Couldn't Wall Post With Image URL : " + xhpc_message_text + " On The Fan Page URL : " + strFanPageURL + " With User Name : " + Userss);
-
-                                                
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + Userss);
-                                //GlobusLogHelper.log.Debug("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + Userss);
-                            } 
-                        }
-                }
-            }
-            catch (Exception ex)
-            {
-                GlobusLogHelper.log.Error("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + fbUser.username);
-               // GlobusLogHelper.log.Debug("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + fbUser.username);
-            }
-
-            GlobusLogHelper.log.Info("Process Completed Of Wall Posting With Username >>> " + fbUser.username);
-            GlobusLogHelper.log.Debug("Process Completed Of Wall Posting With Username >>> " +fbUser.username);
-        
-        }
-
-        public void PostOnFanPageWallWithURLAndItsImageNew(ref FacebookUser fbUser)
         {
             try
             {
@@ -15733,6 +16511,380 @@ namespace Pages
                 string UsreId = "";
                 string __a = "1";
                 string phstamp = "";
+                string pageId = string.Empty;
+                #endregion
+
+                Username = Userss;
+
+                GlobusLogHelper.log.Info("Start Process of Wall Posting With Username.... >>> " + Username);
+                GlobusLogHelper.log.Debug("Start Process of Wall Posting With Username.... >>> " + Username);
+
+
+
+                foreach (var lstFanPageURLsitem in lstFanPageURLs)
+                {
+                    int Counter = 0;
+                    while (true)
+                    {
+
+                        Counter = Counter + 1;
+                        try
+                        {
+                            //Counter = Counter + 1;
+                            if (Counter > noOfPicsPerURL)
+                            {
+                                break;
+                            }
+
+                            string strFanPageURL = lstFanPageURLsitem;
+                            strFanPageURL = strFanPageURL.Replace("?ref=hl", "/");
+                            strFanPageURL = strFanPageURL.Replace("?fref=ts", "/");
+                            string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(strFanPageURL));
+                            string imp_id = string.Empty;
+                            pageId = Utils.getBetween(strPageSource, "PageAuxContentPagelet_", "\"");
+                            if (strPageSource.Contains("xhpc_composerid") && strPageSource.Contains("xhpc_targetid") && strPageSource.Contains("xhpc_context")) //&& strPageSource.Contains("xhpc_fbx")
+                            {
+                                UsreId = GlobusHttpHelper.Get_UserID(strPageSource);
+                                fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
+                                imp_id = Utils.getBetween(strPageSource, "imp_id\":\"", "\"");
+                                xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_composerid");
+                                xhpc_targetid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_targetid");
+                                xhpc_context = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
+                                xhpc_fbx = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_fbx");
+                                xhpc_timeline = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_timeline");
+                                xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
+
+                                xhpc_message_text = lstFanPagePostURLs[new Random().Next(0, lstFanPagePostURLs.Count)];
+                                xhpc_message = xhpc_message_text;
+                                //lstFanPagePostURLs.Remove(xhpc_message);
+                                //xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
+                                //xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
+                                string[] urlWithMessages = xhpc_message_text.Split(':');
+                                string messageText = string.Empty;
+                                if (urlWithMessages.Length > 2)
+                                {
+                                    messageText = urlWithMessages[0];
+                                }
+                                if (string.IsNullOrEmpty(UsreId))
+                                {
+                                    UsreId = GlobusHttpHelper.ParseJson(strPageSource, "user");
+                                }
+
+                                string composer_session_idSource = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.pageFanPageAjaxMetaComposerTargetidUrl + UsreId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1"));//Convert.ToInt32(ConvertToUnixTimestamp(DateTime.Now)).ToString();
+                                if (composer_session_idSource.Contains("composer_session_id"))
+                                {
+                                    composer_session_id = (composer_session_idSource.Substring(composer_session_idSource.IndexOf("composer_session_id"), composer_session_idSource.IndexOf("/>", composer_session_idSource.IndexOf("composer_session_id")) - composer_session_idSource.IndexOf("composer_session_id")).Replace("composer_session_id", string.Empty).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+
+                                }
+
+                                string strImageValue = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.pageFanPageUrlAjaxMetacomposerLinkUrl + Uri.EscapeDataString(xhpc_message_text) + "&alt_scrape_url=" + Uri.EscapeDataString(xhpc_message_text) + "&targetid=" + UsreId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1"));   //https://www.facebook.com/ajax/metacomposer/attachment/link/scraper.php?scrape_url=http%253A%252F%252Fwww.google.co.in%252F&alt_scrape_url=http%253A%252F%252Fwww.google.co.in%252F&targetid=100003798185175&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=100003798185175&__a=1
+
+                                string imageURL = xhpc_message_text;
+                                try
+                                {
+                                    imageURL = HttpHelper.GetHrefsFromString(xhpc_message_text)[0];
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                                string post_URL_GetImageParams = faceboardpro.FBGlobals.Instance.PageFanPageUrlComposeLinkScraper + imageURL + "&composerurihash=3";
+                                string post_Data_GetImageParams = "fb_dtsg=" + fb_dtsg + "&composerid=" + composer_session_id + "&targetid=" + xhpc_targetid + "&istimeline=1&composercontext=composer&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=maininput&loaded_components[3]=mainprivacywidget&loaded_components[4]=explicitplaceinput&loaded_components[5]=hiddenplaceinput&loaded_components[6]=placenameinput&loaded_components[7]=hiddensessionid&loaded_components[8]=withtagger&loaded_components[9]=placetagger&loaded_components[10]=withtaggericon&loaded_components[11]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n8ahyj2tVBoeVag&__req=4n&phstamp=165816886688048122625";
+
+                                string res_post_GetImageParams = string.Empty;
+                                try
+                                {
+                                    res_post_GetImageParams = HttpHelper.postFormData(new Uri(post_URL_GetImageParams), post_Data_GetImageParams);
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error(ex.Message);
+                                }
+                                strImageValue = res_post_GetImageParams;
+
+                                Dictionary<string, string> dicNameValue = new Dictionary<string, string>();
+                                string attachment_params_summary = string.Empty;
+                                string attachment_params_images = string.Empty;
+                                string partPostData = string.Empty;
+                                if (strImageValue.Contains("name=") && strImageValue.Contains("value="))
+                                {
+                                    try
+                                    {
+                                        string[] strNameValue = Regex.Split(strImageValue, "name=");
+                                        foreach (var strNameValueitem in strNameValue)
+                                        {
+                                            try
+                                            {
+                                                if (strNameValueitem.Contains("value="))
+                                                {
+                                                    string strSplit = strNameValueitem.Substring(0, strNameValueitem.IndexOf("/>"));
+                                                    if (strSplit.Contains("value="))
+                                                    {
+
+                                                        string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("value=") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+                                                        strName = strName.Replace(">u003Coption", "");
+                                                        if (strName == "fb_dtsg")
+                                                        {
+
+                                                            continue;
+                                                        }
+                                                        string strValue = (strNameValueitem.Substring(strNameValueitem.IndexOf("value="), strNameValueitem.IndexOf("/>", strNameValueitem.IndexOf("value=")) - strNameValueitem.IndexOf("value=")).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+                                                        if (strValue.Contains(">Year:u003C/option>"))
+                                                        {
+                                                            strValue = strValue.Replace("u003C", "<");
+                                                            if (strValue.Contains("</option>"))
+                                                            {
+                                                                strValue = Utils.getBetween(strValue, "<option 2014>", "</option>");
+                                                            }
+                                                        }
+                                                        if (strValue.Contains("Month:u003C/option>"))
+                                                        {
+                                                            strValue = strValue.Replace("u003C", "<");
+                                                            if (strValue.Contains("</option>"))
+                                                            {
+                                                                strValue = Utils.getBetween(strValue, "<option 12>", "</option>");
+                                                            }
+                                                        }
+                                                        strValue = (strValue);
+
+                                                        if (strNameValueitem.Contains("attachment[params][summary]"))
+                                                        {
+                                                            attachment_params_summary = strValue;
+                                                        }
+                                                        if (strNameValueitem.Contains("attachment[params][images]"))
+                                                        {
+                                                            attachment_params_images = strValue;
+                                                        }
+
+                                                        dicNameValue.Add(strName, strValue);
+                                                    }
+                                                    else
+                                                    {
+                                                        string strName = (strNameValueitem.Substring(0, strNameValueitem.IndexOf("/>") - 0).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+                                                        if (strName == "fb_dtsg")
+                                                        {
+                                                            continue;
+                                                        }
+                                                        string strValue = "0";
+                                                        strValue = (strValue);
+                                                        dicNameValue.Add(strName, strValue);
+                                                    }
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                            }
+                                        }
+
+
+
+                                        foreach (var dicNameValueitem in dicNameValue)
+                                        {
+                                            partPostData = partPostData + dicNameValueitem.Key + "=" + dicNameValueitem.Value + "&";
+                                        }
+
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+                                string strPostData = string.Empty;
+                                if (!string.IsNullOrEmpty(partPostData))
+                                {
+                                    strPostData = ("fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=" + xhpc_context + "&xhpc_fbx=" + xhpc_fbx + "&xhpc_timeline=" + xhpc_timeline + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_message_text=" + messageText + " " + xhpc_message_text + "&xhpc_message=" + messageText + " " + xhpc_message + "&" + partPostData + "uithumbpager_width=320&uithumbpager_height=180&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=" + composer_session_id + "&is_explicit_place=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&phstamp=16581671021075776692083");//fb_dtsg=AQB6MSsa&xhpc_composerid=uv6h8i_132&xhpc_targetid=185980263874&xhpc_context=profile&xhpc_fbx=&xhpc_timeline=1&xhpc_ismeta=1&xhpc_message_text=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&xhpc_message=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&aktion=post&app_id=2309869772&UIThumbPager_Input=0&attachment[params][metaTagMap][0][http-equiv]=content-type&attachment[params][metaTagMap][0][content]=text%2Fhtml%3B%20charset%3Dutf-8&attachment[params][metaTagMap][1][name]=title&attachment[params][metaTagMap][1][content]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTagMap][2][name]=description&attachment[params][metaTagMap][2][content]=&attachment[params][metaTagMap][3][name]=keywords&attachment[params][metaTagMap][3][content]=Devon%2C%20ke%2C%20Dev%2C%20Mahadev%2C%2010th%2C%20July%2C%202012%2C%20Video%2C%20Watch%2C%20Online%2C%20Pt4&attachment[params][metaTagMap][4][property]=og%3Aurl&attachment[params][metaTagMap][4][content]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][metaTagMap][5][property]=og%3Atitle&attachment[params][metaTagMap][5][content]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTagMap][6][property]=og%3Adescription&attachment[params][metaTagMap][6][content]=&attachment[params][metaTagMap][7][property]=og%3Atype&attachment[params][metaTagMap][7][content]=video&attachment[params][metaTagMap][8][property]=og%3Aimage&attachment[params][metaTagMap][8][content]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][metaTagMap][9][property]=og%3Avideo&attachment[params][metaTagMap][9][content]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][10][property]=og%3Avideo%3Atype&attachment[params][metaTagMap][10][content]=application%2Fx-shockwave-flash&attachment[params][metaTagMap][11][property]=og%3Avideo%3Awidth&attachment[params][metaTagMap][11][content]=480&attachment[params][metaTagMap][12][property]=og%3Avideo%3Aheight&attachment[params][metaTagMap][12][content]=360&attachment[params][metaTagMap][13][property]=og%3Asite_name&attachment[params][metaTagMap][13][content]=YouTube&attachment[params][metaTagMap][14][property]=fb%3Aapp_id&attachment[params][metaTagMap][14][content]=87741124305&attachment[params][metaTagMap][15][name]=twitter%3Acard&attachment[params][metaTagMap][15][value]=player&attachment[params][metaTagMap][16][name]=twitter%3Asite&attachment[params][metaTagMap][16][value]=%40youtube&attachment[params][metaTagMap][17][name]=twitter%3Aplayer&attachment[params][metaTagMap][17][value]=https%3A%2F%2Fwww.youtube.com%2Fembed%2Fa1hRe_xGuGw&attachment[params][metaTagMap][18][property]=twitter%3Aplayer%3Awidth&attachment[params][metaTagMap][18][content]=480&attachment[params][metaTagMap][19][property]=twitter%3Aplayer%3Aheight&attachment[params][metaTagMap][19][content]=360&attachment[params][metaTagMap][20][name]=attribution&attachment[params][metaTagMap][20][content]=youtube_none%2F&attachment[params][medium]=103&attachment[params][urlInfo][canonical]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][urlInfo][final]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][urlInfo][user]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&attachment[params][favicon]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][fragment_title]=&attachment[params][external_author]=&attachment[params][summary]=&attachment[params][url]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][video][0][type]=application%2Fx-shockwave-flash&attachment[params][video][0][src]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][video][0][width]=480&attachment[params][video][0][height]=360&attachment[params][video][0][v]=0&attachment[params][video][0][safe]=1&attachment[params][error]=1&attachment[params][og_info][properties][0][0]=og%3Aurl&attachment[params][og_info][properties][0][1]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][og_info][properties][1][0]=og%3Atitle&attachment[params][og_info][properties][1][1]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][og_info][properties][2][0]=og%3Adescription&attachment[params][og_info][properties][2][1]=&attachment[params][og_info][properties][3][0]=og%3Atype&attachment[params][og_info][properties][3][1]=video&attachment[params][og_info][properties][4][0]=og%3Aimage&attachment[params][og_info][properties][4][1]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][og_info][properties][5][0]=og%3Avideo&attachment[params][og_info][properties][5][1]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][og_info][properties][6][0]=og%3Avideo%3Atype&attachment[params][og_info][properties][6][1]=application%2Fx-shockwave-flash&attachment[params][og_info][properties][7][0]=og%3Avideo%3Awidth&attachment[params][og_info][properties][7][1]=480&attachment[params][og_info][properties][8][0]=og%3Avideo%3Aheight&attachment[params][og_info][properties][8][1]=360&attachment[params][og_info][properties][9][0]=og%3Asite_name&attachment[params][og_info][properties][9][1]=YouTube&attachment[params][og_info][properties][10][0]=fb%3Aapp_id&attachment[params][og_info][properties][10][1]=87741124305&attachment[params][og_info][properties][11][0]=twitter%3Aplayer%3Awidth&attachment[params][og_info][properties][11][1]=480&attachment[params][og_info][properties][12][0]=twitter%3Aplayer%3Aheight&attachment[params][og_info][properties][12][1]=360&attachment[params][og_info][guesses][0][0]=og%3Aurl&attachment[params][og_info][guesses][0][1]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][og_info][guesses][1][0]=og%3Atitle&attachment[params][og_info][guesses][1][1]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][og_info][guesses][2][0]=og%3Adescription&attachment[params][og_info][guesses][2][1]=&attachment[params][og_info][guesses][3][0]=og%3Aimage&attachment[params][og_info][guesses][3][1]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][og_info][guesses][4][0]=og%3Alocale&attachment[params][og_info][guesses][4][1]=en&attachment[params][responseCode]=200&attachment[params][redirectPath][0][status]=og%3Aurl&attachment[params][redirectPath][0][url]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][redirectPath][0][ip]=74.125.228.3&attachment[params][metaTags][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTags][keywords]=Devon%2C%20ke%2C%20Dev%2C%20Mahadev%2C%2010th%2C%20July%2C%202012%2C%20Video%2C%20Watch%2C%20Online%2C%20Pt4&attachment[params][metaTags][attribution]=youtube_none%2F&attachment[params][locale]=en&attachment[params][lang]=en&attachment[params][links][0][rel]=search&attachment[params][links][0][type]=application%2Fopensearchdescription%2Bxml&attachment[params][links][0][href]=http%3A%2F%2Fwww.youtube.com%2Fopensearch%3Flocale%3Den_US&attachment[params][links][0][title]=YouTube%20Video%20Search&attachment[params][links][1][rel]=icon&attachment[params][links][1][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][links][1][type]=image%2Fx-icon&attachment[params][links][2][rel]=shortcut%20icon&attachment[params][links][2][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][links][2][type]=image%2Fx-icon&attachment[params][links][3][rel]=canonical&attachment[params][links][3][href]=%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][links][4][rel]=alternate&attachment[params][links][4][media]=handheld&attachment[params][links][4][href]=http%3A%2F%2Fm.youtube.com%2Fwatch%3Fdesktop_uri%3D%252Fwatch%253Fv%253Da1hRe_xGuGw%26v%3Da1hRe_xGuGw%26gl%3DUS&attachment[params][links][5][rel]=shortlink&attachment[params][links][5][href]=http%3A%2F%2Fyoutu.be%2Fa1hRe_xGuGw&attachment[params][links][6][rel]=alternate&attachment[params][links][6][type]=application%2Fjson%2Boembed&attachment[params][links][6][href]=http%3A%2F%2Fwww.youtube.com%2Foembed%3Furl%3Dhttp%253A%252F%252Fwww.youtube.com%252Fwatch%253Fv%253Da1hRe_xGuGw%26format%3Djson&attachment[params][links][6][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][links][7][rel]=alternate&attachment[params][links][7][type]=text%2Fxml%2Boembed&attachment[params][links][7][href]=http%3A%2F%2Fwww.youtube.com%2Foembed%3Furl%3Dhttp%253A%252F%252Fwww.youtube.com%252Fwatch%253Fv%253Da1hRe_xGuGw%26format%3Dxml&attachment[params][links][7][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][links][8][id]=www-core-css&attachment[params][links][8][rel]=stylesheet&attachment[params][links][8][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Fcssbin%2Fwww-core-vflMJW9Qx.css&attachment[params][links][9][itemprop]=url&attachment[params][links][9][href]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][links][10][itemprop]=url&attachment[params][links][10][href]=http%3A%2F%2Fwww.youtube.com%2Fchannel%2FUCpEMCp-RW4JB0RkTROQDWrg&attachment[params][links][11][itemprop]=url&attachment[params][links][11][href]=https%3A%2F%2Fplus.google.com%2F101628430301028857728&attachment[params][links][12][itemprop]=thumbnailUrl&attachment[params][links][12][href]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fhqdefault.jpg&attachment[params][links][13][itemprop]=url&attachment[params][links][13][href]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][links][14][itemprop]=embedURL&attachment[params][links][14][href]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][images][0]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][cache_hit]=1&attachment[type]=100&uithumbpager_width=320&uithumbpager_height=180&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=1342159698&is_explicit_place=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=100003798185175&__a=1&phstamp=16581665477831159710600
+                                }
+                                else
+                                {
+                                    strPostData = "composer_session_id=1849fbbd-514f-49ad-84ee-c45ec1c77b4a&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_timeline=&xhpc_composerid=" + xhpc_composerid + "&xhpc_finch=1&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22" + imp_id + "%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1j%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + messageText + " " + xhpc_message + "&xhpc_message=" + xhpc_message + "&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1432105140&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_timeline_main_column&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7pEsx6iWF3oyut9LHwxBxCbzES2N6xt2UnwPUS2O4K5e8Gi4EOy28yiq5WCgSi&__req=i&ttstamp=265817273106120561081207888117&__rev=1745336";
+                                }
+                                string strResponse = string.Empty;
+                                try
+                                {
+                                    strResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupsGroupCampaignManagerPostAjaxUpdateStatusUrl), strPostData);
+
+                                    if (strResponse.Contains("errorSummary"))
+                                    {
+                                        try
+                                        {
+                                            string attachment_params_urlInfo_final = string.Empty;
+                                            string attachment_params_favicon = string.Empty;
+                                            string link_metrics_base_domain = string.Empty;
+
+                                            attachment_params_favicon = Utils.getBetween(res_post_GetImageParams, "attachment[params][favicon]", "\\/>").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "");
+
+                                            attachment_params_urlInfo_final = Utils.getBetween(res_post_GetImageParams, "attachment[params][urlInfo][final]", "\\/>").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "");
+                                            string ImagePath = string.Empty;
+                                            ImagePath = Utils.getBetween(res_post_GetImageParams, "img class=\\\"scaledImageFitWidth img\\\" src=\\\"", "\"").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "").Replace("amp;", string.Empty);
+                                            link_metrics_base_domain = Utils.getBetween(res_post_GetImageParams, "link_metrics[base_domain]", "\\/>").Replace(" value=", "").Replace("\\\"", "").Replace("\\", "");
+                                            xhpc_message_text = Uri.EscapeDataString(xhpc_message_text);
+                                            // ImagePath = Uri.EscapeDataString(ImagePath);
+                                            string PostDataa = "composer_session_id=f461bebd-0d21-4555-a46f-81020df04023&fb_dtsg=" + fb_dtsg + "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&clp=%7B%22cl_impid%22%3A%22bd5578f5%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_39%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A693901727326724%7D&xhpc_message_text=" + xhpc_message_text + "%20&xhpc_message=" + xhpc_message + "%20&aktion=post&app_id=2309869772&attachment[params][urlInfo][canonical]=" + attachment_params_urlInfo_final + "&attachment[params][urlInfo][final]=" + attachment_params_urlInfo_final + "&attachment[params][urlInfo][user]=" + attachment_params_urlInfo_final + "&attachment[params][favicon]=" + attachment_params_favicon + "&attachment[params][title]=" + link_metrics_base_domain + "&attachment[params][summary]=" + attachment_params_summary + "&attachment[params][images][0]=" + attachment_params_images + "&attachment[params][medium]=106&attachment[params][url]=" + ImagePath + "&attachment[type]=100&link_metrics[source]=ShareStageExternal&link_metrics[domain]=www.google.com&link_metrics[base_domain]=google.com&link_metrics[title_len]=6&link_metrics[summary_len]=159&link_metrics[min_dimensions][0]=70&link_metrics[min_dimensions][1]=70&link_metrics[images_with_dimensions]=2&link_metrics[images_pending]=0&link_metrics[images_fetched]=0&link_metrics[image_dimensions][0]=269&link_metrics[image_dimensions][1]=95&link_metrics[images_selected]=2&link_metrics[images_considered]=2&link_metrics[images_cap]=3&link_metrics[images_type]=ranked&composer_metrics[best_image_w]=100&composer_metrics[best_image_h]=100&composer_metrics[image_selected]=0&composer_metrics[images_provided]=2&composer_metrics[images_loaded]=2&composer_metrics[images_shown]=2&composer_metrics[load_duration]=2&composer_metrics[timed_out]=0&composer_metrics[sort_order]=&composer_metrics[selector_type]=UIThumbPager_6&scheduled=0&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&future_dateIntlDisplay=28%2F3%2F2014&future_date=3%2F28%2F2014&future_time=&future_time_display_time=&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1395899372&composertags_city=&disable_location_sharing=false&composer_predicted_city=&UITargetedPrivacyWidget=80&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n8ajEAMCBynxl2u6aEyx9CxSq78hAKGgyiGGfJ4WpUpBw&__req=8&ttstamp=2658166727510250104&__rev=1179995";
+                                            //  PostDataa = "composer_session_id=3b9a614b-eb04-4fe9-a5ef-65a64cc29237&fb_dtsg="+fb_dtsg+"&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=&xhpc_composerid="+xhpc_composerid+"&xhpc_finch=1&xhpc_targetid="+pageId+"&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%226b4fbe0e%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1n%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A1530015940606190%7D&xhpc_message_text="+xhpc_message_text+"&xhpc_message="+xhpc_message_text+"&aktion=post&app_id=2309869772&attachment[params][0]=114443711899061&attachment[type]=18&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1420440363&action_type_id[0]=&object_str[0]=&object_id[0]=&hide_object_attachment=0&og_suggestion_mechanism=&og_suggestion_logging_data=&icon_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&UITargetedPrivacyWidget=80&future_date=&future_time=&scheduled=&draft=&backdated_date[year]=&backdated_date[month]=&backdated_date[day]=&hide_from_newsfeed=&nctr[_mod]=pagelet_timeline_main_column&__user="+pageId+"&__a=1&__dyn=aKUOqQu9loAwmgDDx2FbAy9aBxSq78hAJlCDiV8hrWqy8lBxiHGq8GEy5UCAqhB-8pbqDhUKFGx3CUtCw&__req=f&ttstamp=2658171113104861189012051103115&__rev=1549264";
+                                            strResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/updatestatus.php?av=" + pageId), PostDataa);    // "https://www.facebook.com/ajax/updatestatus.php"
+                                            xhpc_message_text = Uri.UnescapeDataString(xhpc_message_text);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
+                                try
+                                {
+                                    if (string.IsNullOrEmpty(strResponse))
+                                    {
+                                        try
+                                        {
+                                            strResponse = HttpHelper.postFormData(new Uri(faceboardpro.FBGlobals.Instance.PageFanPageUrlComposerPhpUrl), strPostData);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+
+                                if (strResponse.Contains("\"errorSummary\":"))
+                                {
+                                    try
+                                    {
+                                        string summary = GlobusHttpHelper.ParseJson(strResponse, "errorSummary");
+                                        string errorDescription = GlobusHttpHelper.ParseJson(strResponse, "errorDescription");
+
+                                        summary = Utils.getBetween(strResponse, "errorSummary\":\"", "\"");
+                                        errorDescription = Utils.getBetween(strResponse, "errorDescription\":\"", "\"");
+
+                                        GlobusLogHelper.log.Info("Fan Page Posting Error: " + summary + " | Error Description: " + errorDescription);
+
+                                        if (summary.Contains("Please verify your account"))
+                                        {
+                                            return;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+
+                                if (!strResponse.Contains("error") || strResponse.Contains("story_fbid=") || strResponse.Contains("post_fbid"))
+                                {
+                                    //string ok = "ok";
+                                    // TotalFanPageWallPoster_Counter++;
+                                    GlobusLogHelper.log.Info(CountPostWall + " Wall Posted With Image URL : " + xhpc_message_text + " On The Fan Page URL : " + strFanPageURL + " With User Name : " + Userss);
+                                    CountPostWall++;
+
+                                    // Write Data in CSV File  
+                                    //  CSVUtilities.ExportDataCSVFile(CSVHeader, CSV_Content, _ExportLocation);                                    
+
+                                    try
+                                    {
+                                        string CSVHeader = "UserName" + "," + "FanpageUrl" + "," + "Message";
+                                        string CSV_Content = Username + "," + lstFanPageURLsitem + "," + xhpc_message_text;
+
+                                        Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, GlobusFileHelper.DesktopFanFilePath);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                    int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
+                                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                                    Thread.Sleep(delayInSeconds);
+                                }
+                                else
+                                {
+                                    GlobusLogHelper.log.Info("Couldn't Wall Post With Image URL : " + xhpc_message_text + " On The Fan Page URL : " + strFanPageURL + " With User Name : " + Userss);
+                                    GlobusLogHelper.log.Debug("Couldn't Wall Post With Image URL : " + xhpc_message_text + " On The Fan Page URL : " + strFanPageURL + " With User Name : " + Userss);
+
+
+                                }
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + Userss);
+                            //GlobusLogHelper.log.Debug("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + Userss);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + fbUser.username);
+                // GlobusLogHelper.log.Debug("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + fbUser.username);
+            }
+
+            GlobusLogHelper.log.Info("Process Completed Of Wall Posting With Username >>> " + fbUser.username);
+            GlobusLogHelper.log.Debug("Process Completed Of Wall Posting With Username >>> " + fbUser.username);
+
+        }
+
+        public void PostOnFanPageWallWithURLAndItsImageNew(ref FacebookUser fbUser)
+        {
+            try
+            {
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+
+                string Username = string.Empty;
+                string Password = string.Empty;
+
+                GlobusLogHelper.log.Debug("Please Wait------------!");
+                GlobusLogHelper.log.Info("Please Wait------------!");
+
+                Array paramArray = new object[10];
+                string Userss = fbUser.username;
+
+                int CountPostWall = 1;
+                //string FanpageUrl = (string)paramArray.GetValue(6);
+                lstFanPageUrlCollectionFanPagePoster = lstFanPageUrlCollectionFanPagePoster.Distinct().ToList();
+                lstFanPageURLs = lstFanPageUrlCollectionFanPagePoster;
+                lstFanPageUrlCollectionFanPagePostUrl = lstFanPageUrlCollectionFanPagePostUrl.Distinct().ToList();
+                lstFanPagePostURLs = lstFanPageUrlCollectionFanPagePostUrl;
+
+                string siteUrl = string.Empty;
+                string composer_session_id = "";
+                string fb_dtsg = "";
+                string xhpc_composerid = "";
+                string xhpc_targetid = "";
+                string xhpc_context = "";
+                string xhpc_fbx = "";
+                string xhpc_timeline = "";
+                string xhpc_ismeta = "";
+                string xhpc_message_text = "";
+                string xhpc_message = "";
+
+                #region MyRegion
+                string uithumbpager_width = "128";
+                string uithumbpager_height = "128";
+                string composertags_place = "";
+                string composertags_place_name = "";
+                string composer_predicted_city = "";
+                string is_explicit_place = "";
+                string composertags_city = "";
+                string disable_location_sharing = "false";
+                string audiencevalue = "80";
+                string nctr_mod = "pagelet_timeline_recent";
+                string UsreId = "";
+                string __a = "1";
+                string phstamp = "";
                 #endregion
 
                 Username = Userss;
@@ -15742,6 +16894,8 @@ namespace Pages
 
 
                 int Counter = 0;
+
+
                 foreach (var lstFanPageURLsitem in lstFanPageURLs)
                 {
 
@@ -15773,6 +16927,13 @@ namespace Pages
                                 xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
 
                                 xhpc_message_text = lstFanPagePostURLs[new Random().Next(0, lstFanPagePostURLs.Count)];
+                                string[] urlWithMessages = xhpc_message_text.Split(':');
+                                string messageText = string.Empty;
+                                if (urlWithMessages.Length > 2)
+                                {
+                                    xhpc_message_text = urlWithMessages[1] + urlWithMessages[2];
+                                    messageText = urlWithMessages[0];
+                                }
                                 xhpc_message = xhpc_message_text;
                                 //lstFanPagePostURLs.Remove(xhpc_message);
                                 //xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
@@ -15888,7 +17049,11 @@ namespace Pages
                                         {
                                             partPostData = partPostData + dicNameValueitem.Key + "=" + dicNameValueitem.Value + "&";
                                         }
-
+                                        if (!string.IsNullOrEmpty(messageText))
+                                        {
+                                            xhpc_message_text = Uri.EscapeDataString(messageText);
+                                            xhpc_message = Uri.EscapeDataString(messageText);
+                                        }
                                         string strPostData = ("fb_dtsg=" + fb_dtsg + "&xhpc_composerid=" + xhpc_composerid + "&xhpc_targetid=" + xhpc_targetid + "&xhpc_context=" + xhpc_context + "&xhpc_fbx=" + xhpc_fbx + "&xhpc_timeline=" + xhpc_timeline + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_message_text=" + xhpc_message_text + "&xhpc_message=" + xhpc_message + "&" + partPostData + "uithumbpager_width=320&uithumbpager_height=180&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=" + composer_session_id + "&is_explicit_place=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&phstamp=16581671021075776692083");//fb_dtsg=AQB6MSsa&xhpc_composerid=uv6h8i_132&xhpc_targetid=185980263874&xhpc_context=profile&xhpc_fbx=&xhpc_timeline=1&xhpc_ismeta=1&xhpc_message_text=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&xhpc_message=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&aktion=post&app_id=2309869772&UIThumbPager_Input=0&attachment[params][metaTagMap][0][http-equiv]=content-type&attachment[params][metaTagMap][0][content]=text%2Fhtml%3B%20charset%3Dutf-8&attachment[params][metaTagMap][1][name]=title&attachment[params][metaTagMap][1][content]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTagMap][2][name]=description&attachment[params][metaTagMap][2][content]=&attachment[params][metaTagMap][3][name]=keywords&attachment[params][metaTagMap][3][content]=Devon%2C%20ke%2C%20Dev%2C%20Mahadev%2C%2010th%2C%20July%2C%202012%2C%20Video%2C%20Watch%2C%20Online%2C%20Pt4&attachment[params][metaTagMap][4][property]=og%3Aurl&attachment[params][metaTagMap][4][content]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][metaTagMap][5][property]=og%3Atitle&attachment[params][metaTagMap][5][content]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTagMap][6][property]=og%3Adescription&attachment[params][metaTagMap][6][content]=&attachment[params][metaTagMap][7][property]=og%3Atype&attachment[params][metaTagMap][7][content]=video&attachment[params][metaTagMap][8][property]=og%3Aimage&attachment[params][metaTagMap][8][content]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][metaTagMap][9][property]=og%3Avideo&attachment[params][metaTagMap][9][content]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][metaTagMap][10][property]=og%3Avideo%3Atype&attachment[params][metaTagMap][10][content]=application%2Fx-shockwave-flash&attachment[params][metaTagMap][11][property]=og%3Avideo%3Awidth&attachment[params][metaTagMap][11][content]=480&attachment[params][metaTagMap][12][property]=og%3Avideo%3Aheight&attachment[params][metaTagMap][12][content]=360&attachment[params][metaTagMap][13][property]=og%3Asite_name&attachment[params][metaTagMap][13][content]=YouTube&attachment[params][metaTagMap][14][property]=fb%3Aapp_id&attachment[params][metaTagMap][14][content]=87741124305&attachment[params][metaTagMap][15][name]=twitter%3Acard&attachment[params][metaTagMap][15][value]=player&attachment[params][metaTagMap][16][name]=twitter%3Asite&attachment[params][metaTagMap][16][value]=%40youtube&attachment[params][metaTagMap][17][name]=twitter%3Aplayer&attachment[params][metaTagMap][17][value]=https%3A%2F%2Fwww.youtube.com%2Fembed%2Fa1hRe_xGuGw&attachment[params][metaTagMap][18][property]=twitter%3Aplayer%3Awidth&attachment[params][metaTagMap][18][content]=480&attachment[params][metaTagMap][19][property]=twitter%3Aplayer%3Aheight&attachment[params][metaTagMap][19][content]=360&attachment[params][metaTagMap][20][name]=attribution&attachment[params][metaTagMap][20][content]=youtube_none%2F&attachment[params][medium]=103&attachment[params][urlInfo][canonical]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][urlInfo][final]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][urlInfo][user]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw%26feature%3Drelated&attachment[params][favicon]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][fragment_title]=&attachment[params][external_author]=&attachment[params][summary]=&attachment[params][url]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][video][0][type]=application%2Fx-shockwave-flash&attachment[params][video][0][src]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1%26autoplay%3D1&attachment[params][video][0][width]=480&attachment[params][video][0][height]=360&attachment[params][video][0][v]=0&attachment[params][video][0][safe]=1&attachment[params][error]=1&attachment[params][og_info][properties][0][0]=og%3Aurl&attachment[params][og_info][properties][0][1]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][og_info][properties][1][0]=og%3Atitle&attachment[params][og_info][properties][1][1]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][og_info][properties][2][0]=og%3Adescription&attachment[params][og_info][properties][2][1]=&attachment[params][og_info][properties][3][0]=og%3Atype&attachment[params][og_info][properties][3][1]=video&attachment[params][og_info][properties][4][0]=og%3Aimage&attachment[params][og_info][properties][4][1]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][og_info][properties][5][0]=og%3Avideo&attachment[params][og_info][properties][5][1]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][og_info][properties][6][0]=og%3Avideo%3Atype&attachment[params][og_info][properties][6][1]=application%2Fx-shockwave-flash&attachment[params][og_info][properties][7][0]=og%3Avideo%3Awidth&attachment[params][og_info][properties][7][1]=480&attachment[params][og_info][properties][8][0]=og%3Avideo%3Aheight&attachment[params][og_info][properties][8][1]=360&attachment[params][og_info][properties][9][0]=og%3Asite_name&attachment[params][og_info][properties][9][1]=YouTube&attachment[params][og_info][properties][10][0]=fb%3Aapp_id&attachment[params][og_info][properties][10][1]=87741124305&attachment[params][og_info][properties][11][0]=twitter%3Aplayer%3Awidth&attachment[params][og_info][properties][11][1]=480&attachment[params][og_info][properties][12][0]=twitter%3Aplayer%3Aheight&attachment[params][og_info][properties][12][1]=360&attachment[params][og_info][guesses][0][0]=og%3Aurl&attachment[params][og_info][guesses][0][1]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][og_info][guesses][1][0]=og%3Atitle&attachment[params][og_info][guesses][1][1]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][og_info][guesses][2][0]=og%3Adescription&attachment[params][og_info][guesses][2][1]=&attachment[params][og_info][guesses][3][0]=og%3Aimage&attachment[params][og_info][guesses][3][1]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][og_info][guesses][4][0]=og%3Alocale&attachment[params][og_info][guesses][4][1]=en&attachment[params][responseCode]=200&attachment[params][redirectPath][0][status]=og%3Aurl&attachment[params][redirectPath][0][url]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][redirectPath][0][ip]=74.125.228.3&attachment[params][metaTags][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][metaTags][keywords]=Devon%2C%20ke%2C%20Dev%2C%20Mahadev%2C%2010th%2C%20July%2C%202012%2C%20Video%2C%20Watch%2C%20Online%2C%20Pt4&attachment[params][metaTags][attribution]=youtube_none%2F&attachment[params][locale]=en&attachment[params][lang]=en&attachment[params][links][0][rel]=search&attachment[params][links][0][type]=application%2Fopensearchdescription%2Bxml&attachment[params][links][0][href]=http%3A%2F%2Fwww.youtube.com%2Fopensearch%3Flocale%3Den_US&attachment[params][links][0][title]=YouTube%20Video%20Search&attachment[params][links][1][rel]=icon&attachment[params][links][1][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][links][1][type]=image%2Fx-icon&attachment[params][links][2][rel]=shortcut%20icon&attachment[params][links][2][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Ffavicon-vfldLzJxy.ico&attachment[params][links][2][type]=image%2Fx-icon&attachment[params][links][3][rel]=canonical&attachment[params][links][3][href]=%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][links][4][rel]=alternate&attachment[params][links][4][media]=handheld&attachment[params][links][4][href]=http%3A%2F%2Fm.youtube.com%2Fwatch%3Fdesktop_uri%3D%252Fwatch%253Fv%253Da1hRe_xGuGw%26v%3Da1hRe_xGuGw%26gl%3DUS&attachment[params][links][5][rel]=shortlink&attachment[params][links][5][href]=http%3A%2F%2Fyoutu.be%2Fa1hRe_xGuGw&attachment[params][links][6][rel]=alternate&attachment[params][links][6][type]=application%2Fjson%2Boembed&attachment[params][links][6][href]=http%3A%2F%2Fwww.youtube.com%2Foembed%3Furl%3Dhttp%253A%252F%252Fwww.youtube.com%252Fwatch%253Fv%253Da1hRe_xGuGw%26format%3Djson&attachment[params][links][6][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][links][7][rel]=alternate&attachment[params][links][7][type]=text%2Fxml%2Boembed&attachment[params][links][7][href]=http%3A%2F%2Fwww.youtube.com%2Foembed%3Furl%3Dhttp%253A%252F%252Fwww.youtube.com%252Fwatch%253Fv%253Da1hRe_xGuGw%26format%3Dxml&attachment[params][links][7][title]=Devon%20ke%20Dev%20Mahadev%2010th%20July%202012%20Video%20Watch%20Online%20Pt4&attachment[params][links][8][id]=www-core-css&attachment[params][links][8][rel]=stylesheet&attachment[params][links][8][href]=http%3A%2F%2Fs.ytimg.com%2Fyt%2Fcssbin%2Fwww-core-vflMJW9Qx.css&attachment[params][links][9][itemprop]=url&attachment[params][links][9][href]=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Da1hRe_xGuGw&attachment[params][links][10][itemprop]=url&attachment[params][links][10][href]=http%3A%2F%2Fwww.youtube.com%2Fchannel%2FUCpEMCp-RW4JB0RkTROQDWrg&attachment[params][links][11][itemprop]=url&attachment[params][links][11][href]=https%3A%2F%2Fplus.google.com%2F101628430301028857728&attachment[params][links][12][itemprop]=thumbnailUrl&attachment[params][links][12][href]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fhqdefault.jpg&attachment[params][links][13][itemprop]=url&attachment[params][links][13][href]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][links][14][itemprop]=embedURL&attachment[params][links][14][href]=http%3A%2F%2Fwww.youtube.com%2Fv%2Fa1hRe_xGuGw%3Fversion%3D3%26autohide%3D1&attachment[params][images][0]=http%3A%2F%2Fi2.ytimg.com%2Fvi%2Fa1hRe_xGuGw%2Fmqdefault.jpg&attachment[params][cache_hit]=1&attachment[type]=100&uithumbpager_width=320&uithumbpager_height=180&composertags_place=&composertags_place_name=&composer_predicted_city=&composer_session_id=1342159698&is_explicit_place=&composertags_city=&disable_location_sharing=false&nctr[_mod]=pagelet_timeline_recent&__user=100003798185175&__a=1&phstamp=16581665477831159710600
                                         string strResponse = string.Empty;
                                         try
@@ -16024,6 +17189,226 @@ namespace Pages
 
         }
 
+
+        public void PostOnFanPageWallWithURLAndItsMessage(ref FacebookUser fbUser)
+        {
+            try
+            {
+                GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+
+                string Username = string.Empty;
+                string Password = string.Empty;
+
+                GlobusLogHelper.log.Debug("Please Wait------------!");
+                GlobusLogHelper.log.Info("Please Wait------------!");
+
+                Array paramArray = new object[10];
+                string Userss = fbUser.username;
+
+                int CountPostWall = 1;
+                //string FanpageUrl = (string)paramArray.GetValue(6);
+                lstFanPageUrlCollectionFanPagePoster = lstFanPageUrlCollectionFanPagePoster.Distinct().ToList();
+                lstFanPageURLs = lstFanPageUrlCollectionFanPagePoster;
+                lstFanPageUrlCollectionFanPagePostUrl = lstFanPageUrlCollectionFanPagePostUrl.Distinct().ToList();
+                lstFanPagePostURLs = lstFanPageUrlCollectionFanPagePostUrl;
+
+                string composer_session_id = "";
+                string fb_dtsg = "";
+                string xhpc_composerid = "";
+                string xhpc_targetid = "";
+                string xhpc_context = "";
+                string xhpc_fbx = "";
+                string xhpc_timeline = "";
+                string xhpc_ismeta = "";
+                string xhpc_message_text = "";
+                string xhpc_message = "";
+                string cl_impid = string.Empty;
+                string app_id = string.Empty;
+                string urlInfo_canonical = string.Empty;
+                string urlInfo_final = string.Empty;
+                string urlInfo_user = string.Empty;
+                string params_responseCode = string.Empty;
+                string params_favicon = string.Empty;
+                string params_external_author = string.Empty;
+                string params_title = string.Empty;
+                string params_summary = string.Empty;
+                string images_0 = string.Empty;
+                string ranked_images_images_0 = string.Empty;
+                string ranked_images_images_1 = string.Empty;
+                string ranked_images_images_2 = string.Empty;
+                string ranked_images_images_3 = string.Empty;
+                string ranked_images_images_4 = string.Empty;
+                string image_info_0_url = string.Empty;
+                string image_info_1_url = string.Empty;
+                string image_info_2_url = string.Empty;
+                string time_scraped = string.Empty;
+                string globalShareId = string.Empty;
+                string loginfo_prooperties = string.Empty;
+                string redirectPath_0_status = string.Empty;
+                string redirectPath_0_RedirectedUrl = string.Empty;
+                string og_info_0 = string.Empty;
+                string ttl = string.Empty;
+                #region MyRegion
+                string uithumbpager_width = "128";
+                string uithumbpager_height = "128";
+                string composertags_place = "";
+                string composertags_place_name = "";
+                string composer_predicted_city = "";
+                string is_explicit_place = "";
+                string composertags_city = "";
+                string disable_location_sharing = "false";
+                string audiencevalue = "80";
+                string nctr_mod = "pagelet_timeline_recent";
+                string UsreId = "";
+                string __a = "1";
+                string phstamp = "";
+                string pageId = string.Empty;
+                #endregion
+
+                Username = Userss;
+
+                GlobusLogHelper.log.Info("Start Process of Wall Posting With Username.... >>> " + Username);
+                GlobusLogHelper.log.Debug("Start Process of Wall Posting With Username.... >>> " + Username);
+
+
+                int Counter = 0;
+                foreach (var lstFanPageURLsitem in lstFanPageURLs)
+                {
+
+                    while (true)
+                    {
+
+                        Counter = Counter + 1;
+                        try
+                        {
+                            //Counter = Counter + 1;
+                            if (Counter > noOfPicsPerURL)
+                            {
+                                break;
+                            }
+
+                            string strFanPageURL = lstFanPageURLsitem;
+                            strFanPageURL = strFanPageURL.Replace("?ref=hl", "/");
+                            strFanPageURL = strFanPageURL.Replace("?fref=ts", "/");
+                            string strPageSource = HttpHelper.getHtmlfromUrl(new Uri(strFanPageURL));
+                            pageId = Utils.getBetween(strPageSource, "PageAuxContentPagelet_", "\"");
+                            if (strPageSource.Contains("xhpc_composerid") && strPageSource.Contains("xhpc_targetid") && strPageSource.Contains("xhpc_context")) //&& strPageSource.Contains("xhpc_fbx")
+                            {
+                                UsreId = GlobusHttpHelper.Get_UserID(strPageSource);
+                                fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strPageSource);
+
+                                xhpc_composerid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_composerid");
+                                xhpc_targetid = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_targetid");
+                                xhpc_context = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_context");
+                                xhpc_fbx = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_fbx");
+                                xhpc_timeline = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_timeline");
+                                xhpc_ismeta = GlobusHttpHelper.GetParamValue(strPageSource, "xhpc_ismeta");
+                                cl_impid = Utils.getBetween(strPageSource, "\"imp_id\":\"", "\"");
+
+                                xhpc_message_text = lstFanPagePostURLs[new Random().Next(0, lstFanPagePostURLs.Count)];
+                                xhpc_message = xhpc_message_text;
+
+                                string[] urlWithMessages = xhpc_message_text.Split(':');
+                                string SiteUrl = xhpc_message_text;
+                                if (urlWithMessages.Length > 2)
+                                {
+                                    SiteUrl = urlWithMessages[1] + urlWithMessages[2];
+                                    xhpc_message_text = urlWithMessages[0] + " " + urlWithMessages[1] + ":" + urlWithMessages[2];
+                                }
+
+                                if (string.IsNullOrEmpty(UsreId))
+                                {
+                                    UsreId = GlobusHttpHelper.ParseJson(strPageSource, "user");
+                                }
+
+                                string composer_session_idSource = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.pageFanPageAjaxMetaComposerTargetidUrl + UsreId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1"));//Convert.ToInt32(ConvertToUnixTimestamp(DateTime.Now)).ToString();
+                                if (composer_session_idSource.Contains("composer_session_id"))
+                                {
+                                    composer_session_id = (composer_session_idSource.Substring(composer_session_idSource.IndexOf("composer_session_id"), composer_session_idSource.IndexOf("/>", composer_session_idSource.IndexOf("composer_session_id")) - composer_session_idSource.IndexOf("composer_session_id")).Replace("composer_session_id", string.Empty).Replace("value=", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Trim());
+
+                                }
+
+                                string strImageValue = HttpHelper.getHtmlfromUrl(new Uri(faceboardpro.FBGlobals.Instance.pageFanPageUrlAjaxMetacomposerLinkUrl + Uri.EscapeDataString(SiteUrl) + "&alt_scrape_url=" + Uri.EscapeDataString(xhpc_message_text) + "&targetid=" + UsreId + "&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=" + UsreId + "&__a=1"));   //https://www.facebook.com/ajax/metacomposer/attachment/link/scraper.php?scrape_url=http%253A%252F%252Fwww.google.co.in%252F&alt_scrape_url=http%253A%252F%252Fwww.google.co.in%252F&targetid=100003798185175&xhpc=composerTourStart&nctr[_mod]=pagelet_composer&__user=100003798185175&__a=1
+
+                                string imageURL = SiteUrl;
+                                try
+                                {
+                                    imageURL = HttpHelper.GetHrefsFromString(xhpc_message_text)[0];
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                                try
+                                {
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error(ex.Message);
+                                }
+                                string post_URL_GetImageParams = faceboardpro.FBGlobals.Instance.PageFanPageUrlComposeLinkScraper + imageURL + "&composerurihash=3";
+                                string post_Data_GetImageParams = "fb_dtsg=" + fb_dtsg + "&composerid=" + composer_session_id + "&targetid=" + xhpc_targetid + "&istimeline=1&composercontext=composer&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=maininput&loaded_components[3]=mainprivacywidget&loaded_components[4]=explicitplaceinput&loaded_components[5]=hiddenplaceinput&loaded_components[6]=placenameinput&loaded_components[7]=hiddensessionid&loaded_components[8]=withtagger&loaded_components[9]=placetagger&loaded_components[10]=withtaggericon&loaded_components[11]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n8ahyj2tVBoeVag&__req=4n&phstamp=165816886688048122625";
+                                post_Data_GetImageParams = "fb_dtsg=" + fb_dtsg + "&composerid=" + composer_session_id + "&targetid=" + xhpc_targetid + "&composercontext=composer&isadspowereditor=&iscontenttabdrafts=&iscontenttabpublishedposts=&iscontenttabscheduledposts=&composerpublishtype=1&isfinch=1&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=maininput&loaded_components[5]=withtaggericon&loaded_components[6]=placetaggericon&loaded_components[7]=mainprivacywidget&loaded_components[8]=placetagger&loaded_components[9]=explicitplaceinput&loaded_components[10]=hiddenplaceinput&loaded_components[11]=placenameinput&loaded_components[12]=hiddensessionid&loaded_components[13]=withtagger&loaded_components[14]=cameraicon&loaded_components[15]=citysharericon&nctr[_mod]=pagelet_timeline_main_column&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7qK78hAKGgS8VpQC-K26m6oKezob4q5Qbxu3fzob8iUk-qF8izam8y99EnGp3p8&__req=g&ttstamp=2658170489948457211310011375&__rev=1735386";
+                                string res_post_GetImageParams = HttpHelper.postFormData(new Uri(post_URL_GetImageParams), post_Data_GetImageParams);
+
+                                if (strImageValue.Contains("name=") && strImageValue.Contains("value="))
+                                {
+                                    try
+                                    {
+                                        app_id = Utils.getBetween(res_post_GetImageParams, "app_id\\\" value=\\\"", "\\\"");
+                                        urlInfo_canonical = Utils.getBetween(res_post_GetImageParams, "params][urlInfo][canonical]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        params_responseCode = Utils.getBetween(res_post_GetImageParams, "attachment[params][responseCode]\\\" value=\\\"", "\\\"");
+                                        params_favicon = Utils.getBetween(res_post_GetImageParams, "attachment[params][favicon]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        params_external_author = Utils.getBetween(res_post_GetImageParams, "attachment[params][external_author]\\\" value=\\\"", "\\\"");
+                                        params_title = Utils.getBetween(res_post_GetImageParams, "[params][title]\\\" value=\\\"", "\\\"");
+                                        params_summary = Utils.getBetween(res_post_GetImageParams, "attachment[params][summary]\\\" value=\\\"", "\\\"");
+                                        images_0 = Utils.getBetween(res_post_GetImageParams, "[params][images][0]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        ranked_images_images_0 = Utils.getBetween(res_post_GetImageParams, "ranked_images][images][0]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        ranked_images_images_1 = Utils.getBetween(res_post_GetImageParams, "ranked_images][images][1]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        ranked_images_images_2 = Utils.getBetween(res_post_GetImageParams, "ranked_images][images][2]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        ranked_images_images_3 = Utils.getBetween(res_post_GetImageParams, "ranked_images][images][3]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        ranked_images_images_4 = Utils.getBetween(res_post_GetImageParams, "ranked_images][images][4]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        image_info_0_url = Utils.getBetween(res_post_GetImageParams, "[params][image_info][0][url]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&"); //[params][image_info][0][url]\" value=\"
+                                        image_info_1_url = Utils.getBetween(res_post_GetImageParams, "[params][image_info][1][url]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        image_info_2_url = Utils.getBetween(res_post_GetImageParams, "[params][image_info][2][url]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        time_scraped = Utils.getBetween(res_post_GetImageParams, "[params][time_scraped]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&"); //time_scraped
+                                        globalShareId = Utils.getBetween(res_post_GetImageParams, "[params][global_share_id]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        loginfo_prooperties = Utils.getBetween(res_post_GetImageParams, "][og_info][properties][0][1]\\\" value=\\\"", "\\\"");
+                                        redirectPath_0_status = Utils.getBetween(res_post_GetImageParams, "[redirectPath][0][status]\\\" value=\\\"", "\\\"");
+                                        redirectPath_0_RedirectedUrl = Utils.getBetween(res_post_GetImageParams, "[redirectPath][0][url]\\\" value=\\\"", "\\\"").Replace("\\", string.Empty).Replace("&amp;", "&");
+                                        ttl = Utils.getBetween(res_post_GetImageParams, "attachment[params][ttl]\\\" value=\\\"", "\\\"");
+
+
+                                        string PostDataForUrl = "composer_session_id=abf69e05-7b6b-4293-ad9e-0ad2d9818329&fb_dtsg=" + fb_dtsg + "&xhpc_context=" + xhpc_context + "&xhpc_ismeta=" + xhpc_ismeta + "&xhpc_timeline=&xhpc_composerid=u_0_1e&xhpc_finch=1&xhpc_targetid=" + xhpc_targetid + "&xhpc_publish_type=1&clp=%7B%22cl_impid%22%3A%22" + cl_impid + "%22%2C%22clearcounter%22%3A0%2C%22elementid%22%3A%22u_0_1j%22%2C%22version%22%3A%22x%22%2C%22parent_fbid%22%3A" + xhpc_targetid + "%7D&xhpc_message_text=" + Uri.EscapeDataString(xhpc_message_text) + "&xhpc_message=" + Uri.EscapeDataString(xhpc_message_text) + "&aktion=post&app_id=" + app_id + "&attachment[params][urlInfo][canonical]=" + Uri.EscapeDataString(urlInfo_canonical) + "&attachment[params][urlInfo][final]=" + Uri.EscapeDataString(urlInfo_final) + "&attachment[params][urlInfo][user]=" + Uri.EscapeDataString(SiteUrl) + "&attachment[params][responseCode]=" + params_responseCode + "&attachment[params][favicon]=" + Uri.EscapeDataString(params_favicon) + "&attachment[params][external_author]=" + params_external_author + "&attachment[params][title]=" + params_title + "&attachment[params][summary]=" + Uri.EscapeDataString(params_summary) + "&attachment[params][content_removed]=&attachment[params][images][0]=" + images_0 + "&attachment[params][ranked_images][images][0]=" + Uri.EscapeDataString(ranked_images_images_0) + "&attachment[params][ranked_images][images][1]=" + Uri.EscapeDataString(ranked_images_images_1) + "&attachment[params][ranked_images][images][2]=" + Uri.EscapeDataString(ranked_images_images_2) + "&attachment[params][ranked_images][images][3]=" + Uri.EscapeDataString(ranked_images_images_3) + "&attachment[params][ranked_images][images][4]=" + Uri.EscapeDataString(ranked_images_images_4) + "&attachment[params][ranked_images][ranking_model_version]=10&attachment[params][image_info][0][url]=" + Uri.EscapeDataString(image_info_0_url) + "&attachment[params][image_info][0][width]=170&attachment[params][image_info][0][height]=135&attachment[params][image_info][0][xray][overlaid_text]=0.5904&attachment[params][image_info][0][xray][synthetic]=0.8978&attachment[params][image_info][0][xray][scores][710528045704026]=0.0036&attachment[params][image_info][1][url]=" + Uri.EscapeDataString(image_info_1_url) + "&attachment[params][image_info][1][width]=170&attachment[params][image_info][1][height]=135&attachment[params][image_info][2][url]=" + Uri.EscapeDataString(image_info_2_url) + "&attachment[params][image_info][2][width]=170&attachment[params][image_info][2][height]=135&attachment[params][medium]=106&attachment[params][url]=" + Uri.EscapeDataString(SiteUrl) + "&attachment[params][time_scraped]=" + time_scraped + "&attachment[params][cache_hit]=1&attachment[params][global_share_id]=" + globalShareId + "&attachment[params][was_recent]=&attachment[params][og_info][properties][0][0]=fb%3Aapp_id&attachment[params][og_info][properties][0][1]=" + loginfo_prooperties + "&attachment[params][redirectPath][0][status]=" + Uri.EscapeDataString(redirectPath_0_status) + "&attachment[params][redirectPath][0][url]=" + Uri.EscapeDataString(redirectPath_0_RedirectedUrl) + "&attachment[params][ttl]=" + ttl + "&attachment[params][error]=1&attachment[type]=100&composer_metrics[image_selected]=0&is_explicit_place=&composertags_place=&composertags_place_name=&tagger_session_id=1431588661&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_timeline_main_column&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2lm9o-t2u5bGya4Au7qK78hAKGgS8VpQC-K26m6oKezob4q5Qbxu3fzob8iUk-qF8izam8y99EnGp3p8&__req=j&ttstamp=2658170489948457211310011375&__rev=1735386";
+                                        string strResponse = HttpHelper.postFormData(new Uri(FBGlobals.Instance.GroupsGroupCampaignManagerPostAjaxUpdateStatusUrl), PostDataForUrl);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + Userss);
+                            //GlobusLogHelper.log.Debug("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + Userss);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + fbUser.username);
+                // GlobusLogHelper.log.Debug("Error >>> ex.Message >>> " + ex.Message + " ex.StackTrace >>> " + ex.StackTrace + " With Username >>> " + fbUser.username);
+            }
+
+            GlobusLogHelper.log.Info("Process Completed Of Wall Posting With Username >>> " + fbUser.username);
+            GlobusLogHelper.log.Debug("Process Completed Of Wall Posting With Username >>> " + fbUser.username);
+
+        }
+
         public void UploadImage(ref FacebookUser fbUser)
         {
             try
@@ -16046,7 +17431,7 @@ namespace Pages
             }
         }
 
-       
+
 
         public void StartImageUploading(ref FacebookUser fbUser, string url)
         {
@@ -16056,12 +17441,12 @@ namespace Pages
             string strProxyAddress = fbUser.proxyusername;
             string strProxyUserName = fbUser.proxyusername;
             string strProxyPassword = fbUser.proxypassword;
-            string strProxyPort = fbUser.proxyport;            
+            string strProxyPort = fbUser.proxyport;
 
             try
             {
-                 GlobusLogHelper.log.Debug(" Starting Image Upload With Username : " + strUserName + " On The URL : " + url);
-                 GlobusLogHelper.log.Info(" Starting Image Upload With Username : " + strUserName + " On The URL : " + url);
+                GlobusLogHelper.log.Debug(" Starting Image Upload With Username : " + strUserName + " On The URL : " + url);
+                GlobusLogHelper.log.Info(" Starting Image Upload With Username : " + strUserName + " On The URL : " + url);
 
                 string pics = string.Empty;
                 string message = string.Empty;
@@ -16079,7 +17464,7 @@ namespace Pages
                 if (string.IsNullOrEmpty(__user))
                 {
                     __user = GlobusHttpHelper.ParseJson(res_Home, "user");
-                }              
+                }
 
                 string fb_dtsg = Get_fb_dtsg(res_Home);
 
@@ -16090,10 +17475,10 @@ namespace Pages
                     pageId = res_get_FanPage.Substring(res_get_FanPage.IndexOf("?page_id="), res_get_FanPage.IndexOf("\"", res_get_FanPage.IndexOf("?page_id=")) - res_get_FanPage.IndexOf("?page_id=")).Replace("?page_id=", string.Empty).Replace("\"", string.Empty).Trim();
                 }
 
-                res_get_FanPage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.PageManagerPagesGetting + pageId + ""));  
+                res_get_FanPage = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.PageManagerPagesGetting + pageId + ""));
 
 
-                string postURL_identity = FBGlobals.Instance.PageManagerPageIdentitySwitchPhp;                                    
+                string postURL_identity = FBGlobals.Instance.PageManagerPageIdentitySwitchPhp;
                 string postData_identity = "fb_dtsg=" + fb_dtsg + "&user_id=" + pageId + "&url=" + Uri.EscapeUriString(url) + "";
 
                 res_get_FanPage = HttpHelper.postFormData(new Uri(postURL_identity), postData_identity);
@@ -16123,8 +17508,8 @@ namespace Pages
                         }
                         else
                         {
-                             GlobusLogHelper.log.Debug("All pics used up : " + strUserName);
-                             GlobusLogHelper.log.Info("All pics used up : " + strUserName);
+                            GlobusLogHelper.log.Debug("All pics used up : " + strUserName);
+                            GlobusLogHelper.log.Info("All pics used up : " + strUserName);
                             return;
                         }
 
@@ -16135,7 +17520,7 @@ namespace Pages
                         }
 
                         ///composer hash1
-                        string postURL_composerhash1 = FBGlobals.Instance.PageManagerPageAjaxComposerx1;    
+                        string postURL_composerhash1 = FBGlobals.Instance.PageManagerPageAjaxComposerx1;
                         string postData_composerhash1 = "fb_dtsg=" + fb_dtsg + "&composerid=" + composerid + "&targetid=" + targetid + "&istimeline=1&composercontext=composer&loaded_components[0]=maininput&loaded_components[1]=backdateicon&loaded_components[2]=placetaggericon&loaded_components[3]=mainprivacywidget&loaded_components[4]=backdateicon&loaded_components[5]=mainprivacywidget&loaded_components[6]=placetaggericon&loaded_components[7]=maininput&nctr[_mod]=pagelet_timeline_recent&__user=" + __user + "&__a=1&__dyn=7n8ahyj35whVag&__req=4&phstamp=1658167108458977122472";
 
                         string res_post_composerhash1 = HttpHelper.postFormData(new Uri(postURL_composerhash1), postData_composerhash1);
@@ -16143,7 +17528,7 @@ namespace Pages
 
                         ///composer hash2
                         ///
-                        string postURL_composerhash2 = FBGlobals.Instance.PageManagerPageAjaxComposerx2;     
+                        string postURL_composerhash2 = FBGlobals.Instance.PageManagerPageAjaxComposerx2;
                         string postData_composerhash2 = "fb_dtsg=" + fb_dtsg + "&composerid=" + composerid + "&targetid=" + targetid + "&istimeline=1&composercontext=composer&loaded_components[0]=maininput&loaded_components[1]=backdateicon&loaded_components[2]=placetaggericon&loaded_components[3]=mainprivacywidget&loaded_components[4]=backdateicon&loaded_components[5]=mainprivacywidget&loaded_components[6]=placetaggericon&loaded_components[7]=maininput&nctr[_mod]=pagelet_timeline_recent&__user=" + __user + "&__a=1&__dyn=7n88QoAMNo4uiA&__req=5&phstamp=1658167108458977122472";
 
                         string res_post_composerhash2 = HttpHelper.postFormData(new Uri(postURL_composerhash2), postData_composerhash2);
@@ -16195,8 +17580,8 @@ namespace Pages
                             GlobusLogHelper.log.Debug("Image Uploaded With Username : " + strUserName + " On The URL : " + url);
                             GlobusLogHelper.log.Info("Image Uploaded With Username : " + strUserName + " On The URL : " + url);
                             try
-                              {
-                                  int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
+                            {
+                                int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
                                 GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                 GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                 Thread.Sleep(delayInSeconds);
@@ -16244,7 +17629,7 @@ namespace Pages
                     }
                 }
 
-#endregion
+                #endregion
             }
             catch (Exception ex)
             {
@@ -16279,7 +17664,7 @@ namespace Pages
         }
         public void StartImageUploadingOnPage(ref FacebookUser fbUser, string PageUrl)
         {
-          GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
 
             string strUserName = fbUser.username;
             string strProxyAddress = fbUser.proxyusername;
@@ -16297,7 +17682,7 @@ namespace Pages
                 string pageId = string.Empty;
                 string session_id = string.Empty;
                 string grid_Id = string.Empty;
-                string waterfallId=string.Empty;
+                string waterfallId = string.Empty;
 
                 if (string.IsNullOrEmpty(strProxyPort))
                 {
@@ -16316,8 +17701,8 @@ namespace Pages
                 string res_get_FanPage = HttpHelper.getHtmlfromUrl(new Uri(PageUrl));
                 string ComposerId = string.Empty;
                 pageId = Utils.getBetween(res_get_FanPage, "{\"pageID\":\"", "\"}]]]");
-               
-                ComposerId=Utils.getBetween(res_get_FanPage,"composerid\" value=\"","\"");
+
+                ComposerId = Utils.getBetween(res_get_FanPage, "composerid\" value=\"", "\"");
                 #region for
                 for (int i = 0; i < noOfPicsPerURL; i++)
                 {
@@ -16341,13 +17726,13 @@ namespace Pages
                         }
                         string ImagePostClickResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/composerx/attachment/media/upload/?av=" + __user + "&composerurihash=1"), "fb_dtsg=" + fb_dtsg + "&composerid=" + ComposerId + "&targetid=" + pageId + "&composercontext=composer&isfinch=1&loaded_components[0]=maininput&loaded_components[1]=withtaggericon&loaded_components[2]=placetaggericon&loaded_components[3]=mainprivacywidget&loaded_components[4]=mainprivacywidget&loaded_components[5]=withtaggericon&loaded_components[6]=placetaggericon&loaded_components[7]=maininput&nctr[_mod]=pagelet_timeline_main_column&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUW5ogDyQqUjhpoW8xOdy8-&__req=g&ttstamp=2658170819911711579109529989&__rev=1561259");
                         grid_Id = Utils.getBetween(ImagePostClickResp, "\"gridID\":\"", "\"");
-                        waterfallId=Utils.getBetween(ImagePostClickResp,"\"waterfallID\":\"","\""); 
+                        waterfallId = Utils.getBetween(ImagePostClickResp, "\"waterfallID\":\"", "\"");
                         NameValueCollection nvc = new NameValueCollection();
-                        nvc.Add("fb_dtsg",fb_dtsg);
-                        nvc.Add("source","8");
-                        nvc.Add("profile_id",__user);
-                        nvc.Add("grid_id",grid_Id);
-                        nvc.Add("qn",waterfallId);
+                        nvc.Add("fb_dtsg", fb_dtsg);
+                        nvc.Add("source", "8");
+                        nvc.Add("profile_id", __user);
+                        nvc.Add("grid_id", grid_Id);
+                        nvc.Add("qn", waterfallId);
                         nvc.Add("0", "" + pics + "<:><:><:>image/jpeg");
                         nvc.Add("upload_id", "1024");
                         string imgUploadResp = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + pageId + "&image_height=100&image_width=100&letterbox=0&av=" + __user + "&qn=" + waterfallId + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8ponUKexm49UJ6K4Qmmey8szoyfw&__req=p&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170819911711579109529989&__rev=1561259", PageUrl, nvc, "upload_id", "0");
@@ -16356,32 +17741,32 @@ namespace Pages
 
                         NameValueCollection nvc1 = new NameValueCollection();
                         nvc1.Add("composer_session_id", "57c32c98-d4b9-4f5a-9fb9-6452e01e24bb");
-                        nvc1.Add("fb_dtsg",fb_dtsg);
-                        nvc1.Add("xhpc_context","profile");
-                        nvc1.Add("xhpc_ismeta","1");
-                        nvc1.Add("xhpc_timeline",string.Empty);
+                        nvc1.Add("fb_dtsg", fb_dtsg);
+                        nvc1.Add("xhpc_context", "profile");
+                        nvc1.Add("xhpc_ismeta", "1");
+                        nvc1.Add("xhpc_timeline", string.Empty);
                         nvc1.Add("xhpc_composerid", ComposerId);
                         nvc1.Add("xhpc_finch", "1");
                         nvc1.Add("xhpc_targetid", pageId);
                         nvc1.Add("xhpc_publish_type", "1");
-                        nvc1.Add("clp", "{\"cl_impid\":\"626b99df\",\"clearcounter\":0,\"elementid\":\"u_0_19\",\"version\":\"x\",\"parent_fbid\":"+pageId+"}");
-                        nvc1.Add("xhpc_message",message);
-                        nvc1.Add("composer_unpublished_photo[]",UnPublishId);
-                        nvc1.Add("album_type","128");
-                        nvc1.Add("is_file_form","1");
+                        nvc1.Add("clp", "{\"cl_impid\":\"626b99df\",\"clearcounter\":0,\"elementid\":\"u_0_19\",\"version\":\"x\",\"parent_fbid\":" + pageId + "}");
+                        nvc1.Add("xhpc_message", message);
+                        nvc1.Add("composer_unpublished_photo[]", UnPublishId);
+                        nvc1.Add("album_type", "128");
+                        nvc1.Add("is_file_form", "1");
                         nvc1.Add("oid", string.Empty);
                         nvc1.Add("qn", waterfallId);
-                        nvc1.Add("application","composer");
-                        nvc1.Add("is_explicit_place",string.Empty);
-                        nvc1.Add("composertags_place",string.Empty);
+                        nvc1.Add("application", "composer");
+                        nvc1.Add("is_explicit_place", string.Empty);
+                        nvc1.Add("composertags_place", string.Empty);
                         nvc1.Add("composertags_place_name", string.Empty);
                         nvc1.Add("tagger_session_id", "1421254406");
-                        nvc1.Add("composertags_city",string.Empty);
-                        nvc1.Add("disable_location_sharing","false");
-                        nvc1.Add("composer_predicted_city",string.Empty);
-                        string imgUploadResp1 = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/media/upload/photos/composer/?av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8ponUKexm49UJ6K4Qmmey8szoyfw&__req=x&fb_dtsg="+fb_dtsg+"&ttstamp=2658170819911711579109529989&__rev=1561259", PageUrl, nvc1, "composer_predicted_city", string.Empty);
+                        nvc1.Add("composertags_city", string.Empty);
+                        nvc1.Add("disable_location_sharing", "false");
+                        nvc1.Add("composer_predicted_city", string.Empty);
+                        string imgUploadResp1 = HttpHelper.UploadImageWaterfallModel("https://upload.facebook.com/media/upload/photos/composer/?av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4pbGAdBGeqrWo8ponUKexm49UJ6K4Qmmey8szoyfw&__req=x&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170819911711579109529989&__rev=1561259", PageUrl, nvc1, "composer_predicted_city", string.Empty);
 
-                        string photoId=Utils.getBetween(imgUploadResp1,"photo_fbid\":",",\"story_fbid");
+                        string photoId = Utils.getBetween(imgUploadResp1, "photo_fbid\":", ",\"story_fbid");
                         if (!string.IsNullOrEmpty(photoId))
                         {
                             GlobusLogHelper.log.Debug("Image Uploaded With Username : " + strUserName + " On The URL : " + PageUrl);
@@ -16426,11 +17811,11 @@ namespace Pages
                         GlobusLogHelper.log.Error(ex.Message);
                     }
 
-                       
+
                 }
 
                 #endregion
-                
+
 
             }
             catch (Exception ex)
@@ -16466,7 +17851,7 @@ namespace Pages
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
             {
-               
+
                 #region Post variable
 
                 string post_form_id = string.Empty;
@@ -16481,19 +17866,19 @@ namespace Pages
                 bool isPostingAvailbale = false;
                 #endregion
 
-                int NoOfEmailAccount = 20;              
-                Array paramArray = new object[8];              
-                string  Username = fbUser.username;
-                string  Password = fbUser.password;
-                string proxyAddress =fbUser.proxyusername;
-                string proxyPort =fbUser.proxyport;
-                string proxyUserName =fbUser.proxyusername;
-                string proxyPassword =fbUser.proxypassword;
-                string strPostFanpageMessageCount = string.Empty; 
-                string Message =string.Empty;
-                string campaignName = string.Empty;    
+                int NoOfEmailAccount = 20;
+                Array paramArray = new object[8];
+                string Username = fbUser.username;
+                string Password = fbUser.password;
+                string proxyAddress = fbUser.proxyusername;
+                string proxyPort = fbUser.proxyport;
+                string proxyUserName = fbUser.proxyusername;
+                string proxyPassword = fbUser.proxypassword;
+                string strPostFanpageMessageCount = string.Empty;
+                string Message = string.Empty;
+                string campaignName = string.Empty;
                 string ResponseFanPagePostMessage = string.Empty;
-              
+
 
                 foreach (var FanPageUrl in lstFanPageUrlCollectionFanPagePoster)
                 {
@@ -16513,7 +17898,7 @@ namespace Pages
                         {
 
                             string PageSrcFanPageUrl = HttpHelper.getHtmlfromUrl(new Uri(FanPageUrl));
-                            if (count >=noOfPicsPerURL)
+                            if (count >= noOfPicsPerURL)
                             {
                                 break;
                             }
@@ -16536,51 +17921,51 @@ namespace Pages
                             fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(PageSrcFanPageUrl);
 
                             fbpage_id = GlobusHttpHelper.GetPageID(PageSrcFanPageUrl, ref strFanPageURL);
-                           
+
                             /*Enable this if User want to post Message with like the Fan Page */
-                          /*  string postURL_1st = FaceDominator.FBGlobals.Instance.pageFanPagePosterAjaxPagesFanStatusPhp;   
-                            string postData_1st = "fbpage_id=" + fbpage_id + "&add=true&reload=false&fan_origin=page_timeline&nctr[_mod]=pagelet_timeline_page_actions&fb_dtsg=" + fb_dtsg + "&__user=" + __user + "&phstamp=" + GenerateTimeStamp() + "";
-                            string res_post_1st = HttpHelper.postFormData(new Uri(postURL_1st), postData_1st);
+                            /*  string postURL_1st = faceboardpro.FBGlobals.Instance.pageFanPagePosterAjaxPagesFanStatusPhp;   
+                              string postData_1st = "fbpage_id=" + fbpage_id + "&add=true&reload=false&fan_origin=page_timeline&nctr[_mod]=pagelet_timeline_page_actions&fb_dtsg=" + fb_dtsg + "&__user=" + __user + "&phstamp=" + GenerateTimeStamp() + "";
+                              string res_post_1st = HttpHelper.postFormData(new Uri(postURL_1st), postData_1st);
 
-                            if (res_post_1st.Contains("Security Check Required"))
-                            {
-                                string content = Username + ":" + Password;
-                                GlobusLogHelper.log.Debug("Security Check Required : " + FanPageUrl + "  with : " + Username);
-                                GlobusLogHelper.log.Info("Security Check Required : " + FanPageUrl + "  with : " + Username);
-                                continue;
-                            }
-                            else if (res_post_1st.Contains("You already like this Page"))
-                            {
-                                #region commentedCode
-                                //string content = Username + ":" + Password;
-                                //CreateFileLikeDeskTop(content, "UnLike");
-                                //GlobusLogHelper.log.Debug("Already Liked " + FanPageUrl + "  with " + Username);
-                                //return; 
-                                #endregion
+                              if (res_post_1st.Contains("Security Check Required"))
+                              {
+                                  string content = Username + ":" + Password;
+                                  GlobusLogHelper.log.Debug("Security Check Required : " + FanPageUrl + "  with : " + Username);
+                                  GlobusLogHelper.log.Info("Security Check Required : " + FanPageUrl + "  with : " + Username);
+                                  continue;
+                              }
+                              else if (res_post_1st.Contains("You already like this Page"))
+                              {
+                                  #region commentedCode
+                                  //string content = Username + ":" + Password;
+                                  //CreateFileLikeDeskTop(content, "UnLike");
+                                  //GlobusLogHelper.log.Debug("Already Liked " + FanPageUrl + "  with " + Username);
+                                  //return; 
+                                  #endregion
 
-                                GlobusLogHelper.log.Debug("You have already liked this Page : " + FanPageUrl + "  with : " + Username);
-                                GlobusLogHelper.log.Info("You have already liked this Page : " + FanPageUrl + "  with : " + Username);
-                            }
-                            else if (res_post_1st.Contains("\"errorSummary\""))
-                            {
-                                try
-                                {
-                                    string summary = GlobusHttpHelper.ParseJson(res_post_1st, "errorSummary");
-                                    string errorDescription = GlobusHttpHelper.ParseJson(res_post_1st, "errorDescription");
+                                  GlobusLogHelper.log.Debug("You have already liked this Page : " + FanPageUrl + "  with : " + Username);
+                                  GlobusLogHelper.log.Info("You have already liked this Page : " + FanPageUrl + "  with : " + Username);
+                              }
+                              else if (res_post_1st.Contains("\"errorSummary\""))
+                              {
+                                  try
+                                  {
+                                      string summary = GlobusHttpHelper.ParseJson(res_post_1st, "errorSummary");
+                                      string errorDescription = GlobusHttpHelper.ParseJson(res_post_1st, "errorDescription");
 
-                                   // GlobusLogHelper.log.Debug("Liking Error: " + summary + " | Error Description: " + errorDescription);
-                                   // GlobusLogHelper.log.Info("Liking Error: " + summary + " | Error Description: " + errorDescription);
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error(ex.Message);
-                                }
-                            }
-                            else
-                            {
-                                GlobusLogHelper.log.Debug("Liked " + FanPageUrl + "  with " + Username);
-                                GlobusLogHelper.log.Info("Liked " + FanPageUrl + "  with " + Username);
-                            }*/
+                                     // GlobusLogHelper.log.Debug("Liking Error: " + summary + " | Error Description: " + errorDescription);
+                                     // GlobusLogHelper.log.Info("Liking Error: " + summary + " | Error Description: " + errorDescription);
+                                  }
+                                  catch (Exception ex)
+                                  {
+                                      GlobusLogHelper.log.Error(ex.Message);
+                                  }
+                              }
+                              else
+                              {
+                                  GlobusLogHelper.log.Debug("Liked " + FanPageUrl + "  with " + Username);
+                                  GlobusLogHelper.log.Info("Liked " + FanPageUrl + "  with " + Username);
+                              }*/
 
                             try
                             {
@@ -16588,12 +17973,12 @@ namespace Pages
                                 string CSV_Content = Username + "," + FanPageUrl + "," + message_text;
 
                                 Globussoft.GlobusFileHelper.ExportDataCSVFile(CSVHeader, CSV_Content, GlobusFileHelper.DesktopFanFilePath);
-                         }
+                            }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
-                          
+
 
                             string postURL_2nd = faceboardpro.FBGlobals.Instance.pageFanPageAjaxPagesFetchColumnPhp;
                             string postData_2nd = "profile_id=" + fbpage_id + "&tab_key=timeline&fb_dtsg=" + fb_dtsg + "&__user=" + __user + "&phstamp=" + GenerateTimeStamp() + "";
@@ -16628,11 +18013,11 @@ namespace Pages
                                 //count++;
                                 //GlobusLogHelper.log.Debug(count.ToString() + " Posted Message on Fan Page Wall with " + Username + " and " + FanPageUrl);
                                 //GlobusLogHelper.log.Info(count.ToString() + " Posted Message on Fan Page Wall with " + Username + " and " + FanPageUrl);
-                                
+
                             }
 
                             ///Post Message
-                         
+
 
                             try
                             {
@@ -16659,7 +18044,7 @@ namespace Pages
                             else
                             {
                                 isPosted = false;
-                            
+
                             }
                         }
                         catch (Exception ex)
@@ -16678,11 +18063,11 @@ namespace Pages
                                 int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
                                 GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                 GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                Thread.Sleep(delayInSeconds); 
+                                Thread.Sleep(delayInSeconds);
                             }
                             else if (ResponseFanPagePostMessage.Contains("This status update is identical to the last one you posted"))
                             {
-                                
+
                                 GlobusLogHelper.log.Debug("you can't post on this wall" + Username + " and " + FanPageUrl);
                                 GlobusLogHelper.log.Info("you can't post on this wall" + Username + " and " + FanPageUrl);
 
@@ -16690,11 +18075,11 @@ namespace Pages
                                 int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
                                 GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
                                 GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                                Thread.Sleep(delayInSeconds); 
+                                Thread.Sleep(delayInSeconds);
                             }
-                            else if(!isPostingAvailbale)
+                            else if (!isPostingAvailbale)
                             {
-                                GlobusLogHelper.log.Debug("Posting Option Not Available On "+ FanPageUrl+" So Message "+message_text+" Can't Be Posted");
+                                GlobusLogHelper.log.Debug("Posting Option Not Available On " + FanPageUrl + " So Message " + message_text + " Can't Be Posted");
                                 GlobusLogHelper.log.Info("Posting Option Not Available On " + FanPageUrl + " So Message" + message_text + " Can't Be Posted");
                                 break;
 
@@ -16707,14 +18092,14 @@ namespace Pages
                         }
                     }
                 }
-	
+
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
 
-          //  Thread.Sleep(1000);
+            //  Thread.Sleep(1000);
         }
 
         public static string GenerateTimeStamp()
@@ -16748,7 +18133,7 @@ namespace Pages
                 {
                     try
                     {
-                        PostCommentLiker(ref fbUser, lstFanPageCommentURLs_item);                     
+                        PostCommentLiker(ref fbUser, lstFanPageCommentURLs_item);
                     }
                     catch (Exception ex)
                     {
@@ -16769,253 +18154,253 @@ namespace Pages
             GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
             try
             {
-                    GlobusLogHelper.log.Debug("Start Liking Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                GlobusLogHelper.log.Debug("Start Liking Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
 
-                    string comment_id = string.Empty;
-                    string fbid = string.Empty;
-                    string set = string.Empty;
-                    string dtsg = string.Empty;
-                   
-                    string pagesource = HttpHelper.getHtmlfromUrl(new Uri(postpageUrl));
-                  
-                    if (string.IsNullOrEmpty(pagesource))
-                    {
-                        pagesource = HttpHelper.getHtmlfromUrl(new Uri(postpageUrl));     
-                    }
-                    if (pagesource.Contains("&amp;set="))
-                    {
-                        try
-                        {
-                            int startindex = pagesource.IndexOf("&amp;set=");
-                            int endindex = pagesource.IndexOf("type=");
-                            set = pagesource.Substring(startindex, endindex - startindex).Replace("&amp;set=", string.Empty).Replace("&amp;", string.Empty).Trim();
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            string s = Utils.getBetween(pagesource, "targetfbid", "entidentifier");
-                            s = s.Replace("\":\"", string.Empty).Replace("\",\"","");
-                            fbid = s;
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                    }
-              
+                string comment_id = string.Empty;
+                string fbid = string.Empty;
+                string set = string.Empty;
+                string dtsg = string.Empty;
 
-                    if (postpageUrl.Contains("fbid="))
-                    {
-                        try
-                        {
-                            int startindex = postpageUrl.IndexOf("fbid=");
-                            int endindex = postpageUrl.IndexOf("&set");
-                            fbid = postpageUrl.Substring(startindex, endindex - startindex).Replace("fbid=", string.Empty).Trim();                                    
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                    }
-                    else 
-                    {
-                        try
-                        {
-                            if (string.IsNullOrEmpty(fbid))
-                            {
-                                try
-                                {
-                                    int startindex = pagesource.IndexOf("fbid=");
-                                    int endindex = pagesource.IndexOf("&set");
-                                    string ss = pagesource.Substring(startindex, endindex - startindex).Replace("fbid=", string.Empty).Trim();
-                                    string[] arr = ss.Split('\"');
-                                    fbid = arr[0];
-                                }
-                                catch (Exception ex)
-                                {
-                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                }
-                                
-                            }
-                            else
-                            {
-                                if (string.IsNullOrEmpty(fbid))
-                                {
-                                    try
-                                    {
-                                        fbid = Utils.getBetween(pagesource, "fbid=", "&set");
-                                        if (fbid.Contains("&") && fbid.Contains("amp"))
-                                        {
-                                            fbid = Utils.getBetween(pagesource, "fbid=", "&amp;");
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                    }
-                                }
+                string pagesource = HttpHelper.getHtmlfromUrl(new Uri(postpageUrl));
 
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            //fbid = Utils.getBetween(pagesource, "fbid=", "&set");
-                            //if (fbid.Contains("&") && fbid.Contains("amp"))
-                            //{
-                            //    fbid = Utils.getBetween(pagesource, "fbid=", "&amp;");
-                            //}
-                            GlobusLogHelper.log.Error(ex.Message);
-                        }
-                    }               
-
-                    if (postpageUrl.Contains("comment_id"))
-                    {
-                        try
-                        {
-                            int startindex = postpageUrl.IndexOf("comment_id=");
-                            int endindex = postpageUrl.IndexOf("&offset");
-                            comment_id = postpageUrl.Substring(startindex, endindex - startindex).Replace("comment_id=", string.Empty).Trim();
-                        }
-                        catch (Exception ex)
-                        {
-                            string[] arr = System.Text.RegularExpressions.Regex.Split(postpageUrl, "comment_id=");
-                            comment_id=arr[1];
-                            GlobusLogHelper.log.Error(ex.Message);
-                        } 
-                    }
-                    if (pagesource.Contains("dtsg"))
-                    {
-                        try
-                        {
-                            int startindex = pagesource.IndexOf("fb_dtsg");
-                            int endindex = pagesource.IndexOf("ajaxpipe_token");
-                            dtsg = pagesource.Substring(startindex, endindex - startindex).Replace("fb_dtsg", string.Empty).Replace("&amp;", string.Empty).Replace("\",\"", string.Empty).Replace("\":\"", string.Empty).Trim();                                   
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                        try
-                        {
-                            if (dtsg == "")
-                            {
-                                dtsg = GlobusHttpHelper.Get_fb_dtsg(pagesource);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                        
-                    }
-
-                    string userid = GlobusHttpHelper.Get_UserID(pagesource);
-                    string pagesource1 = string.Empty;
-
-                    string _SVN = Utils.getBetween(pagesource, "_rev", ",");
-                    _SVN = _SVN.Replace("\":",string.Empty);
-                    string commenID = Utils.getBetween(pagesource, ".php?v=", "&amp;");
-                    string _rev = Utils.getBetween(pagesource, "_rev\":", ",");
-                    string ft_ent_identifier = Utils.getBetween(pagesource, "ftentidentifier\":", ",");
-                    ft_ent_identifier = ft_ent_identifier.Replace("\"",string.Empty);
+                if (string.IsNullOrEmpty(pagesource))
+                {
+                    pagesource = HttpHelper.getHtmlfromUrl(new Uri(postpageUrl));
+                }
+                if (pagesource.Contains("&amp;set="))
+                {
                     try
                     {
+                        int startindex = pagesource.IndexOf("&amp;set=");
+                        int endindex = pagesource.IndexOf("type=");
+                        set = pagesource.Substring(startindex, endindex - startindex).Replace("&amp;set=", string.Empty).Replace("&amp;", string.Empty).Trim();
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        string s = Utils.getBetween(pagesource, "targetfbid", "entidentifier");
+                        s = s.Replace("\":\"", string.Empty).Replace("\",\"", "");
+                        fbid = s;
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
 
-                        //change post data 17/12/2013 by ajay kumar yadav  post data for pic comments 
 
-                        try
-                        {
-                            string postdata = "comment_id=" + fbid + "_" + comment_id + "&legacy_id=" + comment_id + "&like_action=true&ft_ent_identifier=" + fbid + "&source=2&client_id=&ft[tn]=%3ER1]&__user=" + userid + "&__a=1&__dyn=&__req=e&fb_dtsg=" + dtsg + "&phstamp=1658166887010910498237";
-                            pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata);
-
-                        }
-                        catch (Exception ex)
-                        {
-                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                        }
-                        //Create new post data  17/12/2013  by ajay kumar yadav  post data for  video comments 
-                        if (string.IsNullOrEmpty(pagesource1))
-                        {
-                            string postdata1 = "comment_id=" + commenID + "_" + comment_id + "&legacy_id=" + comment_id + "&like_action=true&ft_ent_identifier=" + ft_ent_identifier + "&source=2&client_id=1387448430300%3A4135632999&ft[tn]=%3ER9]&__user=" + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=k&fb_dtsg=" + dtsg + "&__rev=" + _rev + "&ttstamp=2658168122979010753";
-                            pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata1);
-
-                        }
-
-                        if (pagesource1.Contains("This doesn't seem to be possible just now. Please try again"))
+                if (postpageUrl.Contains("fbid="))
+                {
+                    try
+                    {
+                        int startindex = postpageUrl.IndexOf("fbid=");
+                        int endindex = postpageUrl.IndexOf("&set");
+                        fbid = postpageUrl.Substring(startindex, endindex - startindex).Replace("fbid=", string.Empty).Trim();
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        if (string.IsNullOrEmpty(fbid))
                         {
                             try
                             {
-                                string page = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.PageManagerPagePosterAjaxAjaxPresenceReconnectPhp + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGA9w&__req=r&__rev=" + _SVN + "&fb_dtsg=" + dtsg + ""));                     
-
-                                string lastActionID = Utils.getBetween(pagesource, "last_action_id", ",");
-                                lastActionID = lastActionID.Replace("\"", string.Empty).Replace(":", string.Empty);
-
-                                string PostData2nd = "last_action_id=" + lastActionID + "&folders[0]=inbox&client=mercury&__user=" + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGA9w&__req=s&fb_dtsg=" + dtsg + "&__rev=" + _SVN + "&ttstamp=2658168681177211978";
-                                string gg = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerPageAjaxMercury), PostData2nd);
-
-
-                                string postdata1 = "comment_id=" + commenID + "_" + comment_id + "&legacy_id=" + comment_id + "&like_action=true&ft_ent_identifier=" + ft_ent_identifier + "&source=2&client_id=1387448430300%3A4135632999&ft[tn]=%3ER9]&__user=" + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=k&fb_dtsg=" + dtsg + "&__rev=" + _rev + "&ttstamp=2658168122979010753";
-                                pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata1);                               
-                                
+                                int startindex = pagesource.IndexOf("fbid=");
+                                int endindex = pagesource.IndexOf("&set");
+                                string ss = pagesource.Substring(startindex, endindex - startindex).Replace("fbid=", string.Empty).Trim();
+                                string[] arr = ss.Split('\"');
+                                fbid = arr[0];
                             }
                             catch (Exception ex)
                             {
                                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                             }
-                        }
 
-                        #region CodeCommented
-                        //string postdata2 = "comment_id=657264170978481_9011745&legacy_id=9011745&like_action=true&ft_ent_identifier=657264170978481&source=2&client_id=1387625253339%3A1591471781&ft[tn]=%3ER]&__user=100005237021539&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=g&fb_dtsg=AQDzaZk5&__rev=1055839&ttstamp=2658168122979010753";
-                        //pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata2);    
-                        #endregion
-                    }
-                    catch (Exception ex)
-                    {
-                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    }
-                   
-
-                    if (pagesource1 == "")
-                    {
-                        GlobusLogHelper.log.Info("Comment already Liked >>> " + postpageUrl + " With Username >>> " + fbUser.username);
-                        GlobusLogHelper.log.Debug("Comment already Liked >>> " + postpageUrl + " With Username >>> " + fbUser.username);
-                    }
-                    else
-                    {
-                        if (!pagesource1.Contains("error") || pagesource1.Contains("boosted_pagelikes"))
-                        {
-                            GlobusLogHelper.log.Info("Liked Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
-                            GlobusLogHelper.log.Debug("Liked Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
                         }
                         else
                         {
-                            GlobusLogHelper.log.Info(" Couldn't Like Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
-                            GlobusLogHelper.log.Info(" Couldn't Like Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                            if (string.IsNullOrEmpty(fbid))
+                            {
+                                try
+                                {
+                                    fbid = Utils.getBetween(pagesource, "fbid=", "&set");
+                                    if (fbid.Contains("&") && fbid.Contains("amp"))
+                                    {
+                                        fbid = Utils.getBetween(pagesource, "fbid=", "&amp;");
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
+                            }
+
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        //fbid = Utils.getBetween(pagesource, "fbid=", "&set");
+                        //if (fbid.Contains("&") && fbid.Contains("amp"))
+                        //{
+                        //    fbid = Utils.getBetween(pagesource, "fbid=", "&amp;");
+                        //}
+                        GlobusLogHelper.log.Error(ex.Message);
+                    }
+                }
+
+                if (postpageUrl.Contains("comment_id"))
+                {
                     try
                     {
-                        int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
-                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                        Thread.Sleep(delayInSeconds);
+                        int startindex = postpageUrl.IndexOf("comment_id=");
+                        int endindex = postpageUrl.IndexOf("&offset");
+                        comment_id = postpageUrl.Substring(startindex, endindex - startindex).Replace("comment_id=", string.Empty).Trim();
+                    }
+                    catch (Exception ex)
+                    {
+                        string[] arr = System.Text.RegularExpressions.Regex.Split(postpageUrl, "comment_id=");
+                        comment_id = arr[1];
+                        GlobusLogHelper.log.Error(ex.Message);
+                    }
+                }
+                if (pagesource.Contains("dtsg"))
+                {
+                    try
+                    {
+                        int startindex = pagesource.IndexOf("fb_dtsg");
+                        int endindex = pagesource.IndexOf("ajaxpipe_token");
+                        dtsg = pagesource.Substring(startindex, endindex - startindex).Replace("fb_dtsg", string.Empty).Replace("&amp;", string.Empty).Replace("\",\"", string.Empty).Replace("\":\"", string.Empty).Trim();
                     }
                     catch (Exception ex)
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    }             
-                                   
+                    }
+                    try
+                    {
+                        if (dtsg == "")
+                        {
+                            dtsg = GlobusHttpHelper.Get_fb_dtsg(pagesource);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+
+                }
+
+                string userid = GlobusHttpHelper.Get_UserID(pagesource);
+                string pagesource1 = string.Empty;
+
+                string _SVN = Utils.getBetween(pagesource, "_rev", ",");
+                _SVN = _SVN.Replace("\":", string.Empty);
+                string commenID = Utils.getBetween(pagesource, ".php?v=", "&amp;");
+                string _rev = Utils.getBetween(pagesource, "_rev\":", ",");
+                string ft_ent_identifier = Utils.getBetween(pagesource, "ftentidentifier\":", ",");
+                ft_ent_identifier = ft_ent_identifier.Replace("\"", string.Empty);
+                try
+                {
+
+                    //change post data 17/12/2013 by ajay kumar yadav  post data for pic comments 
+
+                    try
+                    {
+                        string postdata = "comment_id=" + fbid + "_" + comment_id + "&legacy_id=" + comment_id + "&like_action=true&ft_ent_identifier=" + fbid + "&source=2&client_id=&ft[tn]=%3ER1]&__user=" + userid + "&__a=1&__dyn=&__req=e&fb_dtsg=" + dtsg + "&phstamp=1658166887010910498237";
+                        pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                    }
+                    //Create new post data  17/12/2013  by ajay kumar yadav  post data for  video comments 
+                    if (string.IsNullOrEmpty(pagesource1))
+                    {
+                        string postdata1 = "comment_id=" + commenID + "_" + comment_id + "&legacy_id=" + comment_id + "&like_action=true&ft_ent_identifier=" + ft_ent_identifier + "&source=2&client_id=1387448430300%3A4135632999&ft[tn]=%3ER9]&__user=" + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=k&fb_dtsg=" + dtsg + "&__rev=" + _rev + "&ttstamp=2658168122979010753";
+                        pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata1);
+
+                    }
+
+                    if (pagesource1.Contains("This doesn't seem to be possible just now. Please try again"))
+                    {
+                        try
+                        {
+                            string page = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.PageManagerPagePosterAjaxAjaxPresenceReconnectPhp + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGA9w&__req=r&__rev=" + _SVN + "&fb_dtsg=" + dtsg + ""));
+
+                            string lastActionID = Utils.getBetween(pagesource, "last_action_id", ",");
+                            lastActionID = lastActionID.Replace("\"", string.Empty).Replace(":", string.Empty);
+
+                            string PostData2nd = "last_action_id=" + lastActionID + "&folders[0]=inbox&client=mercury&__user=" + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGA9w&__req=s&fb_dtsg=" + dtsg + "&__rev=" + _SVN + "&ttstamp=2658168681177211978";
+                            string gg = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageManagerPageAjaxMercury), PostData2nd);
+
+
+                            string postdata1 = "comment_id=" + commenID + "_" + comment_id + "&legacy_id=" + comment_id + "&like_action=true&ft_ent_identifier=" + ft_ent_identifier + "&source=2&client_id=1387448430300%3A4135632999&ft[tn]=%3ER9]&__user=" + userid + "&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=k&fb_dtsg=" + dtsg + "&__rev=" + _rev + "&ttstamp=2658168122979010753";
+                            pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata1);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                        }
+                    }
+
+                    #region CodeCommented
+                    //string postdata2 = "comment_id=657264170978481_9011745&legacy_id=9011745&like_action=true&ft_ent_identifier=657264170978481&source=2&client_id=1387625253339%3A1591471781&ft[tn]=%3ER]&__user=100005237021539&__a=1&__dyn=7n8apij35CFUSt2u5KIGKaExEW9ACxO4pbGAdGm&__req=g&fb_dtsg=AQDzaZk5&__rev=1055839&ttstamp=2658168122979010753";
+                    //pagesource1 = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PageFanPagePosterAjaxUfiCommentLikePhp), postdata2);    
+                    #endregion
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
+
+                if (pagesource1 == "")
+                {
+                    GlobusLogHelper.log.Info("Comment already Liked >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                    GlobusLogHelper.log.Debug("Comment already Liked >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                }
+                else
+                {
+                    if (!pagesource1.Contains("error") || pagesource1.Contains("\"payload\":null") || pagesource1.Contains("likecount"))
+                    {
+                        GlobusLogHelper.log.Info("Liked Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                        GlobusLogHelper.log.Debug("Liked Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                    }
+                    else
+                    {
+                        GlobusLogHelper.log.Info(" Couldn't Like Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                        GlobusLogHelper.log.Info(" Couldn't Like Particular Comment URL >>> " + postpageUrl + " With Username >>> " + fbUser.username);
+                    }
+                }
+                try
+                {
+                    int delayInSeconds = Utils.GenerateRandom(minDelayFanPagePoster * 1000, maxDelayFanPagePoster * 1000);
+                    GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                    GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                    Thread.Sleep(delayInSeconds);
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
+
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-            }             
+            }
         }
 
 
@@ -17023,7 +18408,7 @@ namespace Pages
         /// PhotoLiker Method add by ajay kumar yadav 21/12/2013
         /// </summary>
         /// <param name="fbUser"></param>
-        
+
 
         public void StartPhotoLiker(ref FacebookUser fbUser)
         {
@@ -17048,27 +18433,33 @@ namespace Pages
                             __user = GlobusHttpHelper.ParseJson(strEventURLPageSource, "user");
                         }
 
-                        fb_dtsg =GlobusHttpHelper.Get_fb_dtsg(strEventURLPageSource);
+                        fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(strEventURLPageSource);
                         try
                         {
                             ft_ent_identifier = item.Substring(item.IndexOf("?fbid="), item.Length - item.IndexOf("?fbid=")).Replace("?fbid=", string.Empty).Trim();
                         }
                         catch (Exception ex)
-                        {                            
+                        {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
 
                         try
                         {
-                            string[] Arr = System.Text.RegularExpressions.Regex.Split(item,"/");
-                            ft_ent_identifier=Arr[6];
+                            string[] Arr = System.Text.RegularExpressions.Regex.Split(item, "/");
+                            ft_ent_identifier = Arr[6];
                         }
                         catch (Exception ex)
                         {
                             GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
 
+                        if (string.IsNullOrEmpty(ft_ent_identifier))
+                        {
+                            strEventURLPageSource = HttpUtility.HtmlDecode(strEventURLPageSource);
+                        }
+
                         string postData = "like_action=true&ft_ent_identifier=" + ft_ent_identifier + "&source=2&client_id=1357365511041%3A1142013411&ft[tn]=%3E%3D&ft[type]=20&__user=" + __user + "&__a=1&__req=5&fb_dtsg=" + fb_dtsg + "&phstamp=1658168106858611353174";
+                        postData = "like_action=true&ft_ent_identifier=" + ft_ent_identifier + "&source=2&client_id=1436165496971%3A3935682308&rootid=u_0_8&ft[tn]=%3E%3D]&ft[type]=20&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bGya4Au7pEsx6iqAdy9VQC-K26m6oKezob4q68K5Uc-dwIxbxjx24oSy28yiq5UB1abK8KuEOq&__req=c&fb_dtsg=" + fb_dtsg + "&ttstamp=26581721204855668111110912275&__rev=1819463";
                         string response = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PagePagePosterAjaxUfiLikePhp), postData);
 
                         #region CodeCommented
@@ -17103,7 +18494,7 @@ namespace Pages
                             {
                                 string CSVHeader = "User_Name" + "," + "PhotoId" + ", " + "PhotoURL";
                                 string CSV_Content = Username + "," + ft_ent_identifier + ", " + item;
-                               // FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.Path_PhotoLikerDetails);
+                                // FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, Globals.Path_PhotoLikerDetails);
                             }
                             catch (Exception ex)
                             {
@@ -17144,7 +18535,7 @@ namespace Pages
         /// StartPostLiker add by ajay kumar yadav  23/12/2013
         /// </summary>
         /// <param name="fbUser"></param>
-        
+
 
 
         public void StartPostLiker(ref FacebookUser fbUser)
@@ -17199,11 +18590,11 @@ namespace Pages
                         try
                         {
                             ft_ent_identifier = item.Substring(item.IndexOf("posts/"), item.Length - item.IndexOf("posts/")).Replace("posts/", string.Empty).Trim();
-                            ft_ent_identifier = ft_ent_identifier.Replace("?","&&");
+                            ft_ent_identifier = ft_ent_identifier.Replace("?", "&&");
                             if (ft_ent_identifier.Contains("&&"))
                             {
                                 string[] arr = System.Text.RegularExpressions.Regex.Split(ft_ent_identifier, "&&");
-                                ft_ent_identifier=arr[0];
+                                ft_ent_identifier = arr[0];
                             }
                         }
                         catch (Exception ex)
@@ -17213,14 +18604,14 @@ namespace Pages
 
                         if (string.IsNullOrEmpty(ft_ent_identifier))
                         {
-                            ft_ent_identifier = Utils.getBetween(strEventURLPageSource,"ftentidentifier","instanceid").Replace("\"","").Replace(":","").Replace(",","");
+                            ft_ent_identifier = Utils.getBetween(strEventURLPageSource, "ftentidentifier", "instanceid").Replace("\"", "").Replace(":", "").Replace(",", "");
                         }
 
-                     
+
                         string postData = "like_action=true&ft_ent_identifier=" + ft_ent_identifier + "&source=2&client_id=1357365511041%3A1142013411&ft[tn]=%3E%3D&ft[type]=20&__user=" + __user + "&__a=1&__req=5&fb_dtsg=" + fb_dtsg + "&phstamp=1658168106858611353174";
-                        string response = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PagePagePosterAjaxUfiLikePhp), postData);   
-                                                                                                                                           
-                        if (response.Contains("error"))
+                        string response = HttpHelper.postFormData(new Uri(FBGlobals.Instance.PagePagePosterAjaxUfiLikePhp), postData);
+
+                        if (response.Contains("errorSummary"))
                         {
                             try
                             {
@@ -17475,8 +18866,8 @@ namespace Pages
             {
                 //  FanPageInviter method
 
-                FanPageInviter(ref fbUser);             
-              
+                FanPageInviter(ref fbUser);
+
             }
             catch (Exception ex)
             {
@@ -17487,7 +18878,7 @@ namespace Pages
 
         public void FanPageInviter(ref FacebookUser fbUser)
         {
-           
+
             try
             {
                 GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
@@ -17569,19 +18960,17 @@ namespace Pages
                                         break;
                                     }
 
-                                    string PostData = "page_id=" + page_id + "&invitee=" + lstFriends_item + "&action=send&ref=finch_about_build_audience&__user=" + UserId + "&__a=1&__dyn=aJswFeyj2qm9a5k9VUgGhaiV925xSq78hACl5DlqUSS-CEy5pokAWCyaG8z8gKAqhB-fjw&__req=9&fb_dtsg="+fb_dtsg+"&ttstamp=265816911110311176851225611890&__rev=1363263";
+                                    string PostData = "page_id=" + page_id + "&invitee=" + lstFriends_item + "&action=send&ref=finch_about_build_audience&__user=" + UserId + "&__a=1&__dyn=aJswFeyj2qm9a5k9VUgGhaiV925xSq78hACl5DlqUSS-CEy5pokAWCyaG8z8gKAqhB-fjw&__req=9&fb_dtsg=" + fb_dtsg + "&ttstamp=265816911110311176851225611890&__rev=1363263";
                                     string PostUrl = FBGlobals.Instance.PageManagerFanPageInviter;                  // "https://www.facebook.com/ajax/pages/invite/send_single/";
 
                                     string response = HttpHelper.postFormDataSendInvite(new Uri(PostUrl), PostData);
 
-                                    if (response.Contains("\"payload\":null,\"bootloadable\""))
+                                    if (response.Contains("\"payload\":null"))
                                     {
                                         CountSendInvite = CountSendInvite + 1;
 
                                         GlobusLogHelper.log.Debug(CountSendInvite + " : invitation Send : " + lstFriends_item + " with UserName : " + fbUser.username + " for Fan Page Url : " + FanPageUrl_item);
                                         GlobusLogHelper.log.Info(CountSendInvite + " : invitation Send : " + lstFriends_item + " with UserName : " + fbUser.username + " for Fan Page Url : " + FanPageUrl_item);
-
-
 
                                         try
                                         {
@@ -17617,7 +19006,7 @@ namespace Pages
                     {
                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                     }
-                    
+
                 }
             }
             catch (Exception ex)
@@ -17642,7 +19031,7 @@ namespace Pages
         public static int minDelayWebSiteLiker = 10;
         public static int maxDelayWebSiteLiker = 20;
         public static int noOfLikesPerAccount = 0;
-     
+
         public int NoOfThreadsWebSiteLiker
         {
             get;
@@ -17650,14 +19039,14 @@ namespace Pages
         }
 
 
-       
+
         #endregion
 
         #region Property
 
-     
 
-     
+
+
         public static string WebSiteLikerUsingAccount
         {
             get;
@@ -17665,8 +19054,8 @@ namespace Pages
         }
 
         public static List<string> listWebSiteUrl = new List<string>();
-     
-    
+
+
 
         #endregion
 
@@ -17812,7 +19201,7 @@ namespace Pages
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
 
-          
+
 
         }
 
@@ -17864,432 +19253,432 @@ namespace Pages
                 string strProxyUserName = string.Empty;
                 string strProxyPassword = string.Empty;
 
-                    string webSiteUrl = string.Empty;
-                    try
+                string webSiteUrl = string.Empty;
+                try
+                {
+                    string fb_dtsg = string.Empty;
+                    string href = string.Empty;
+                    string iframe_referer = string.Empty;
+                    string __user = string.Empty;
+
+                    int counter_LikesWithAccount = 0;
+
+                    if (string.IsNullOrEmpty(strProxyPort))
                     {
-                        string fb_dtsg = string.Empty;
-                        string href = string.Empty;
-                        string iframe_referer = string.Empty;
-                        string __user = string.Empty;
+                        strProxyPort = (0).ToString();
+                    }
 
-                        int counter_LikesWithAccount = 0;
-
-                        if (string.IsNullOrEmpty(strProxyPort))
+                    if (lstWebSiteLikerCollectionWebSiteLiker.Count > 0)
+                    {
+                        try
                         {
-                            strProxyPort = (0).ToString();
-                        }
+                            string fbPageSource = HttpHelper.getHtmlfromUrlProxy(new Uri("http://www.facebook.com"), strProxyAddress, Convert.ToInt32(strProxyPort), strProxyUserName, strProxyPassword);
+                            string pageSource = HttpHelper.getHtmlfromUrlProxy(new Uri("http://developers.facebook.com/docs/reference/plugins/like/"), strProxyAddress, Convert.ToInt32(strProxyPort), strProxyUserName, strProxyPassword);
 
-                        if (lstWebSiteLikerCollectionWebSiteLiker.Count > 0)
-                        {
-                            try
+
+
+                            foreach (string item in lstWebSiteLikerCollectionWebSiteLiker)
                             {
-                                string fbPageSource = HttpHelper.getHtmlfromUrlProxy(new Uri("http://www.facebook.com"), strProxyAddress, Convert.ToInt32(strProxyPort), strProxyUserName, strProxyPassword);
-                                string pageSource = HttpHelper.getHtmlfromUrlProxy(new Uri("http://developers.facebook.com/docs/reference/plugins/like/"), strProxyAddress, Convert.ToInt32(strProxyPort), strProxyUserName, strProxyPassword);
-
-                              
-
-                                foreach (string item in lstWebSiteLikerCollectionWebSiteLiker)
+                                try
                                 {
+                                    webSiteUrl = item;
+                                    if (counter_LikesWithAccount >= noOfLikesPerAccount)
+                                    {
+                                        GlobusLogHelper.log.Debug("Reached max no of likes : " + noOfLikesPerAccount + " per account with: " + fbUser.username);
+                                        GlobusLogHelper.log.Info("Reached max no of likes : " + noOfLikesPerAccount + " per account with: " + fbUser.username);
+                                        return;
+
+                                    }
+
+                                    int maxCountOnPage = 3;
+
+
+                                    string[] webSiteUrlData = Regex.Split(item, "<:>");
+                                    if (webSiteUrlData.Length == 2)
+                                    {
+                                        try
+                                        {
+                                            webSiteUrl = webSiteUrlData[0];
+                                            string requiredCount = webSiteUrlData[1];
+
+                                            if (Utils.IsNumeric(requiredCount))
+                                            {
+                                                maxCountOnPage = int.Parse(requiredCount);
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    if (IsCountFullfilled(webSiteUrl, maxCountOnPage))
+                                    {
+                                        GlobusLogHelper.log.Debug("Required Counts: " + maxCountOnPage + " sent to : " + webSiteUrl);
+                                        GlobusLogHelper.log.Info("Required Counts: " + maxCountOnPage + " sent to : " + webSiteUrl);
+
+                                        continue;
+                                    }
+
+                                    GlobusLogHelper.log.Debug("Start Liking The Website URL : " + item + " With User Name : " + fbUser.username);
+                                    GlobusLogHelper.log.Info("Start Liking The Website URL : " + item + " With User Name : " + fbUser.username);
+                                    __user = GlobusHttpHelper.Get_UserID(fbPageSource);
+                                    if (string.IsNullOrEmpty(__user))
+                                    {
+                                        __user = GlobusHttpHelper.ParseJson(fbPageSource, "user");
+                                    }
+
+
+                                    fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(fbPageSource);
+
+
+                                    bool Statusliked = false;
+                                    string app_Key = string.Empty;
                                     try
                                     {
-                                        webSiteUrl = item;
-                                        if (counter_LikesWithAccount >= noOfLikesPerAccount)
+                                        app_Key = Utils.getBetween(pageSource, "appId\\\":", ",\\");
+                                        if (string.IsNullOrEmpty(app_Key))
                                         {
-                                            GlobusLogHelper.log.Debug("Reached max no of likes : " + noOfLikesPerAccount + " per account with: " + fbUser.username);
-                                            GlobusLogHelper.log.Info("Reached max no of likes : " + noOfLikesPerAccount + " per account with: " + fbUser.username);
-                                            return;
-
+                                            app_Key = pageSource.Substring(pageSource.IndexOf("\"appId\":"), pageSource.IndexOf(",", pageSource.IndexOf("\"appId\":")) - pageSource.IndexOf("\"appId\":")).Replace("\"appId\":", string.Empty).Trim();
                                         }
-
-                                        int maxCountOnPage = 3;
-
-                               
-                                        string[] webSiteUrlData = Regex.Split(item, "<:>");
-                                        if (webSiteUrlData.Length == 2)
-                                        {
-                                            try
-                                            {
-                                                webSiteUrl = webSiteUrlData[0];
-                                                string requiredCount = webSiteUrlData[1];
-
-                                                if (Utils.IsNumeric(requiredCount))
-                                                {
-                                                    maxCountOnPage = int.Parse(requiredCount);
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-
-                                        if (IsCountFullfilled(webSiteUrl, maxCountOnPage))
-                                        {
-                                             GlobusLogHelper.log.Debug("Required Counts: " + maxCountOnPage + " sent to : " + webSiteUrl);
-                                             GlobusLogHelper.log.Info("Required Counts: " + maxCountOnPage + " sent to : " + webSiteUrl);
-
-                                            continue;
-                                        }
-
-                                        GlobusLogHelper.log.Debug("Start Liking The Website URL : " + item + " With User Name : " + fbUser.username);
-                                        GlobusLogHelper.log.Info("Start Liking The Website URL : " + item + " With User Name : " + fbUser.username);
-                                        __user = GlobusHttpHelper.Get_UserID(fbPageSource);
-                                        if (string.IsNullOrEmpty(__user))
-                                        {
-                                            __user = GlobusHttpHelper.ParseJson(fbPageSource, "user");
-                                        }
-
-
-                                        fb_dtsg = GlobusHttpHelper.Get_fb_dtsg(fbPageSource);
-
-
-                                        bool Statusliked = false;
-                                        string app_Key = string.Empty;
-                                        try
-                                        {
-                                            app_Key = Utils.getBetween(pageSource, "appId\\\":", ",\\");
-                                            if (string.IsNullOrEmpty(app_Key))
-                                            {
-                                                app_Key = pageSource.Substring(pageSource.IndexOf("\"appId\":"), pageSource.IndexOf(",", pageSource.IndexOf("\"appId\":")) - pageSource.IndexOf("\"appId\":")).Replace("\"appId\":", string.Empty).Trim();
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-
-                                        string referer1 = "https://www.facebook.com/plugins/like.php?api_key="+app_Key+"&locale=en_US&sdk=joey&channel_url=https%3A%2F%2Fs-static.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df2c93cc8b01cb7c%26origin%3Dhttps%253A%252F%252Fdevelopers.facebook.com%252Ffa7556e1237aa2%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent&href=http%3A%2F%2Fstackoverflow.com%2F&node_type=link&width=450&layout=standard&colorscheme=light&show_faces=true&send=true&extended_social_context=false";
-
-                                       
-                                       
-
-                                        string postData = "fb_dtsg=" + fb_dtsg + "&href=" + System.Uri.EscapeDataString(webSiteUrl) + "&action=like&nobootload=&iframe_referer=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&ref=&__user=" + __user + "&__a=1&__req=1&phstamp=1658165117561225699218";//"fb_dtsg=AQAu8z8c&href=http%3A%2F%2Fstackoverflow.com%2F&action=like&nobootload=&iframe_referer=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&ref=&__user=100000570903647&__a=1&__req=1&phstamp=1658165117561225699213";
-                                       
-
-                                        string response = HttpHelper.postFormData(new Uri("https://www.facebook.com/plugins/like/connect"), postData, referer1);
-
-                                        string PostDataForCOmment = "fb_dtsg=" + fb_dtsg + "&href=" + System.Uri.EscapeDataString(webSiteUrl) + "&ref=&nobootload=&action=like&comment_text=" + Comment + "&comment=" + Comment + "&__user=" + __user + "&__a=1&__dyn=7wfGbx6m5FuC0DU98nxG2y&__req=4&locale=en_US&ttstamp=26581724910189671155011111982&__rev=1528811";
-                                        string PostUrlForComment = "https://www.facebook.com/plugins/like/comment";
-                                        string ResponceForComment = HttpHelper.postFormData(new Uri(PostUrlForComment), PostDataForCOmment, referer1);
-
-
-
-                                        try
-                                        {
-                                            Comment = lstWebSiteLikerCollectionMessages[Utils.GenerateRandom(0, Convert.ToInt32(lstWebSiteLikerCollectionMessages.Count() - 1))];
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                        }
-
-                                        if (response.Contains("Confirm"))
-                                        {
-                                            try
-                                            {
-                                                if (pageSource.Contains("\"appId\":"))
-                                                {
-                                                     GlobusLogHelper.log.Debug("Liking Require Confirmation With Website >>> " + webSiteUrl + " !");
-                                                     GlobusLogHelper.log.Info("Liking Require Confirmation With Website >>> " + webSiteUrl + " !");
-
-
-                                                    string geturl = "http://www.facebook.com/plugins/error/confirm/like?iframe_referer=http%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22113869198637480%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df3b923da1046022%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff334b25e7dd67e4%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22" + Uri.EscapeDataString(webSiteUrl) + "%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7D";
-
-                                                    string getRequest1 = HttpHelper.getHtmlfromUrl(new Uri("http://www.facebook.com/plugins/error/confirm/like?iframe_referer=http%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22113869198637480%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df3b923da1046022%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff334b25e7dd67e4%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22" + Uri.EscapeDataString(webSiteUrl) + "%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7D"));
-
-                                                    string[] Iframerefere1 = System.Text.RegularExpressions.Regex.Split(getRequest1, "iframe_referer");
-
-                                                    string iframe = string.Empty;
-                                                    if (Iframerefere1.Length > 2)
-                                                    {
-                                                        iframe = Iframerefere1[1].Substring(Iframerefere1[1].IndexOf("http"), Iframerefere1[1].IndexOf("/>", Iframerefere1[2].IndexOf("http")) - Iframerefere1[1].IndexOf("http")).Replace(" ", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim().Replace("amp;_fb_noscript1", string.Empty).Replace("amp;", string.Empty).Replace("&_fb_noscript=1", string.Empty);
-                                                    }
-
-                                                    string postData1 = "fb_dtsg=" + fb_dtsg + "&iframe_referer=" + iframe;
-
-                                                    string referer = "http://www.facebook.com/plugins/error/confirm/like?iframe_referer=http%3A%2F%2Fwww.facebook.com%2Fplugins%2Flike.php%3Fapi_key%3D113869198637480%26locale%3Den_US%26sdk%3Djoey%26channel_url%3Dhttp%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df3a615924c2a814%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff3e51ff5a1ad31a%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%26href%3Dhttp%253A%252F%252Fhowisaggressivedogbehavior.tumblr.com%252F%26node_type%3Dlink%26width%3D450%26layout%3Dstandard%26colorscheme%3Dlight%26show_faces%3Dtrue%26send%3Dtrue%26extended_social_context%3Dfalse&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22113869198637480%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df3a615924c2a814%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff3e51ff5a1ad31a%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22http%3A%2F%2Fhowisaggressivedogbehavior.tumblr.com%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7DCookie: datr=i4wCUYOslQ-VFRRXTvP4WWny; fr=03Lqn7n9uxeTAg8ms.AWXpEnhoyDogxPI5YkZtw4ZN-Bk.BRC5zb.vf.AWWLzUJk; lu=RgiBynAiO_6mcfxX2Ta8oC9g; locale=en_US; c_user=100003330902438; xs=65%3AMKu1xjd7c90bRQ%3A0%3A1360218145; wd=484x319; act=1360218268354%2F1%3A2; _e_0vG8_0=%5B%220vG8%22%2C1360218268355%2C%22act%22%2C1360218268354%2C1%2C%22http%3A%2F%2Fwww.facebook.com%2Fplugins%2Ferror%2Fconfirm%2Flike%22%2C%22form%22%2C%22submit%22%2C%22-%22%2C%22r%22%2C%22%2Fplugins%2Ferror%2Fconfirm%2Flike%3Fiframe_referer%3Dhttp%253A%252F%252Fwww.facebook.com%252Fplugins%252Flike.php%253Fapi_key%253D113869198637480%2526locale%253Den_US%2526sdk%253Djoey%2526channel_url%253Dhttp%25253A%25252F%25252Fstatic.ak.facebook.com%25252Fconnect%25252Fxd_arbiter.php%25253Fversion%25253D18%252523cb%25253Df3a615924c2a814%252526origin%25253Dhttp%2525253A%2525252F%2525252Fdevelopers.facebook.com%2525252Ff3e51ff5a1ad31a%252526domain%25253Ddevelopers.facebook.com%252526relation%25253Dparent.parent%2526href%253Dhttp%25253A%25252F%25252Fhowisaggressivedogbehavior.tumblr.com%25252F%2526node_type%253Dlink%2526width%253D450%2526layout%253Dstandard%2526colorscheme%253Dlight%2526show_faces%253Dtrue%2526send%253Dtrue%2526extended_social_context%253Dfalse%26secure%3Dfalse%26plugin%3Dlike%26return_params%3D%257B%2522api_key%2522%253A%2522113869198637480%2522%252C%2522locale%2522%253A%2522en_US%2522%252C%2522sdk%2522%253A%2522joey%2522%252C%2522channel_url%2522%253A%2522http%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df3a615924c2a814%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff3e51ff5a1ad31a%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%2522%252C%2522href%2522%253A%2522http%253A%252F%252Fhowisaggressivedogbehavior.tumblr.com%252F%2522%252C%2522node_type%2522%253A%2522link%2522%252C%2522width%2522%253A%2522450%2522%252C%2522layout%2522%253A%2522standard%2522%252C%2522colorscheme%2522%253A%2522light%2522%252C%2522show_faces%2522%253A%2522true%2522%252C%2522send%2522%253A%2522true%2522%252C%2522extended_social_context%2522%253A%2522false%2522%252C%2522ret%2522%253A%2522sentry%2522%252C%2522act%2522%253A%2522connect%2522%257D%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C0%2C0%2C0%2C0%2C16%5D" + app_Key + "%26locale%3Den_US%26sdk%3Djoey%26channel_url%3Dhttp%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df394609fd48f4f8%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff334b25e7dd67e4%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%26href%3Dhttp%253A%252F%252Fneronsolutions.co.uk%252F%26node_type%3Dlink%26width%3D450%26layout%3Dstandard%26colorscheme%3Dlight%26show_faces%3Dtrue%26send%3Dtrue%26extended_social_context%3Dfalse&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22" + app_Key + "%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df394609fd48f4f8%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff334b25e7dd67e4%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22http%3A%2F%2Fneronsolutions.co.uk%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7D";
-                                                    string response1 = HttpHelper.postFormData(new Uri("http://www.facebook.com/plugins/error/confirm/like"), postData1, referer);
-
-                                                    string[] arrreload = Regex.Split(response1, "reload:");
-
-                                                    if (arrreload.Length > 1)
-                                                    {
-                                                        try
-                                                        {
-                                                            string getRequest2ndurl = ((arrreload[1].Substring(0, arrreload[1].IndexOf("}"))).Replace(@"\", string.Empty).Replace("u0025", "%").Replace("\"", string.Empty).Trim());
-
-                                                            string GetRequest2nd = HttpHelper.getHtmlfromUrl(new Uri(getRequest2ndurl));
-
-                                                            string postData2 = "fb_dtsg=" + fb_dtsg + "&href=" + webSiteUrl + "&action=like&nobootload=&iframe_referer=http%3A%2F%2Fwww.facebook.com%2Fplugins%2Flike.php%3Fapi_key%3D113869198637480%26locale%3Den_US%26sdk%3Djoey%26channel_url%3Dhttp%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df22357d78bd7fa8%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff3b0c888e33e4c8%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%26href%3D" + webSiteUrl + "%26node_type%3Dlink%26width%3D450%26layout%3Dstandard%26colorscheme%3Dlight%26show_faces%3Dtrue%26send%3Dtrue%26extended_social_context%3Dfalse&ref=&ret=sentry&__user=" + __user + "&__a=1&__req=1&phstamp=16581661025573108110765";
-
-                                                            response = HttpHelper.postFormData(new Uri("http://www.facebook.com/plugins/like/connect"), postData2, getRequest2ndurl);
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                                        }
-                                                    }
-                                                  
-                                                }
-
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-
-                                        // Find Already Liked
-
-                                        string[] arrHttp = System.Text.RegularExpressions.Regex.Split(response, "www");//http:
-
-                                        if (arrHttp.Length < 2)
-                                        {
-                                            try
-                                            {
-                                                arrHttp = System.Text.RegularExpressions.Regex.Split(response, "http");//http:
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-
-                                        if (arrHttp.Length > 1)
-                                        {
-                                            try
-                                            {
-                                                string[] arrComa = System.Text.RegularExpressions.Regex.Split(arrHttp[1], ",");
-
-                                                if (arrComa.Length > 1)
-                                                {
-                                                    try
-                                                    {
-
-                                                        string strValue = arrComa[1].Replace("]]", string.Empty).Replace("\"", string.Empty).Trim();
-                                                        string[] numericValue = System.Text.RegularExpressions.Regex.Split(strValue, "[^0-9]");
-
-                                                        string realValue = string.Empty;
-                                                        foreach (string item1 in numericValue)
-                                                        {
-                                                            if (!string.IsNullOrEmpty(item1))
-                                                            {
-                                                                realValue = item1;
-                                                            }
-                                                        }
-
-                                                        if (realValue == (0).ToString())
-                                                        {
-                                                            GlobusLogHelper.log.Debug("Already Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
-                                                            GlobusLogHelper.log.Info("Already Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
-                                                            
-                                                          
-                                                                int delayInSeconds = Utils.GenerateRandom(minDelayWebSiteLiker * 1000, maxDelayWebSiteLiker * 1000);
-                                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With User Name : " + fbUser.username);
-                                                                Thread.Sleep(delayInSeconds);
-                                                           
-                                                        }
-                                                        else
-                                                        {
-                                                            counter_LikesWithAccount++;
-
-                                                            GlobusLogHelper.log.Info("Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
-
-                                                            GlobusLogHelper.log.Info(counter_LikesWithAccount + " Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
-
-                                                            //Update Dictionary
-                                                            AddUpdatedictionary_LikesOnPage(webSiteUrl, maxCountOnPage);
-
-                                                            // Data Save In CSV File
-
-                                                            //if (!string.IsNullOrEmpty(_ExprotFilePath))
-                                                            //{
-                                                            //    string CSVHeader = "UserName" + ", " + "WebSite URL " + ", " + "Liked" + ", " + "AlReady_Liked";
-                                                            //    string CSV_Content = strUserName + "," + webSiteUrl + "," + "Liked" + "," + "";
-
-                                                            //    FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
-                                                            //}
-
-                                                            //Delay
-                                                           // if (UseDelay)
-                                                            {
-                                                                int delayInSeconds = Utils.GenerateRandom(minDelayWebSiteLiker * 1000, maxDelayWebSiteLiker * 1000);
-                                                                GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With User Name : " + fbUser.username);
-                                                                Thread.Sleep(delayInSeconds);
-                                                            }
-                                                        }
-                                                    }
-                                                    catch
-                                                    {
-                                                        GlobusLogHelper.log.Info(" couldn't Like The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    if (!Statusliked)
-                                                    {
-                                                        //if (arrHttp[0].Contains("Log In"))
-                                                        {
-                                                            GlobusLogHelper.log.Info(" You're Temporarily Blocked for 30 Days so couldn't  Like The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
-                                                        }
-                                                        //else
-                                                        //{
-                                                        //    Log(" couldn't Like The Website : " + webSiteUrl + " With User Name : " + strUserName);
-
-                                                        //}
-                                                    }
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            GlobusLogHelper.log.Info(" couldn't Like The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
-                                        }
-
                                     }
                                     catch (Exception ex)
                                     {
                                         GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                                     }
-                                }
 
-                                //  Log("Process Completed With User Name : " + strUserName);
+                                    string referer1 = "https://www.facebook.com/plugins/like.php?api_key=" + app_Key + "&locale=en_US&sdk=joey&channel_url=https%3A%2F%2Fs-static.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df2c93cc8b01cb7c%26origin%3Dhttps%253A%252F%252Fdevelopers.facebook.com%252Ffa7556e1237aa2%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent&href=http%3A%2F%2Fstackoverflow.com%2F&node_type=link&width=450&layout=standard&colorscheme=light&show_faces=true&send=true&extended_social_context=false";
+
+
+
+
+                                    string postData = "fb_dtsg=" + fb_dtsg + "&href=" + System.Uri.EscapeDataString(webSiteUrl) + "&action=like&nobootload=&iframe_referer=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&ref=&__user=" + __user + "&__a=1&__req=1&phstamp=1658165117561225699218";//"fb_dtsg=AQAu8z8c&href=http%3A%2F%2Fstackoverflow.com%2F&action=like&nobootload=&iframe_referer=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&ref=&__user=100000570903647&__a=1&__req=1&phstamp=1658165117561225699213";
+
+
+                                    string response = HttpHelper.postFormData(new Uri("https://www.facebook.com/plugins/like/connect"), postData, referer1);
+
+                                    string PostDataForCOmment = "fb_dtsg=" + fb_dtsg + "&href=" + System.Uri.EscapeDataString(webSiteUrl) + "&ref=&nobootload=&action=like&comment_text=" + Comment + "&comment=" + Comment + "&__user=" + __user + "&__a=1&__dyn=7wfGbx6m5FuC0DU98nxG2y&__req=4&locale=en_US&ttstamp=26581724910189671155011111982&__rev=1528811";
+                                    string PostUrlForComment = "https://www.facebook.com/plugins/like/comment";
+                                    string ResponceForComment = HttpHelper.postFormData(new Uri(PostUrlForComment), PostDataForCOmment, referer1);
+
+
+
+                                    try
+                                    {
+                                        Comment = lstWebSiteLikerCollectionMessages[Utils.GenerateRandom(0, Convert.ToInt32(lstWebSiteLikerCollectionMessages.Count() - 1))];
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+
+                                    if (response.Contains("Confirm"))
+                                    {
+                                        try
+                                        {
+                                            if (pageSource.Contains("\"appId\":"))
+                                            {
+                                                GlobusLogHelper.log.Debug("Liking Require Confirmation With Website >>> " + webSiteUrl + " !");
+                                                GlobusLogHelper.log.Info("Liking Require Confirmation With Website >>> " + webSiteUrl + " !");
+
+
+                                                string geturl = "http://www.facebook.com/plugins/error/confirm/like?iframe_referer=http%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22113869198637480%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df3b923da1046022%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff334b25e7dd67e4%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22" + Uri.EscapeDataString(webSiteUrl) + "%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7D";
+
+                                                string getRequest1 = HttpHelper.getHtmlfromUrl(new Uri("http://www.facebook.com/plugins/error/confirm/like?iframe_referer=http%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Freference%2Fplugins%2Flike%2F&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22113869198637480%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df3b923da1046022%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff334b25e7dd67e4%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22" + Uri.EscapeDataString(webSiteUrl) + "%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7D"));
+
+                                                string[] Iframerefere1 = System.Text.RegularExpressions.Regex.Split(getRequest1, "iframe_referer");
+
+                                                string iframe = string.Empty;
+                                                if (Iframerefere1.Length > 2)
+                                                {
+                                                    iframe = Iframerefere1[1].Substring(Iframerefere1[1].IndexOf("http"), Iframerefere1[1].IndexOf("/>", Iframerefere1[2].IndexOf("http")) - Iframerefere1[1].IndexOf("http")).Replace(" ", string.Empty).Replace("\\\"", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim().Replace("amp;_fb_noscript1", string.Empty).Replace("amp;", string.Empty).Replace("&_fb_noscript=1", string.Empty);
+                                                }
+
+                                                string postData1 = "fb_dtsg=" + fb_dtsg + "&iframe_referer=" + iframe;
+
+                                                string referer = "http://www.facebook.com/plugins/error/confirm/like?iframe_referer=http%3A%2F%2Fwww.facebook.com%2Fplugins%2Flike.php%3Fapi_key%3D113869198637480%26locale%3Den_US%26sdk%3Djoey%26channel_url%3Dhttp%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df3a615924c2a814%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff3e51ff5a1ad31a%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%26href%3Dhttp%253A%252F%252Fhowisaggressivedogbehavior.tumblr.com%252F%26node_type%3Dlink%26width%3D450%26layout%3Dstandard%26colorscheme%3Dlight%26show_faces%3Dtrue%26send%3Dtrue%26extended_social_context%3Dfalse&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22113869198637480%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df3a615924c2a814%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff3e51ff5a1ad31a%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22http%3A%2F%2Fhowisaggressivedogbehavior.tumblr.com%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7DCookie: datr=i4wCUYOslQ-VFRRXTvP4WWny; fr=03Lqn7n9uxeTAg8ms.AWXpEnhoyDogxPI5YkZtw4ZN-Bk.BRC5zb.vf.AWWLzUJk; lu=RgiBynAiO_6mcfxX2Ta8oC9g; locale=en_US; c_user=100003330902438; xs=65%3AMKu1xjd7c90bRQ%3A0%3A1360218145; wd=484x319; act=1360218268354%2F1%3A2; _e_0vG8_0=%5B%220vG8%22%2C1360218268355%2C%22act%22%2C1360218268354%2C1%2C%22http%3A%2F%2Fwww.facebook.com%2Fplugins%2Ferror%2Fconfirm%2Flike%22%2C%22form%22%2C%22submit%22%2C%22-%22%2C%22r%22%2C%22%2Fplugins%2Ferror%2Fconfirm%2Flike%3Fiframe_referer%3Dhttp%253A%252F%252Fwww.facebook.com%252Fplugins%252Flike.php%253Fapi_key%253D113869198637480%2526locale%253Den_US%2526sdk%253Djoey%2526channel_url%253Dhttp%25253A%25252F%25252Fstatic.ak.facebook.com%25252Fconnect%25252Fxd_arbiter.php%25253Fversion%25253D18%252523cb%25253Df3a615924c2a814%252526origin%25253Dhttp%2525253A%2525252F%2525252Fdevelopers.facebook.com%2525252Ff3e51ff5a1ad31a%252526domain%25253Ddevelopers.facebook.com%252526relation%25253Dparent.parent%2526href%253Dhttp%25253A%25252F%25252Fhowisaggressivedogbehavior.tumblr.com%25252F%2526node_type%253Dlink%2526width%253D450%2526layout%253Dstandard%2526colorscheme%253Dlight%2526show_faces%253Dtrue%2526send%253Dtrue%2526extended_social_context%253Dfalse%26secure%3Dfalse%26plugin%3Dlike%26return_params%3D%257B%2522api_key%2522%253A%2522113869198637480%2522%252C%2522locale%2522%253A%2522en_US%2522%252C%2522sdk%2522%253A%2522joey%2522%252C%2522channel_url%2522%253A%2522http%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df3a615924c2a814%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff3e51ff5a1ad31a%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%2522%252C%2522href%2522%253A%2522http%253A%252F%252Fhowisaggressivedogbehavior.tumblr.com%252F%2522%252C%2522node_type%2522%253A%2522link%2522%252C%2522width%2522%253A%2522450%2522%252C%2522layout%2522%253A%2522standard%2522%252C%2522colorscheme%2522%253A%2522light%2522%252C%2522show_faces%2522%253A%2522true%2522%252C%2522send%2522%253A%2522true%2522%252C%2522extended_social_context%2522%253A%2522false%2522%252C%2522ret%2522%253A%2522sentry%2522%252C%2522act%2522%253A%2522connect%2522%257D%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C0%2C0%2C0%2C0%2C16%5D" + app_Key + "%26locale%3Den_US%26sdk%3Djoey%26channel_url%3Dhttp%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df394609fd48f4f8%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff334b25e7dd67e4%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%26href%3Dhttp%253A%252F%252Fneronsolutions.co.uk%252F%26node_type%3Dlink%26width%3D450%26layout%3Dstandard%26colorscheme%3Dlight%26show_faces%3Dtrue%26send%3Dtrue%26extended_social_context%3Dfalse&secure=false&plugin=like&return_params=%7B%22api_key%22%3A%22" + app_Key + "%22%2C%22locale%22%3A%22en_US%22%2C%22sdk%22%3A%22joey%22%2C%22channel_url%22%3A%22http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D18%23cb%3Df394609fd48f4f8%26origin%3Dhttp%253A%252F%252Fdevelopers.facebook.com%252Ff334b25e7dd67e4%26domain%3Ddevelopers.facebook.com%26relation%3Dparent.parent%22%2C%22href%22%3A%22http%3A%2F%2Fneronsolutions.co.uk%2F%22%2C%22node_type%22%3A%22link%22%2C%22width%22%3A%22450%22%2C%22layout%22%3A%22standard%22%2C%22colorscheme%22%3A%22light%22%2C%22show_faces%22%3A%22true%22%2C%22send%22%3A%22true%22%2C%22extended_social_context%22%3A%22false%22%2C%22ret%22%3A%22sentry%22%2C%22act%22%3A%22connect%22%7D";
+                                                string response1 = HttpHelper.postFormData(new Uri("http://www.facebook.com/plugins/error/confirm/like"), postData1, referer);
+
+                                                string[] arrreload = Regex.Split(response1, "reload:");
+
+                                                if (arrreload.Length > 1)
+                                                {
+                                                    try
+                                                    {
+                                                        string getRequest2ndurl = ((arrreload[1].Substring(0, arrreload[1].IndexOf("}"))).Replace(@"\", string.Empty).Replace("u0025", "%").Replace("\"", string.Empty).Trim());
+
+                                                        string GetRequest2nd = HttpHelper.getHtmlfromUrl(new Uri(getRequest2ndurl));
+
+                                                        string postData2 = "fb_dtsg=" + fb_dtsg + "&href=" + webSiteUrl + "&action=like&nobootload=&iframe_referer=http%3A%2F%2Fwww.facebook.com%2Fplugins%2Flike.php%3Fapi_key%3D113869198637480%26locale%3Den_US%26sdk%3Djoey%26channel_url%3Dhttp%253A%252F%252Fstatic.ak.facebook.com%252Fconnect%252Fxd_arbiter.php%253Fversion%253D18%2523cb%253Df22357d78bd7fa8%2526origin%253Dhttp%25253A%25252F%25252Fdevelopers.facebook.com%25252Ff3b0c888e33e4c8%2526domain%253Ddevelopers.facebook.com%2526relation%253Dparent.parent%26href%3D" + webSiteUrl + "%26node_type%3Dlink%26width%3D450%26layout%3Dstandard%26colorscheme%3Dlight%26show_faces%3Dtrue%26send%3Dtrue%26extended_social_context%3Dfalse&ref=&ret=sentry&__user=" + __user + "&__a=1&__req=1&phstamp=16581661025573108110765";
+
+                                                        response = HttpHelper.postFormData(new Uri("http://www.facebook.com/plugins/like/connect"), postData2, getRequest2ndurl);
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                                    }
+                                                }
+
+                                            }
+
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    // Find Already Liked
+
+                                    string[] arrHttp = System.Text.RegularExpressions.Regex.Split(response, "www");//http:
+
+                                    if (arrHttp.Length < 2)
+                                    {
+                                        try
+                                        {
+                                            arrHttp = System.Text.RegularExpressions.Regex.Split(response, "http");//http:
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+
+                                    if (arrHttp.Length > 1)
+                                    {
+                                        try
+                                        {
+                                            string[] arrComa = System.Text.RegularExpressions.Regex.Split(arrHttp[1], ",");
+
+                                            if (arrComa.Length > 1)
+                                            {
+                                                try
+                                                {
+
+                                                    string strValue = arrComa[1].Replace("]]", string.Empty).Replace("\"", string.Empty).Trim();
+                                                    string[] numericValue = System.Text.RegularExpressions.Regex.Split(strValue, "[^0-9]");
+
+                                                    string realValue = string.Empty;
+                                                    foreach (string item1 in numericValue)
+                                                    {
+                                                        if (!string.IsNullOrEmpty(item1))
+                                                        {
+                                                            realValue = item1;
+                                                        }
+                                                    }
+
+                                                    if (realValue == (0).ToString())
+                                                    {
+                                                        GlobusLogHelper.log.Debug("Already Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
+                                                        GlobusLogHelper.log.Info("Already Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
+
+
+                                                        int delayInSeconds = Utils.GenerateRandom(minDelayWebSiteLiker * 1000, maxDelayWebSiteLiker * 1000);
+                                                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With User Name : " + fbUser.username);
+                                                        Thread.Sleep(delayInSeconds);
+
+                                                    }
+                                                    else
+                                                    {
+                                                        counter_LikesWithAccount++;
+
+                                                        GlobusLogHelper.log.Info("Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
+
+                                                        GlobusLogHelper.log.Info(counter_LikesWithAccount + " Liked The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
+
+                                                        //Update Dictionary
+                                                        AddUpdatedictionary_LikesOnPage(webSiteUrl, maxCountOnPage);
+
+                                                        // Data Save In CSV File
+
+                                                        //if (!string.IsNullOrEmpty(_ExprotFilePath))
+                                                        //{
+                                                        //    string CSVHeader = "UserName" + ", " + "WebSite URL " + ", " + "Liked" + ", " + "AlReady_Liked";
+                                                        //    string CSV_Content = strUserName + "," + webSiteUrl + "," + "Liked" + "," + "";
+
+                                                        //    FBApplicationData.ExportDataCSVFile(CSVHeader, CSV_Content, _ExprotFilePath);
+                                                        //}
+
+                                                        //Delay
+                                                        // if (UseDelay)
+                                                        {
+                                                            int delayInSeconds = Utils.GenerateRandom(minDelayWebSiteLiker * 1000, maxDelayWebSiteLiker * 1000);
+                                                            GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With User Name : " + fbUser.username);
+                                                            Thread.Sleep(delayInSeconds);
+                                                        }
+                                                    }
+                                                }
+                                                catch
+                                                {
+                                                    GlobusLogHelper.log.Info(" couldn't Like The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (!Statusliked)
+                                                {
+                                                    //if (arrHttp[0].Contains("Log In"))
+                                                    {
+                                                        GlobusLogHelper.log.Info(" You're Temporarily Blocked for 30 Days so couldn't  Like The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
+                                                    }
+                                                    //else
+                                                    //{
+                                                    //    Log(" couldn't Like The Website : " + webSiteUrl + " With User Name : " + strUserName);
+
+                                                    //}
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        GlobusLogHelper.log.Info(" couldn't Like The Website : " + webSiteUrl + " With User Name : " + fbUser.username);
+                                    }
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                }
                             }
-                            catch (Exception ex)
-                            {
-                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                            }
+
+                            //  Log("Process Completed With User Name : " + strUserName);
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                }
 
-                    GlobusLogHelper.log.Info("Process Completed With User Name : " +fbUser.username);
-
-
-
-                    #region MyRegion
-                    //try
-                    //{
-                    //    string fb_dtsg = string.Empty;
-                    //    string page_id = string.Empty;
-
-
-                    //    try
-                    //    {
-
-                    //        string PageSourceanPageUrl = HttpHelper.getHtmlfromUrl(new Uri(FanPageUrl_item));
-
-                    //        UserId = GlobusHttpHelper.GetParamValue(PageSourceanPageUrl, "user");
-                    //        if (string.IsNullOrEmpty(UserId))
-                    //        {
-                    //            UserId = GlobusHttpHelper.ParseJson(PageSourceanPageUrl, "user");
-                    //        }
-
-                    //        if (string.IsNullOrEmpty(UserId) || UserId == "0" || UserId.Length < 3)
-                    //        {
-                    //            GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
-                    //            GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
-
-                    //            return;
-                    //        }
-
-                    //        fb_dtsg = GlobusHttpHelper.GetParamValue(PageSourceanPageUrl, "fb_dtsg");
-                    //        if (string.IsNullOrEmpty(fb_dtsg))
-                    //        {
-                    //            fb_dtsg = GlobusHttpHelper.ParseJson(PageSourceanPageUrl, "fb_dtsg");
-                    //        }
-                    //        string FanPageUrl = FanPageUrl_item;
-                    //        page_id = GlobusHttpHelper.GetPageID(PageSourceanPageUrl, ref FanPageUrl);
-
-                    //        //Find Friends ID List
-                    //        int count_Friends = FriendInfoScraper.ExtractFriendCount(ref fbUser, UserId);
-
-                    //        listFriendId.Clear();
-
-                    //        GlobusLogHelper.log.Info("Please wait finding the friends ID...");
-                    //        GlobusLogHelper.log.Debug("Please wait finding the friends ID...");
-
-                    //        //List<string> lstFriends = FriendInfoScraper.ExtractFriendIdsFb(ref fbUser, ref HttpHelper, ref UserId, count_Friends);
-                    //        List<string> lstFriends = new List<string>();
-                    //        try
-                    //        {
-                    //            lstFriends = FBUtils.GetAllFriends(ref HttpHelper, UserId);
-                    //            lstFriends = lstFriends.Distinct().ToList();
-                    //        }
-                    //        catch (Exception ex)
-                    //        {
-                    //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    //        }
-
-                    //        int CountSendInvite = 0;
-                    //        foreach (var lstFriends_item in lstFriends)
-                    //        {
-                    //            try
-                    //            {
-
-                    //                if (FanPageInviterNoOfFriendSendInviter <= CountSendInvite)
-                    //                {
-                    //                    break;
-                    //                }
-
-                    //                string PostData = "page_id=" + page_id + "&invitee=" + lstFriends_item + "&action=send&ref=finch_about_build_audience&__user=" + UserId + "&__a=1&__dyn=aJswFeyj2qm9a5k9VUgGhaiV925xSq78hACl5DlqUSS-CEy5pokAWCyaG8z8gKAqhB-fjw&__req=9&fb_dtsg=" + fb_dtsg + "&ttstamp=265816911110311176851225611890&__rev=1363263";
-                    //                string PostUrl = FBGlobals.Instance.PageManagerFanPageInviter;                  // "https://www.facebook.com/ajax/pages/invite/send_single/";
-
-                    //                string response = HttpHelper.postFormDataSendInvite(new Uri(PostUrl), PostData);
-
-                    //                if (response.Contains("\"payload\":null,\"bootloadable\""))
-                    //                {
-                    //                    CountSendInvite = CountSendInvite + 1;
-
-                    //                    GlobusLogHelper.log.Debug(CountSendInvite + " : invitation Send : " + lstFriends_item + " with UserName : " + fbUser.username + " for Fan Page Url : " + FanPageUrl_item);
-                    //                    GlobusLogHelper.log.Info(CountSendInvite + " : invitation Send : " + lstFriends_item + " with UserName : " + fbUser.username + " for Fan Page Url : " + FanPageUrl_item);
+                GlobusLogHelper.log.Info("Process Completed With User Name : " + fbUser.username);
 
 
 
-                    //                    try
-                    //                    {
-                    //                        int delayInSeconds = Utils.GenerateRandom(minDelayFanPageInviter * 1000, maxDelayFanPageInviter * 1000);
-                    //                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                    //                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
-                    //                        Thread.Sleep(delayInSeconds);
-                    //                    }
-                    //                    catch (Exception ex)
-                    //                    {
-                    //                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    //                    }
-                    //                }
-                    //                else
-                    //                {
-                    //                    Thread.Sleep(1000);
-                    //                }
+                #region MyRegion
+                //try
+                //{
+                //    string fb_dtsg = string.Empty;
+                //    string page_id = string.Empty;
 
-                    //            }
-                    //            catch (Exception ex)
-                    //            {
-                    //                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    //            }
-                    //        }
 
-                    //    }
-                    //    catch (Exception ex)
-                    //    {
-                    //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    //    }
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
-                    //} 
-                    #endregion
+                //    try
+                //    {
 
-                   
+                //        string PageSourceanPageUrl = HttpHelper.getHtmlfromUrl(new Uri(FanPageUrl_item));
+
+                //        UserId = GlobusHttpHelper.GetParamValue(PageSourceanPageUrl, "user");
+                //        if (string.IsNullOrEmpty(UserId))
+                //        {
+                //            UserId = GlobusHttpHelper.ParseJson(PageSourceanPageUrl, "user");
+                //        }
+
+                //        if (string.IsNullOrEmpty(UserId) || UserId == "0" || UserId.Length < 3)
+                //        {
+                //            GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
+                //            GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
+
+                //            return;
+                //        }
+
+                //        fb_dtsg = GlobusHttpHelper.GetParamValue(PageSourceanPageUrl, "fb_dtsg");
+                //        if (string.IsNullOrEmpty(fb_dtsg))
+                //        {
+                //            fb_dtsg = GlobusHttpHelper.ParseJson(PageSourceanPageUrl, "fb_dtsg");
+                //        }
+                //        string FanPageUrl = FanPageUrl_item;
+                //        page_id = GlobusHttpHelper.GetPageID(PageSourceanPageUrl, ref FanPageUrl);
+
+                //        //Find Friends ID List
+                //        int count_Friends = FriendInfoScraper.ExtractFriendCount(ref fbUser, UserId);
+
+                //        listFriendId.Clear();
+
+                //        GlobusLogHelper.log.Info("Please wait finding the friends ID...");
+                //        GlobusLogHelper.log.Debug("Please wait finding the friends ID...");
+
+                //        //List<string> lstFriends = FriendInfoScraper.ExtractFriendIdsFb(ref fbUser, ref HttpHelper, ref UserId, count_Friends);
+                //        List<string> lstFriends = new List<string>();
+                //        try
+                //        {
+                //            lstFriends = FBUtils.GetAllFriends(ref HttpHelper, UserId);
+                //            lstFriends = lstFriends.Distinct().ToList();
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //        }
+
+                //        int CountSendInvite = 0;
+                //        foreach (var lstFriends_item in lstFriends)
+                //        {
+                //            try
+                //            {
+
+                //                if (FanPageInviterNoOfFriendSendInviter <= CountSendInvite)
+                //                {
+                //                    break;
+                //                }
+
+                //                string PostData = "page_id=" + page_id + "&invitee=" + lstFriends_item + "&action=send&ref=finch_about_build_audience&__user=" + UserId + "&__a=1&__dyn=aJswFeyj2qm9a5k9VUgGhaiV925xSq78hACl5DlqUSS-CEy5pokAWCyaG8z8gKAqhB-fjw&__req=9&fb_dtsg=" + fb_dtsg + "&ttstamp=265816911110311176851225611890&__rev=1363263";
+                //                string PostUrl = FBGlobals.Instance.PageManagerFanPageInviter;                  // "https://www.facebook.com/ajax/pages/invite/send_single/";
+
+                //                string response = HttpHelper.postFormDataSendInvite(new Uri(PostUrl), PostData);
+
+                //                if (response.Contains("\"payload\":null,\"bootloadable\""))
+                //                {
+                //                    CountSendInvite = CountSendInvite + 1;
+
+                //                    GlobusLogHelper.log.Debug(CountSendInvite + " : invitation Send : " + lstFriends_item + " with UserName : " + fbUser.username + " for Fan Page Url : " + FanPageUrl_item);
+                //                    GlobusLogHelper.log.Info(CountSendInvite + " : invitation Send : " + lstFriends_item + " with UserName : " + fbUser.username + " for Fan Page Url : " + FanPageUrl_item);
+
+
+
+                //                    try
+                //                    {
+                //                        int delayInSeconds = Utils.GenerateRandom(minDelayFanPageInviter * 1000, maxDelayFanPageInviter * 1000);
+                //                        GlobusLogHelper.log.Info("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                //                        GlobusLogHelper.log.Debug("Delaying for " + delayInSeconds / 1000 + " Seconds With UserName : " + fbUser.username);
+                //                        Thread.Sleep(delayInSeconds);
+                //                    }
+                //                    catch (Exception ex)
+                //                    {
+                //                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //                    }
+                //                }
+                //                else
+                //                {
+                //                    Thread.Sleep(1000);
+                //                }
+
+                //            }
+                //            catch (Exception ex)
+                //            {
+                //                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //            }
+                //        }
+
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //    }
+                //}
+                //catch (Exception ex)
+                //{
+                //    GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                //} 
+                #endregion
+
+
             }
             catch (Exception ex)
             {
@@ -18358,5 +19747,431 @@ namespace Pages
             }
         }
 
+
+        public List<string> lstTargettedPostUrl = new List<string>();
+
+        public List<string> lstCPProfileUrls = new List<string>();
+
+        public List<string> lstCPComments = new List<string>();
+
+        public Queue<string> queueComments = new Queue<string>();
+        int countThreadControllerCommentPoster = 0;
+
+        readonly object lockrThreadControllerCommentPoster = new object();
+
+
+        Queue<string> QueueCPProfileUrls = new Queue<string>();
+
+        public int CPnoOFThreads = 25;
+
+        public int CPminDelay = 5;
+        public int CPmaxDelay = 15;
+
+        public int CPNooFPostPerComment = 5;
+
+        public int CPNoOFProfilePerUser = 2;
+
+        public void StartCommentPoster()
+        {
+
+            foreach (string str in lstCPComments)
+            {
+                queueComments.Enqueue(str);
+            }
+
+            foreach (string profileUrl in lstCPProfileUrls)
+            {
+                QueueCPProfileUrls.Enqueue(profileUrl);
+            }
+            countThreadControllerWallPoster = 0;
+            try
+            {
+                int numberOfAccountPatch = 25;
+
+
+                List<List<string>> list_listAccounts = new List<List<string>>();
+                if (FBGlobals.listAccounts.Count >= 1)
+                {
+
+                    list_listAccounts = Utils.Split(FBGlobals.listAccounts, CPnoOFThreads);
+
+                    foreach (List<string> listAccounts in list_listAccounts)
+                    {
+
+                        foreach (string account in listAccounts)
+                        {
+                            try
+                            {
+                                lock (lockrThreadControllerCommentPoster)
+                                {
+                                    try
+                                    {
+                                        if (countThreadControllerCommentPoster >= listAccounts.Count)
+                                        {
+                                            Monitor.Wait(lockrThreadControllerCommentPoster);
+                                        }
+
+                                        string acc = account.Remove(account.IndexOf(':'));
+
+                                        //Run a separate thread for each account
+                                        FacebookUser item = null;
+                                        FBGlobals.loadedAccountsDictionary.TryGetValue(acc, out item);
+
+                                        if (item != null)
+                                        {
+                                            Thread profilerThread = new Thread(StartMultiThreadsCommentPoster);
+                                            profilerThread.Name = "workerThread_Profiler_" + acc;
+                                            profilerThread.IsBackground = true;
+
+                                            profilerThread.Start(new object[] { item });
+
+                                            countThreadControllerCommentPoster++;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+                            }
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+        }
+
+
+
+
+        public void StartMultiThreadsCommentPoster(object parameters)
+        {
+            try
+            {
+                Array paramsArray = new object[1];
+                paramsArray = (Array)parameters;
+
+                FacebookUser objFacebookUser = (FacebookUser)paramsArray.GetValue(0);
+
+                if (!objFacebookUser.isloggedin)
+                {
+                    GlobusHttpHelper objGlobusHttpHelper = new GlobusHttpHelper();
+                    objFacebookUser.globusHttpHelper = objGlobusHttpHelper;
+                    //Login Process
+                    Accounts.AccountManager objAccountManager = new AccountManager();
+                    objAccountManager.LoginUsingGlobusHttp(ref objFacebookUser);
+                }
+
+                if (objFacebookUser.isloggedin)
+                {
+                    // Call StartActionMessageReply
+                    CommentPost(ref objFacebookUser);
+                }
+                else
+                {
+                    GlobusLogHelper.log.Info("Couldn't Login With Username : " + objFacebookUser.username);
+                    GlobusLogHelper.log.Debug("Couldn't Login With Username : " + objFacebookUser.username);
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
+            }
+        }
+
+        public void CommentPost(ref FacebookUser fbUser)
+        {
+
+            int NooFProfileUrls = 0;
+            string __user = string.Empty;
+            GlobusHttpHelper HttpHelper = fbUser.globusHttpHelper;
+
+            string ResponseLogin = HttpHelper.getHtmlfromUrl(new Uri(FBGlobals.Instance.fbhomeurl));
+            __user = GlobusHttpHelper.GetParamValue(ResponseLogin, "user");
+
+            string fb_dtsg = Get_fb_dtsg(ResponseLogin);
+            if (string.IsNullOrEmpty(__user))
+            {
+                __user = GlobusHttpHelper.ParseJson(ResponseLogin, "user");
+            }
+            if (string.IsNullOrEmpty(__user) || __user == "0" || __user.Length < 3)
+            {
+                GlobusLogHelper.log.Info("Please Check The Account : " + fbUser.username);
+                GlobusLogHelper.log.Debug("Please Check The Account : " + fbUser.username);
+                return;
+            }
+
+            string pageSource1 = ResponseLogin;
+            string FriendId = string.Empty;
+
+            while (QueueCPProfileUrls.Count != 0)
+            {
+                NooFProfileUrls++;
+                try
+                {
+
+                    List<string> lstPostsId = new List<string>();
+                    string FriendUrl = QueueCPProfileUrls.Dequeue();
+                    GlobusLogHelper.log.Info("Start Like Posts  with " + FriendUrl);
+                    GlobusLogHelper.log.Debug("Start Like Post  with " + FriendUrl);
+                    FriendId = GetFriendUserId(ref fbUser, FriendUrl);
+                    string ajaxpipe_token = string.Empty;
+                    string FreindPageResponse = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/profile.php?id=" + FriendId));
+                    string Pagelet = Utils.getBetween(FreindPageResponse, "ProfileTimelineSectionPagelet\\\",", "}");
+                    Pagelet = Pagelet.Replace(" ", string.Empty);
+                    Pagelet = Pagelet + "}";
+                    Pagelet = Pagelet.Replace("\\", string.Empty);
+                    Pagelet = Uri.EscapeDataString(Pagelet);
+
+                    string end = Utils.getBetween(FreindPageResponse, "\"end\":", ",");
+                    ajaxpipe_token = Utils.getBetween(FreindPageResponse, "ajaxpipe_token\":\"", "\"");
+                    string[] splitmainhtml = System.Text.RegularExpressions.Regex.Split(FreindPageResponse, "href");
+                    string postid = string.Empty;
+                    bool isValidUrl = true;
+                    foreach (string html in splitmainhtml)
+                    {
+                        if (html.Contains("posts/"))
+                        {
+                            try
+                            {
+                                string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                string[] splitPosturl = PostUrl.Split('/');
+                                postid = splitPosturl[splitPosturl.Length - 1];
+                                postid = postid.Replace("?fref=nf", string.Empty);
+                                lstPostsId.Add(postid);
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        }
+                        if (html.Contains("photo.php"))
+                        {
+                            if (!html.Contains("coverPhotoImg photo img") && !html.Contains("profilePic img"))
+                                try
+                                {
+                                    string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                    string fbId = Utils.getBetween(PostUrl, "fbid=", "&");
+                                    fbId = fbId.Replace("?fref=nf", string.Empty);
+                                    lstPostsId.Add(fbId);
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                        }
+                        if (html.Contains("permalink"))
+                        {
+                            try
+                            {
+
+                                string fbId = Utils.getBetween(html, "story_fbid=", "&");
+                                fbId = fbId.Replace("?fref=nf", string.Empty);
+                                lstPostsId.Add(fbId);
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        }
+
+
+                    }
+
+                    #region commented
+
+
+                    #endregion
+                    List<string> pageletList = new List<string>();
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A2%2C%22rc%22%3A5%2C%22vc%22%3A5%7D%2C%22num_visible_units%22%3A5%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxembzESu49UJ6K59poW8xHzoyfw&__req=jsonp_2&__rev=1538717&__adt=2");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A2%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A6%2C%22rc%22%3A18%2C%22vc%22%3A20%7D%2C%22num_visible_units%22%3A20%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_3&__rev=1538717&__adt=3");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A3%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A250%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A10%2C%22rc%22%3A18%2C%22vc%22%3A44%7D%2C%22num_visible_units%22%3A44%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_4&__rev=1538717&__adt=4");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A4%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A250%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A14%2C%22rc%22%3A18%2C%22vc%22%3A92%7D%2C%22num_visible_units%22%3A92%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_5&__rev=1538717&__adt=5");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22load_immediately%22%3Afalse%2C%22force_no_friend_activity%22%3Afalse%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_6&__rev=1538717&__adt=6");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A8%2C%22rc%22%3A5%2C%22vc%22%3A11%7D%2C%22num_visible_units%22%3A11%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_7&__rev=1538717&__adt=7");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A2%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A16%2C%22rc%22%3A5%2C%22vc%22%3A30%7D%2C%22num_visible_units%22%3A30%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_8&__rev=1538717&__adt=8");
+                    pageletList.Add("https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=AXiPlphY5F8Sjmr5&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A1388563200%2C%22end%22%3A1420099199%2C%22query_type%22%3A8%2C%22filter_after_timestamp%22%3A1416415349%2C%22page_index%22%3A3%2C%22section_container_id%22%3A%22u_jsonp_6_1%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_year_current%22%2C%22unit_container_id%22%3A%22u_jsonp_6_0%22%2C%22current_scrubber_key%22%3A%22year_2014%22%2C%22buffer%22%3A500%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Afalse%2C%22tipld%22%3A%7B%22sc%22%3A24%2C%22rc%22%3A5%2C%22vc%22%3A68%7D%2C%22num_visible_units%22%3A68%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxe-bzESu49UJ6K59poW8xHzoyfw&__req=jsonp_9&__rev=1538717&__adt=9");
+                    foreach (string pageletUrl in pageletList)
+                    {
+                        try
+                        {
+                            //string pageletUrl1 = "https://www.facebook.com/ajax/pagelet/generic.php/ProfileTimelineSectionPagelet?ajaxpipe=1&ajaxpipe_token=" + ajaxpipe_token + "&no_script_path=1&data=%7B%22profile_id%22%3A" + FriendId + "%2C%22start%22%3A0%2C%22end%22%3A1420099199%2C%22query_type%22%3A36%2C%22page_index%22%3A1%2C%22section_container_id%22%3A%22u_0_16%22%2C%22section_pagelet_id%22%3A%22pagelet_timeline_recent%22%2C%22unit_container_id%22%3A%22u_0_15%22%2C%22current_scrubber_key%22%3A%22recent%22%2C%22buffer%22%3A50%2C%22require_click%22%3Afalse%2C%22showing_esc%22%3Afalse%2C%22adjust_buffer%22%3Atrue%2C%22tipld%22%3A%7B%22sc%22%3A2%2C%22rc%22%3A5%2C%22vc%22%3A5%7D%2C%22num_visible_units%22%3A5%2C%22remove_dupes%22%3Atrue%7D&__user=" + __user + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgyimEVFLFwxBxembzESu49UJ6K59poW8xHzoyfw&__req=jsonp_2&__rev=1538717&__adt=2";
+                            string pageletUrl1Response = HttpHelper.getHtmlfromUrl(new Uri(pageletUrl));
+                            pageletUrl1Response = pageletUrl1Response.Replace("\\", string.Empty);
+                            string[] pageletUrl1html = System.Text.RegularExpressions.Regex.Split(pageletUrl1Response, "href");
+                            string postid1 = string.Empty;
+                            foreach (string html in pageletUrl1html)
+                            {
+                                if (html.Contains("posts/"))
+                                {
+                                    try
+                                    {
+                                        string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                        string[] splitPosturl = PostUrl.Split('/');
+                                        postid1 = splitPosturl[splitPosturl.Length - 1];
+                                        postid1 = postid1.Replace("?fref=nf", string.Empty);
+                                        lstPostsId.Add(postid);
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }
+                                if (html.Contains("photo.php"))
+                                {
+                                    try
+                                    {
+                                        string PostUrl = Utils.getBetween(html, "=\"", "\"");
+                                        string fbId = Utils.getBetween(PostUrl, "fbid=", "&");
+                                        fbId = fbId.Replace("?fref=nf", string.Empty);
+                                        lstPostsId.Add(fbId);
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }
+                                if (html.Contains("permalink"))
+                                {
+                                    try
+                                    {
+
+                                        string fbId = Utils.getBetween(html, "story_fbid=", "&");
+                                        fbId = fbId.Replace("?fref=nf", string.Empty);
+                                        lstPostsId.Add(fbId);
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }
+
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.Message);
+                        }
+                    }
+                    lstPostsId = lstPostsId.Distinct().ToList();
+                    lstPostsId.Remove("");
+                    if (CPNooFPostPerComment > lstPostsId.Count)
+                    {
+                        foreach (string post in lstPostsId)
+                        {
+                            lstCPComments.Shuffle();
+                            string CommentText = string.Empty;
+                            if (queueComments.Count > 0)
+                            {
+                                CommentText = queueComments.Dequeue();
+                            }
+                            else
+                            {
+                                CommentText = lstCPComments[new Random().Next(0, lstCPComments.Count - 1)];
+                            }
+
+                            try
+                            {
+                                string CommentPostData = "ft_ent_identifier=" + post + "&comment_text=" + Uri.EscapeDataString(CommentText) + "&source=2&client_id=1438691275647%3A2033728148&reply_fbid&parent_comment_id&rootid=u_0_8&clp=&attached_sticker_fbid=0&attached_photo_fbid=0&feed_context=%7B%22fbfeed_context%22%3Atrue%7D&ft[tn]=[]&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC-K26m6oKezob4q68K5Uc-dwIxi5e48hzq88zpEnyojzUyVWz9Hxmfw&__req=m&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170117106114508650717690&__rev=1866274";
+                                string CommentDataResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ufi/add/comment/"), CommentPostData);
+                                if (CommentDataResp.Contains("CommentAddedActive"))
+                                {
+                                    GlobusLogHelper.log.Info("Comment On Post Id " + post);
+                                    GlobusLogHelper.log.Debug("Comment On Post Id " + post);
+                                }
+                                else
+                                {
+                                    GlobusLogHelper.log.Info("Unable To Comment On Post Id " + post);
+                                    GlobusLogHelper.log.Debug(" Unable To Comment On Post Id " + post);
+                                }
+                                try
+                                {
+                                    int ran = new Random().Next(CPminDelay, CPmaxDelay);
+                                    GlobusLogHelper.log.Info("Delaying For " + ran);
+                                    GlobusLogHelper.log.Debug("Delaying For " + ran);
+                                    Thread.Sleep(ran * 1000);
+
+                                }
+                                catch { }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error(ex.Message);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < CPNooFPostPerComment; i++)
+                        {
+                            lstCPComments.Shuffle();
+                            string CommentText = string.Empty;
+                            if (queueComments.Count > 0)
+                            {
+                                CommentText = queueComments.Dequeue();
+                            }
+                            else
+                            {
+                                CommentText = lstCPComments[new Random().Next(0, lstCPComments.Count - 1)];
+                            }
+
+                            try
+                            {
+                                string CommentPostData = "ft_ent_identifier=" + lstPostsId[i] + "&comment_text=" + Uri.EscapeDataString(CommentText) + "&source=2&client_id=1438691275647%3A2033728148&reply_fbid&parent_comment_id&rootid=u_0_8&clp=&attached_sticker_fbid=0&attached_photo_fbid=0&feed_context=%7B%22fbfeed_context%22%3Atrue%7D&ft[tn]=[]&av=" + __user + "&__user=" + __user + "&__a=1&__dyn=7AmajEyl2qm9o-t2u5bHaEWCueyp9Esx6iqAdy9VCC-K26m6oKezob4q68K5Uc-dwIxi5e48hzq88zpEnyojzUyVWz9Hxmfw&__req=m&fb_dtsg=" + fb_dtsg + "&ttstamp=2658170117106114508650717690&__rev=1866274";
+                                string CommentDataResp = HttpHelper.postFormData(new Uri("https://www.facebook.com/ufi/add/comment/"), CommentPostData);
+                                if (CommentDataResp.Contains("CommentAddedActive"))
+                                {
+                                    GlobusLogHelper.log.Info("Comment On Post Id " + lstPostsId[i]);
+                                    GlobusLogHelper.log.Debug("Comment On Post Id " + lstPostsId[i]);
+                                }
+                                else
+                                {
+                                    GlobusLogHelper.log.Info("Unable To Comment On Post Id " + lstPostsId[i]);
+                                    GlobusLogHelper.log.Debug(" Unable To Comment On Post Id " + lstPostsId[i]);
+                                }
+                                try
+                                {
+                                    int ran = new Random().Next(CPminDelay, CPmaxDelay);
+                                    GlobusLogHelper.log.Info("Delaying For " + ran);
+                                    GlobusLogHelper.log.Debug("Delaying For " + ran);
+                                    Thread.Sleep(ran * 1000);
+
+                                }
+                                catch { }
+                            }
+                            catch (Exception ex)
+                            {
+                                GlobusLogHelper.log.Error(ex.Message);
+                            }
+
+                        }
+
+                    }
+                    if (CPNoOFProfilePerUser == NooFProfileUrls)
+                    {
+                        GlobusLogHelper.log.Info("Finish Comment on Posts  On Profile " + FriendUrl + " With Username :" + fbUser.username);
+                        GlobusLogHelper.log.Debug("Finish Comment on Posts  On Profile " + FriendUrl + " With Username :" + fbUser.username);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+
+            }
+
+
+
+        }
     }
 }

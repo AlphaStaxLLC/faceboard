@@ -16,6 +16,7 @@ namespace BaseLib
         /// Just call this method where you want to fire the event
         /// </summary>
         /// <param name="e"></param>
+        /// 
         public void RaiseParamsEvent(EventsArgs e)
         {
             if (handleParamsEvent != null)
@@ -25,6 +26,8 @@ namespace BaseLib
         }
 
     }
+
+   
 
     /// <summary>
     /// Contains data to be passed through the event

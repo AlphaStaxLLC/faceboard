@@ -18,13 +18,13 @@ namespace BaseLib
         public HttpWebResponse gResponse;
         public string responseURI = string.Empty;
         public static string qn = string.Empty;
-      
-       public static List<string> LstPicUrlsGroupCampaignManager
+
+        public static List<string> LstPicUrlsGroupCampaignManager
         {
             get;
             set;
         }
-       
+
 
 
         public static string UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0";
@@ -47,14 +47,14 @@ namespace BaseLib
                 //setExpect100Continue();
                 gRequest = (HttpWebRequest)WebRequest.Create(url);
                 gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:18.0) Gecko/20100101 Firefox/18.0";
-               
+
                 gRequest.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
                 gRequest.Headers["Accept-Charset"] = "ISO-8859-1,utf-8;q=0.7,*;q=0.7";
                 gRequest.Headers["Accept-Language"] = "en-us,en;q=0.5";
                 gRequest.Referer = refererUrl;
                 gRequest.KeepAlive = true;
                 gRequest.Host = "www.facebook.com";
-                    
+
                 gRequest.AllowAutoRedirect = true;
 
                 gRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
@@ -79,7 +79,7 @@ namespace BaseLib
                     this.gCookies = new CookieCollection();
                 }
 
-                
+
 
                 //Get Response for this request url
 
@@ -125,9 +125,9 @@ namespace BaseLib
                 #endregion
 
                     responseURI = gResponse.ResponseUri.AbsoluteUri;
-                 
 
-                StreamReader reader = new StreamReader(gResponse.GetResponseStream(), Encoding.ASCII);
+
+                    StreamReader reader = new StreamReader(gResponse.GetResponseStream(), Encoding.ASCII);
                     responseString = reader.ReadToEnd();
                     reader.Close();
                     return responseString;
@@ -249,7 +249,7 @@ namespace BaseLib
             return responseString;
         }
 
-    
+
 
         public string proxyAddress = string.Empty;
         public int port = 80;
@@ -359,7 +359,7 @@ namespace BaseLib
         }
 
 
-        
+
 
         public bool HttpUploadFile(string url, string file, string paramName, string contentType, NameValueCollection nvc, string proxyAddress, int proxyPort, string proxyUsername, string proxyPassword)
         {
@@ -468,7 +468,7 @@ namespace BaseLib
             }
             catch (Exception ex)
             {
-              
+
             }
 
             return isUploadProfile;
@@ -500,7 +500,7 @@ namespace BaseLib
             string ResponseLogin = string.Empty;
             try
             {
-            //    ResponseLogin = postFormData(new Uri("https://www.facebook.com/login.php?login_attempt=1"), "charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + value + "&locale=en_US&email=" + Username.Split('@')[0] + "%40" + Username.Split('@')[1] + "&pass=" + Password + "&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + value + "");
+                //    ResponseLogin = postFormData(new Uri("https://www.facebook.com/login.php?login_attempt=1"), "charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + value + "&locale=en_US&email=" + Username.Split('@')[0] + "%40" + Username.Split('@')[1] + "&pass=" + Password + "&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=" + value + "");
 
                 ResponseLogin = httpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com"));
             }
@@ -611,7 +611,7 @@ namespace BaseLib
 
                 try
                 {
-               
+
                     string okay = HttpHelper.getHtmlfromUrl(new Uri("https://3-pct.channel.facebook.com/pull?channel=p" + UsreId + "&seq=3&partition=69&clientid=70e140db&cb=8p7w&idle=8&state=active&mode=stream&format=json"));
                 }
                 catch (Exception ex)
@@ -920,7 +920,7 @@ namespace BaseLib
                     StreamReader reader = new StreamReader(gResponse.GetResponseStream());
                     responseString = reader.ReadToEnd();
                     reader.Close();
-                    
+
                 }
 
                 else
@@ -939,12 +939,12 @@ namespace BaseLib
 
         public string postFormData(Uri formActionUrl, string postData)
         {
-           // postData="charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=AVqEAf6F&locale=en_US&email=soni.sameer123%40rediffmail.com&pass=god@12345&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=AVqEAf6F";
+            // postData="charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=AVqEAf6F&locale=en_US&email=soni.sameer123%40rediffmail.com&pass=god@12345&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=AVqEAf6F";
 
             gRequest = (HttpWebRequest)WebRequest.Create(formActionUrl);
-           // gRequest.UserAgent = "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16";
+            // gRequest.UserAgent = "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16";
             //"Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0"
-           // gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0";
+            // gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0";
             gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0";
             gRequest.CookieContainer = new CookieContainer();// gCookiesContainer;
             gRequest.Method = "POST";
@@ -1045,6 +1045,124 @@ namespace BaseLib
             }
 
         }
+
+
+
+        public string postFormDataSetCookie(Uri formActionUrl, string postData, string regCoockieval)
+        {
+            // postData="charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=AVqEAf6F&locale=en_US&email=soni.sameer123%40rediffmail.com&pass=god@12345&persistent=1&default_persistent=1&charset_test=%E2%82%AC%2C%C2%B4%2C%E2%82%AC%2C%C2%B4%2C%E6%B0%B4%2C%D0%94%2C%D0%84&lsd=AVqEAf6F";
+
+            gRequest = (HttpWebRequest)WebRequest.Create(formActionUrl);
+            // gRequest.UserAgent = "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16";
+            //"Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0"
+            // gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0";
+            gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0";
+            gRequest.CookieContainer = new CookieContainer();// gCookiesContainer;
+            gRequest.Method = "POST";
+            gRequest.Accept = " text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8, */*";
+            gRequest.KeepAlive = true;
+            gRequest.ContentType = @"application/x-www-form-urlencoded";
+            //gRequest.Timeout = 2 * 30000;
+            // gRequest.Referer = "https://www.facebook.com/checkpoint/";
+
+            ChangeProxy(proxyAddress, port, proxyUsername, proxyPassword);
+
+            #region CookieManagement
+            if (this.gCookies != null && this.gCookies.Count > 0)
+            {
+                setExpect100Continue();
+                gRequest.CookieContainer.Add(gCookies);
+            }
+
+            Cookie ck = new Cookie();
+            ck.Name = "_js_datr";
+            ck.Value = regCoockieval;
+            ck.Domain = "facebook.com";
+            gRequest.CookieContainer.Add(ck);
+
+            //logic to postdata to the form
+            try
+            {
+                setExpect100Continue();
+                string postdata = string.Format(postData);
+                byte[] postBuffer = System.Text.Encoding.GetEncoding(1252).GetBytes(postData);
+                gRequest.ContentLength = postBuffer.Length;
+                Stream postDataStream = gRequest.GetRequestStream();
+                postDataStream.Write(postBuffer, 0, postBuffer.Length);
+                postDataStream.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                // Logger.LogText("Internet Connectivity Exception : "+ ex.Message,null);
+            }
+            //post data logic ends
+
+            //Get Response for this request url
+            try
+            {
+                gResponse = (HttpWebResponse)gRequest.GetResponse();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                //Logger.LogText("Response from "+formActionUrl + ":" + ex.Message,null);
+            }
+
+
+
+            //check if the status code is http 200 or http ok
+
+            if (gResponse.StatusCode == HttpStatusCode.OK)
+            {
+                //get all the cookies from the current request and add them to the response object cookies
+                setExpect100Continue();
+                gResponse.Cookies = gRequest.CookieContainer.GetCookies(gRequest.RequestUri);
+
+                if (gResponse.Cookies.Count > 0)
+                {
+                    //check if this is the first request/response, if this is the response of first request gCookies
+                    //will be null
+                    if (this.gCookies == null)
+                    {
+                        gCookies = gResponse.Cookies;
+                    }
+                    else
+                    {
+                        foreach (Cookie oRespCookie in gResponse.Cookies)
+                        {
+                            bool bMatch = false;
+                            foreach (Cookie oReqCookie in this.gCookies)
+                            {
+                                if (oReqCookie.Name == oRespCookie.Name)
+                                {
+                                    oReqCookie.Value = oRespCookie.Value;
+                                    bMatch = true;
+                                    break; // 
+                                }
+                            }
+                            if (!bMatch)
+                                this.gCookies.Add(oRespCookie);
+                        }
+                    }
+                }
+            #endregion
+
+
+
+                StreamReader reader = new StreamReader(gResponse.GetResponseStream());
+                string responseString = reader.ReadToEnd();
+                reader.Close();
+                //Console.Write("Response String:" + responseString);
+                return responseString;
+            }
+            else
+            {
+                return "Error in posting data";
+            }
+
+        }
+
 
         public string postFormDataUpdated(Uri formActionUrl, string postData)
         {
@@ -1157,13 +1275,13 @@ namespace BaseLib
 
         public string postFormDataSendInvite(Uri formActionUrl, string postData)
         {
-         
+
 
             gRequest = (HttpWebRequest)WebRequest.Create(formActionUrl);
             gRequest.UserAgent = "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36";
             //"Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0"
             // gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0";
-          //  gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0";
+            //  gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0";
             gRequest.CookieContainer = new CookieContainer();// gCookiesContainer;
             gRequest.Method = "POST";
             gRequest.Accept = " text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8, */*";
@@ -1195,9 +1313,9 @@ namespace BaseLib
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-               
+
             }
-          
+
 
             //Get Response for this request url
             try
@@ -1207,7 +1325,7 @@ namespace BaseLib
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
-               
+
             }
 
 
@@ -1337,7 +1455,7 @@ namespace BaseLib
                 gRequest.KeepAlive = true;
                 gRequest.ContentType = @"application/x-www-form-urlencoded";
                 gRequest.Referer = "http://www.facebook.com/events/151218238374603/";
-              
+
                 ChangeProxy(proxyAddress, port, proxyUsername, proxyPassword);
 
                 #region CookieManagement
@@ -1452,7 +1570,7 @@ namespace BaseLib
                 gRequest.KeepAlive = true;
                 gRequest.ContentType = @"application/x-www-form-urlencoded";
                 gRequest.Referer = Refere;
-             
+
                 ChangeProxy(proxyAddress, port, proxyUsername, proxyPassword);
 
                 #region CookieManagement
@@ -1502,7 +1620,7 @@ namespace BaseLib
                     setExpect100Continue();
                     gResponse.Cookies = gRequest.CookieContainer.GetCookies(gRequest.RequestUri);
                     //check if response object has any cookies or not
-                  
+
                     if (gResponse.Cookies.Count > 0)
                     {
                         //check if this is the first request/response, if this is the response of first request gCookies
@@ -1564,8 +1682,8 @@ namespace BaseLib
 
                 if (value.Contains("ion"))
                 {
-                    value = Utils.getBetween(data, "CurrentUserInitialData", "}").Replace("id", string.Empty).Replace("\"", string.Empty).Replace("[]", string.Empty).Replace(",",string.Empty).Replace("{",string.Empty).Replace(":",string.Empty);                                  
-                }              
+                    value = Utils.getBetween(data, "CurrentUserInitialData", "}").Replace("id", string.Empty).Replace("\"", string.Empty).Replace("[]", string.Empty).Replace(",", string.Empty).Replace("{", string.Empty).Replace(":", string.Empty);
+                }
 
                 return value;
             }
@@ -1587,11 +1705,11 @@ namespace BaseLib
                     {
                         string[] sss = System.Text.RegularExpressions.Regex.Split(s1_item, ">");
 
-                        value =Uri.EscapeDataString(sss[0].Replace("e=", "").Replace("/", "").Replace("\"", "").Replace("\\", "%2F").Replace("http:", "http%3A"));
+                        value = Uri.EscapeDataString(sss[0].Replace("e=", "").Replace("/", "").Replace("\"", "").Replace("\\", "%2F").Replace("http:", "http%3A"));
                     }
-                    
+
                 }
-               
+
                 return value;
             }
             catch (Exception)
@@ -1626,7 +1744,6 @@ namespace BaseLib
             }
         }
         public static string GetAttachmentParamsUrlInfoFinal(string data, string paramName)
-        
         {
             try
             {
@@ -1638,7 +1755,7 @@ namespace BaseLib
                     {
                         string[] sss = System.Text.RegularExpressions.Regex.Split(s1_item, ">");
 
-                        value =Uri.EscapeDataString(sss[0].Replace("ms][urlInfo][final]", "").Replace("/", "").Replace("\"", "").Replace("\\", "").Replace(" value=", ""));
+                        value = Uri.EscapeDataString(sss[0].Replace("ms][urlInfo][final]", "").Replace("/", "").Replace("\"", "").Replace("\\", "").Replace(" value=", ""));
                     }
 
                 }
@@ -1684,7 +1801,7 @@ namespace BaseLib
                 string[] s1 = System.Text.RegularExpressions.Regex.Split(data, "[params][urlInfo][final]");
                 foreach (var s1_item in s1)
                 {
-                    if (s1_item.Contains("[summary]") )//&& s1_item.Contains("attachment"))
+                    if (s1_item.Contains("[summary]"))//&& s1_item.Contains("attachment"))
                     {
                         string[] sss = System.Text.RegularExpressions.Regex.Split(s1_item, ">");
 
@@ -1710,7 +1827,7 @@ namespace BaseLib
                 string[] s1 = System.Text.RegularExpressions.Regex.Split(data, "[params][urlInfo][final]");
                 foreach (var s1_item in s1)
                 {
-                    if (s1_item.Contains("ms][medium]") && s1_item.Contains("attachment") )//&& s1_item.Contains("value="))
+                    if (s1_item.Contains("ms][medium]") && s1_item.Contains("attachment"))//&& s1_item.Contains("value="))
                     {
                         string[] sss = System.Text.RegularExpressions.Regex.Split(s1_item, ">");
 
@@ -1735,7 +1852,7 @@ namespace BaseLib
                 string[] s1 = System.Text.RegularExpressions.Regex.Split(data, "[params][urlInfo][final]");
                 foreach (var s1_item in s1)
                 {
-                    if (s1_item.Contains("ms][url]") && s1_item.Contains("attachment")&& s1_item.Contains("value="))
+                    if (s1_item.Contains("ms][url]") && s1_item.Contains("attachment") && s1_item.Contains("value="))
                     {
                         string[] sss = System.Text.RegularExpressions.Regex.Split(s1_item, ">");
 
@@ -1768,9 +1885,9 @@ namespace BaseLib
                             string[] sss1 = System.Text.RegularExpressions.Regex.Split(sss[1], ">");
                             value = sss1[0].Replace("[type]", "").Replace("/", "").Replace("\"", "").Replace("\\", "").Replace(" value=", "").Replace("&#039;", "");
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
-                            GlobusLogHelper.log.Error("Error : " +ex.StackTrace);
+                            GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
                         }
                     }
 
@@ -1783,7 +1900,7 @@ namespace BaseLib
 
                 return null;
             }
-        }     
+        }
         public static string GetLinkMetricsSource(string data, string paramName)
         {
 
@@ -1861,7 +1978,7 @@ namespace BaseLib
                 return null;
             }
         }
-        public static string GetlinkMetricsTitleLen(string data ,string paramName)
+        public static string GetlinkMetricsTitleLen(string data, string paramName)
         {
             try
             {
@@ -1899,7 +2016,7 @@ namespace BaseLib
                     {
                         string[] sss = System.Text.RegularExpressions.Regex.Split(s1_item, ">");
 
-                        value = sss[0].Replace("ms][favicon]", "").Replace("/", "%2F").Replace("\"", " ").Replace("\\", "").Replace(" value=", "").Replace("&#039;", "").Replace(" ","");
+                        value = sss[0].Replace("ms][favicon]", "").Replace("/", "%2F").Replace("\"", " ").Replace("\\", "").Replace(" value=", "").Replace("&#039;", "").Replace(" ", "");
                         value = Uri.EscapeDataString(value);
                     }
 
@@ -1949,20 +2066,20 @@ namespace BaseLib
                 }
                 else if (paramName.Contains("user"))
                 {
-                       string value = string.Empty;
-                     //  value = getBetween(pgSrc, "USER_ID", "ACCOUNT_ID").Replace("\"", string.Empty).Replace(",", string.Empty).Replace(":","");
-                       value = getBetween(pgSrc, "CurrentUserInitialData", "}").Replace("id", string.Empty).Replace("\"", string.Empty).Replace("[]", string.Empty).Replace(",", string.Empty).Replace("{", string.Empty).Replace(":", string.Empty).Replace("is_employeefalse", "").Replace("is_grayfalse", "");
-                       if (value.Contains("account"))
-                       {
-                           string [] arr=System.Text.RegularExpressions.Regex.Split(value,"account");
-                           value=arr[0];
-                       }
-                      if (value.Contains("USER_ID"))
-                       {
-                           value = getBetween(pgSrc, "USER_ID", "ACCOUNT_ID").Replace("\"", string.Empty).Replace(",", string.Empty).Replace(":", "");
-                       }
-                        return value;
-                   
+                    string value = string.Empty;
+                    //  value = getBetween(pgSrc, "USER_ID", "ACCOUNT_ID").Replace("\"", string.Empty).Replace(",", string.Empty).Replace(":","");
+                    value = getBetween(pgSrc, "CurrentUserInitialData", "}").Replace("id", string.Empty).Replace("\"", string.Empty).Replace("[]", string.Empty).Replace(",", string.Empty).Replace("{", string.Empty).Replace(":", string.Empty).Replace("is_employeefalse", "").Replace("is_grayfalse", "");
+                    if (value.Contains("account"))
+                    {
+                        string[] arr = System.Text.RegularExpressions.Regex.Split(value, "account");
+                        value = arr[0];
+                    }
+                    if (value.Contains("USER_ID"))
+                    {
+                        value = getBetween(pgSrc, "USER_ID", "ACCOUNT_ID").Replace("\"", string.Empty).Replace(",", string.Empty).Replace(":", "");
+                    }
+                    return value;
+
                 }
                 return null;
             }
@@ -2002,13 +2119,13 @@ namespace BaseLib
                 return "";
             }
         }
-       
+
         public static string ProfileID(string strSource, string strStart, string strEnd)
         {
             int Start, End;
             if (strSource.Contains(strStart) && strSource.Contains(strEnd))
             {
-                Start = strSource.IndexOf(strStart, 0) + strStart.Length+9;
+                Start = strSource.IndexOf(strStart, 0) + strStart.Length + 9;
                 End = strSource.IndexOf(strEnd, Start);
                 return strSource.Substring(Start, End - Start).Replace(":", "").Replace("\"", "").Replace("}", "");
             }
@@ -2102,9 +2219,9 @@ namespace BaseLib
                     if (pgSrc.Contains("fb_dtsg"))
                     {
                         string[] Arr = System.Text.RegularExpressions.Regex.Split(pgSrc, "fb_dtsg");
-                        fb_dtsg = get_Between(Arr[1], "value=\\\"", "\\\""); 
+                        fb_dtsg = get_Between(Arr[1], "value=\\\"", "\\\"");
                     }
-                   
+
                 }
             }
             return fb_dtsg;
@@ -2339,7 +2456,7 @@ namespace BaseLib
                     return "Error in posting data";
                 }
             }
-            catch ( Exception ex)
+            catch (Exception ex)
             {
                 GlobusLogHelper.log.Error("Error : " + ex.StackTrace);
             }
@@ -2540,12 +2657,12 @@ namespace BaseLib
                     {
                         if (!strhref.Contains("<!DOCTYPE"))
                         {
-                                string profileID=Utils.getBetween(strhref, "\"", "\"");
-                                lstFriend_Requests.Add(profileID);
-                           
+                            string profileID = Utils.getBetween(strhref, "\"", "\"");
+                            lstFriend_Requests.Add(profileID);
+
                         }
                     }
-                } 
+                }
                 #endregion
                 int Count = 0;
                 if (pgSrc_FriendsPage.Contains("pager_id="))
@@ -2556,7 +2673,7 @@ namespace BaseLib
                     {
                         Count = Count + 1;
                         pgSrc_FriendsPage = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/friends/requests/outgoing/more/?page=" + page + "&page_size=10&pager_id=" + Pager_ID + "&__user=" + userID + "&__a=1&__dyn=7n8ahyj35zoSt2u6aAix90BCxO4oKAdBGfirWo8pojByUW5ogxd6K4bBxi&__req=b&__rev=1398717"));
-                        if (!pgSrc_FriendsPage.Contains("pager_id=") || page == "6" || Count>=5)
+                        if (!pgSrc_FriendsPage.Contains("pager_id=") || page == "6" || Count >= 5)
                         {
                             break;
                         }
@@ -2576,7 +2693,7 @@ namespace BaseLib
 
                                 }
                             }
-                        } 
+                        }
                     }
                 }
                 List<string> itemId = lstFriend_Requests.Distinct().ToList();
@@ -2990,7 +3107,7 @@ namespace BaseLib
                 gRequest = (HttpWebRequest)WebRequest.Create(url);
                 gRequest.ContentType = "multipart/form-data; boundary=" + boundary;
                 //gRequest.Referer = "Referer: https://www.facebook.com/profile.php?id=" + userid + "&ref=tn_tnmn";
-               // gRequest.Referer = "https://www.facebook.com/avneetgupta23";
+                // gRequest.Referer = "https://www.facebook.com/avneetgupta23";
 
                 gRequest.Method = "POST";
                 gRequest.KeepAlive = true;
@@ -3525,8 +3642,8 @@ namespace BaseLib
         // } 
         #endregion
 
-       public bool AddaPicture(ref GlobusHttpHelper HttpHelper, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, string targeturl, string message, ref string status, string pageSource_Home, string xhpc_targetid, string xhpc_composerid, string message_text, string fb_dtsg, string UsreId, string pageSource, ref int tempCountMain)        
-       {
+        public bool AddaPicture(ref GlobusHttpHelper HttpHelper, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, string targeturl, string message, ref string status, string pageSource_Home, string xhpc_targetid, string xhpc_composerid, string message_text, string fb_dtsg, string UsreId, string pageSource, ref int tempCountMain)
+        {
 
             // string pageSource = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
             int tempCount = 0;
@@ -3573,7 +3690,7 @@ namespace BaseLib
                     string source = "";
                     string profile_id = "";
                     string gridID = "";
-                  //  string qn = string.Empty;
+                    //  string qn = string.Empty;
 
                     try
                     {
@@ -3586,7 +3703,7 @@ namespace BaseLib
                         try
                         {
                             source = res11.Substring(res11.IndexOf("source\":"), (res11.IndexOf(",", res11.IndexOf("source\":")) - res11.IndexOf("source\":"))).Replace("source\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                           
+
                         }
                         catch (Exception ex)
                         {
@@ -3594,7 +3711,7 @@ namespace BaseLib
                         }
                         if (string.IsNullOrEmpty(source))
                         {
-                            source = Utils.getBetween(res11, "source", "profile_id").Replace("\\\"","").Replace(",","").Replace(":","").Trim();
+                            source = Utils.getBetween(res11, "source", "profile_id").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim();
 
                         }
                         try
@@ -3623,7 +3740,433 @@ namespace BaseLib
                         {
                             gridID = Utils.getBetween(res11, "gridID", ",").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim(); ;
                         }
-                    
+
+
+                        try
+                        {
+                            composer_session_id = res11.Substring(res11.IndexOf("composer_session_id\":"), (res11.IndexOf("}", res11.IndexOf("composer_session_id\":")) - res11.IndexOf("composer_session_id\":"))).Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.StackTrace);
+                        }
+
+                        try
+                        {
+                            if (string.IsNullOrEmpty(composer_session_id))
+                            {
+                                composer_session_id = Utils.getBetween(res11, "\"composerID\":\"", "\"");  //res11.Substring(res11.IndexOf("composerID\":"), (res11.IndexOf("}", res11.IndexOf("composerID\":")) - res11.IndexOf("composerID\":"))).Replace("composerID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.StackTrace);
+                        }
+
+                        try
+                        {
+                            qn = Utils.getBetween(res11, "&qn=", "\"");
+                            // qn =qn.Replace("\\\\\\\"","@");
+                            // qn = getBetween(qn, "@ value=@", "@");
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.StackTrace);
+                        }
+                    }
+                    catch { }
+
+                    NameValueCollection nvc1 = new NameValueCollection();
+                    try
+                    {
+                        //message = Uri.EscapeDataString(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.StackTrace);
+                    }
+
+                    //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
+                    //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid");
+                    //-------------------------------
+                    //nvc1.Add("fb_dtsg", fb_dtsg);
+                    //nvc1.Add("source", source);
+                    //nvc1.Add("profile_id", profile_id);
+                    //nvc1.Add("grid_id", gridID);
+                    //nvc1.Add("upload_id", "1024");
+                    //-----------------------------------
+                    nvc1.Add("fb_dtsg", fb_dtsg);
+                    nvc1.Add("source", source);
+                    nvc1.Add("profile_id", profile_id);
+                    nvc1.Add("grid_id", gridID);
+                    nvc1.Add("upload_id", "1024");
+                    nvc1.Add("qn", qn);
+
+                    //nvc1.Add("fb_dtsg", fb_dtsg);
+                    //nvc1.Add("source", source);
+                    //nvc1.Add("profile_id", profile_id);
+                    //nvc1.Add("grid_id", gridID);
+                    //nvc1.Add("upload_id", "1024");
+                    //nvc1.Add("qn", qn);
+
+                    string _rev = getBetween(pageSource, "svn_rev", ",");
+                    _rev = _rev.Replace("\":", string.Empty);
+
+
+                    string uploadURL = "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88Oq9ccmqDxl2u5Fa8HzCqm5Aqbx2mbAKGiBAGm&__req=1t&fb_dtsg=" + fb_dtsg + "&__rev=" + _rev + "";
+                    tempresponse1 = HttpUploadFile_UploadPic_tempforsingle(ref HttpHelper, UsreId, uploadURL, "composer_unpublished_photo[]", "image/jpeg", localImagePath, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                    if (tempresponse1.ToLower().Contains("errorsummary") && tempresponse1.ToLower().Contains("There was a problem with this request. We're working on getting it fixed as soon as we can".ToLower()))
+                    {
+                        if (tempCount < 2)
+                        {
+                            System.Threading.Thread.Sleep(15000);
+                            tempCount++;
+                            goto startAgain;
+                        }
+                        else
+                        {
+                            tempCountMain++;
+                            return false;
+                        }
+                    }
+
+                    //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/timeline/cover/upload/", "pic", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                    //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                    //tempresponse1 = HttpUploadFile_UploadPic_temp(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=l&fb_dtsg=" + fb_dtsg + "", "composer_unpublished_photo[]", "image/jpeg", localImagePath, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                }
+
+                NameValueCollection nvc = new NameValueCollection();
+                try
+                {
+                    //message = Uri.EscapeDataString(message);
+                }
+                catch { }
+                nvc.Add("fb_dtsg", fb_dtsg);
+                nvc.Add("xhpc_targetid", xhpc_targetid);
+                nvc.Add("xhpc_context", "profile");
+                nvc.Add("xhpc_ismeta", "1");
+                nvc.Add("xhpc_fbx", "1");
+                nvc.Add("xhpc_timeline", "");
+                nvc.Add("xhpc_composerid", xhpc_composerid);
+                nvc.Add("xhpc_message_text", message);
+                nvc.Add("xhpc_message", message);
+                //nvc.Add("name", "file1");
+                //nvc.Add("Content-Type:", "image/jpeg");
+                //nvc.Add("filename=", "");
+
+
+                string composer_unpublished_photo = "";
+                try
+                {
+                    string start_composer_unpublished_photo = Regex.Split(tempresponse1, "},\"")[1];// 
+
+
+
+                    int startIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf(",\"") + ",\"".Length;
+                    int endIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf("\"", startIndex_composer_unpublished_photo + 1);
+
+                    composer_unpublished_photo = start_composer_unpublished_photo.Substring(startIndex_composer_unpublished_photo, endIndex_composer_unpublished_photo - startIndex_composer_unpublished_photo);
+                }
+
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error(ex.StackTrace);
+                }
+
+                if (tempresponse1.Contains("composer_unpublished_photo"))
+                {
+                    try
+                    {
+                        composer_unpublished_photo = Utils.getBetween(tempresponse1, "\"photoFBID\":\"", "\"");
+                        //.Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                        if (string.IsNullOrEmpty(composer_unpublished_photo))
+                        {
+                            composer_unpublished_photo = Utils.getBetween(tempresponse1, "fbid\":\"", "\"");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.StackTrace);
+                    }
+                }
+                ///New test upload pic post
+                string waterfallid = GlobusHttpHelper.ParseJson(pageSource_Home, "waterfallID");
+
+                if (waterfallid.Contains("ar"))
+                {
+                    waterfallid = qn;
+                }
+
+
+                string newpostURL = "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=r&fb_dtsg=" + fb_dtsg + "";
+                string newPostData = "";
+
+
+                NameValueCollection newnvc = new NameValueCollection();
+                try
+                {
+                    //message = Uri.EscapeDataString(message);
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error(ex.StackTrace);
+                }
+
+                newnvc.Add("fb_dtsg", fb_dtsg);
+                newnvc.Add("xhpc_targetid", xhpc_targetid);
+                newnvc.Add("xhpc_context", "profile");
+                newnvc.Add("xhpc_ismeta", "1");
+                newnvc.Add("xhpc_fbx", "1");
+                newnvc.Add("xhpc_timeline", "");
+                newnvc.Add("xhpc_composerid", xhpc_composerid);
+                newnvc.Add("xhpc_message_text", message);
+                newnvc.Add("xhpc_message", message);
+
+                newnvc.Add("composer_unpublished_photo[]", composer_unpublished_photo);
+                newnvc.Add("album_type", "128");
+                newnvc.Add("is_file_form", "1");
+                newnvc.Add("oid", "");
+                newnvc.Add("qn", waterfallid);
+                newnvc.Add("application", "composer");
+                newnvc.Add("is_explicit_place", "");
+                newnvc.Add("composertags_place", "");
+                newnvc.Add("composertags_place_name", "");
+                newnvc.Add("composer_session_id", composer_session_id);
+                newnvc.Add("composertags_city", "");
+                newnvc.Add("vzdisable_location_sharing", "false");
+                newnvc.Add("composer_predicted_city", "");
+
+                // string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/timeline/cover/upload/", "pic", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                // string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, newpostURL, "file1", "image/jpeg", localImagePath, newnvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);//HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+
+                if (response.Contains("post this because it has a blocked link"))
+                {
+                    try
+                    {
+                        GlobusLogHelper.log.Info("-------blocked link-------");
+                        return false;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.StackTrace);
+                    }
+
+                }
+
+                //http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=100004608395129
+                if (string.IsNullOrEmpty(response))
+                {
+                    try
+                    {
+                        //response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+                        response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.StackTrace);
+                    }
+                }
+                string posturl = "https://www.facebook.com/ajax/places/city_sharer_reset.php";
+                string postdata = "__user=" + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=1658167761111108210145";
+                string responsestring = HttpHelper.postFormData(new Uri(posturl), postdata);
+                try
+                {
+                    string okay = HttpHelper.getHtmlfromUrl(new Uri("https://3-pct.channel.facebook.com/pull?channel=p_" + UsreId + "&seq=3&partition=69&clientid=70e140db&cb=8p7w&idle=8&state=active&mode=stream&format=json"));
+                }
+                catch (Exception ex)
+                {
+                    GlobusLogHelper.log.Error(ex.StackTrace);
+                }
+
+                if (!string.IsNullOrEmpty(response) && response.Contains("payload\":{\"photo_fbid"))//response.Contains("photo.php?fbid="))
+                {
+
+                    #region PostData_ForCoverPhotoSelect
+                    //fb_dtsg=AQCLSjCH&photo_id=130869487061841&profile_id=100004163701035&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=100004163701035&__a=1&phstamp=165816776831066772182 
+                    #endregion
+
+                    try
+                    {
+
+                        if (!response.Contains("errorSummary") || !response.Contains("error"))
+                        {
+                            isSentPicMessage = true;
+                        }
+                        if (response.Contains("Your post has been submitted and is pending approval by an admin"))
+                        {
+                            GlobusLogHelper.log.Debug("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
+                            GlobusLogHelper.log.Info("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.StackTrace);
+                    }
+                    #region CodeCommented
+                    //    string photo_idValue = response.Substring(response.IndexOf("photo.php?fbid="), response.IndexOf(";", response.IndexOf("photo.php?fbid=")) - response.IndexOf("photo.php?fbid=")).Replace("photo.php?fbid=", string.Empty).Trim();
+                    //    string[] arrphoto_idValue = Regex.Split(photo_idValue, "[^0-9]");
+
+                    //    foreach (string item in arrphoto_idValue)
+                    //    {
+                    //        try
+                    //        {
+                    //            if (item.Length > 6)
+                    //            {
+                    //                photo_id = item;
+                    //                break;
+                    //            }
+                    //        }
+                    //        catch
+                    //        {
+                    //        }
+                    //    }
+
+                    //   // string postData = "fb_dtsg=" + fb_dtsg + "&photo_id=" + photo_id + "&profile_id=" + UsreId + "&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=" + UsreId + "&__a=1&phstamp=165816776831066772182 ";
+                    //   // string postResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/cover_photo_select.php"), postData);
+
+                    //    //if (!postResponse.Contains("error"))
+                    //    //{
+                    //    //    //string ok = "ok";
+                    //    //    isSentPicMessage = true;
+                    //    //}
+                    //    //if (string.IsNullOrEmpty(postResponse) || string.IsNullOrWhiteSpace(postResponse))
+                    //    //{
+                    //    //    status = "Response Is Null !";
+                    //    //}
+                    //    //if (postResponse.Contains("errorSummary"))
+                    //    //{
+                    //    //    string summary = GlobusHttpHelper.ParseJson(postResponse, "errorSummary");
+                    //    //    string errorDescription = GlobusHttpHelper.ParseJson(postResponse, "errorDescription");
+
+                    //    //    status = "Posting Error: " + summary + " | Error Description: " + errorDescription;
+                    //    //    //FanPagePosterLogger("Posting Error: " + summary + " | Error Description: " + errorDescription);
+                    //    //}
+                    //}
+                    //catch
+                    //{
+                    //} 
+                    #endregion
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.StackTrace);
+            }
+            return isSentPicMessage;
+
+        }
+
+        public bool AddaPictureForEditMessage(ref GlobusHttpHelper HttpHelper, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, string targeturl, string message, ref string status, string pageSource_Home, string xhpc_targetid, string xhpc_composerid, string message_text, string fb_dtsg, string UsreId, string pageSource, ref int tempCountMain, int delay)
+        {
+
+            // string pageSource = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
+            int tempCount = 0;
+        startAgain:
+
+            bool isSentPicMessage = false;
+            //string fb_dtsg = string.Empty;
+            string photo_id = string.Empty;
+            //string UsreId = string.Empty;
+            //xhpc_composerid = string.Empty;
+            //xhpc_targetid = string.Empty;
+            //message_text = string.Empty;
+
+            try
+            {
+                #region commentedCode
+
+
+                //string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri("http://www.facebook.com/home.php"));
+
+                //UsreId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
+                //if (string.IsNullOrEmpty(UsreId))
+                //{
+                //    UsreId = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
+                //}
+
+                //fb_dtsg = GlobusHttpHelper.GetParamValue(pageSource_Home, "fb_dtsg");//pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
+                //if (string.IsNullOrEmpty(fb_dtsg))
+                //{
+                //    fb_dtsg = GlobusHttpHelper.ParseJson(pageSource_Home, "fb_dtsg");
+                //}
+
+
+                //string pageSource_HomeData = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
+                //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
+                //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid"); 
+                #endregion
+
+                string composer_session_id = "";
+
+                string tempresponse1 = "";
+                ///temp post
+                {
+                    string source = "";
+                    string profile_id = "";
+                    string gridID = "";
+                    //  string qn = string.Empty;
+
+                    try
+                    {
+                        string Url = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?composerurihash=1";
+                        string posturl1 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=cameraicon&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=cameraicon&loaded_components[6]=mainprivacywidget&loaded_components[7]=withtaggericon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=i&phstamp=16581688688747595501";    //"fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&istimeline=1&timelinelocation=composer&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=mainprivacywidget&loaded_components[3]=maininput&loaded_components[4]=explicitplaceinput&loaded_components[5]=hiddenplaceinput&loaded_components[6]=placenameinput&loaded_components[7]=hiddensessionid&loaded_components[8]=withtagger&loaded_components[9]=backdatepicker&loaded_components[10]=placetagger&loaded_components[11]=withtaggericon&loaded_components[12]=backdateicon&loaded_components[13]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=18&phstamp=1658168111112559866679";
+                        // string PostUrl = "city_id=" + CityIDS1 + "&city_page_id=" + city_page_id + "&city_name=" + CityName1 + "&is_default=false&session_id=1362404125&__user=" + UsreId + "&__a=1&__dyn=798aD5z5ynU&__req=z&fb_dtsg=" + fb_dtsg + "&phstamp=1658168111112559866165";
+                        string res11 = HttpHelper.postFormData(new Uri(Url), posturl1);
+
+
+                        try
+                        {
+                            source = res11.Substring(res11.IndexOf("source\":"), (res11.IndexOf(",", res11.IndexOf("source\":")) - res11.IndexOf("source\":"))).Replace("source\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.StackTrace);
+                        }
+                        if (string.IsNullOrEmpty(source))
+                        {
+                            source = Utils.getBetween(res11, "source", "profile_id").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim();
+
+                        }
+                        try
+                        {
+                            profile_id = res11.Substring(res11.IndexOf("profile_id\":"), (res11.IndexOf("}", res11.IndexOf("profile_id\":")) - res11.IndexOf("profile_id\":"))).Replace("profile_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                            if (profile_id.Contains(","))
+                            {
+                                profile_id = ParseEncodedJson(res11, "profile_id");
+                            }
+                            //"gridID":
+                        }
+                        catch { }
+                        if (string.IsNullOrEmpty(profile_id))
+                        {
+                            profile_id = Utils.getBetween(res11, "profile_id", "}").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim();
+                        }
+                        try
+                        {
+                            gridID = res11.Substring(res11.IndexOf("gridID\":"), (res11.IndexOf(",", res11.IndexOf("gridID\":")) - res11.IndexOf("gridID\":"))).Replace("gridID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.StackTrace);
+                        }
+                        if (string.IsNullOrEmpty(gridID))
+                        {
+                            gridID = Utils.getBetween(res11, "gridID", ",").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim(); ;
+                        }
+
 
                         try
                         {
@@ -3650,7 +4193,7 @@ namespace BaseLib
                         try
                         {
                             qn = getBetween(res11, "qn", "/>");
-                            qn =qn.Replace("\\\\\\\"","@");
+                            qn = qn.Replace("\\\\\\\"", "@");
                             qn = getBetween(qn, "@ value=@", "@");
                         }
                         catch (Exception ex)
@@ -3803,8 +4346,8 @@ namespace BaseLib
                 newnvc.Add("xhpc_fbx", "1");
                 newnvc.Add("xhpc_timeline", "");
                 newnvc.Add("xhpc_composerid", xhpc_composerid);
-                newnvc.Add("xhpc_message_text", message);
-                newnvc.Add("xhpc_message", message);
+                newnvc.Add("xhpc_message_text", string.Empty);
+                newnvc.Add("xhpc_message", string.Empty);
 
                 newnvc.Add("composer_unpublished_photo[]", composer_unpublished_photo);
                 newnvc.Add("album_type", "128");
@@ -3825,8 +4368,49 @@ namespace BaseLib
                 // string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
 
                 string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, newpostURL, "file1", "image/jpeg", localImagePath, newnvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);//HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+                string messageId = Utils.getBetween(response, "message_id=", "&");
+                string editUrl = "https://www.facebook.com/ajax/groups/mall/mall_post_menu.php?group_id=" + xhpc_targetid + "&message_id=" + composer_unpublished_photo + "&story_dom_id=" + xhpc_composerid + "&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D";
+                string editPost = "pmid=14&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=19&fb_dtsg=" + fb_dtsg + "&ttstamp=26581721069876105685711711688&__rev=1557661";
+
+                if (!response.Contains("Your post has been submitted and is pending approval by an admin"))
+                {
+                    GlobusLogHelper.log.Info("Delaying For " + delay + " Seconds For Editing Post");
+                    Thread.Sleep(delay * 1000);
+                    try
+                    {
+                        string editResp = HttpHelper.postFormData(new Uri(editUrl), editPost);
+
+                        string editResp1 = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/groups/mall/edit"), "fb_dtsg=" + fb_dtsg + "&edited_post_fbid=" + messageId + "&story_dom_id=" + xhpc_composerid + "&parent_story_dom_id=&target_id=" + xhpc_targetid + "&hey_kid_im_a_composer=1&display_context=group&xhpc_context=group&is_permalink=&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&status_text=" + message + "&status=" + message + "&save=1&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=1h&ttstamp=26581721069876105685711711688&__rev=1557661");
+                    }
+                    catch (Exception ex)
+                    { };
+                    try
+                    {
+                        string editAgain = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/feed/edit_post.php"), "display_context=home&post_fbid=" + messageId + "&parent_story_dom_id=" + xhpc_composerid + "&story_dom_id=" + xhpc_composerid + "&target_id=" + UsreId + "&is_permalink=1&is_substory=0&entstory_id=S%3A_I" + UsreId + "%3A" + messageId + "&entstory_context=%7B%22is_viewer_page_admin%22%3Afalse%2C%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A5%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUW5ogDyQqUkBBzEy78S8zU&__req=k&fb_dtsg=" + fb_dtsg + "&ttstamp=26581698589751218677519098&__rev=1562552&ft[tn]=V&ft[fbfeed_location]=5");
+
+                        string editAgainPostMsg = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/edits/save/"), "fb_dtsg=" + fb_dtsg + "&edited_post_fbid=" + messageId + "&story_dom_id=" + xhpc_composerid + "&parent_story_dom_id=&target_id=" + xhpc_targetid + "&hey_kid_im_a_composer=1&display_context=group&xhpc_context=group&is_permalink=&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&status_text=" + message + "&status=" + message + "&save=1&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=1h&ttstamp=26581721069876105685711711688&__rev=1557661");
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.Message);
+                    }
 
 
+
+                }
+                else
+                {
+                    try
+                    {
+                        string editAgain = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/feed/edit_post.php"), "display_context=home&post_fbid=" + messageId + "&parent_story_dom_id=" + xhpc_composerid + "&story_dom_id=" + xhpc_composerid + "&target_id=" + UsreId + "&is_permalink=1&is_substory=0&entstory_id=S%3A_I" + UsreId + "%3A" + messageId + "&entstory_context=%7B%22is_viewer_page_admin%22%3Afalse%2C%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A5%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUW5ogDyQqUkBBzEy78S8zU&__req=k&fb_dtsg=" + fb_dtsg + "&ttstamp=26581698589751218677519098&__rev=1562552&ft[tn]=V&ft[fbfeed_location]=5");
+
+                        string editAgainPostMsg = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/edits/save/"), "fb_dtsg=" + fb_dtsg + "&edited_post_fbid=" + messageId + "&story_dom_id=" + xhpc_composerid + "&parent_story_dom_id=&target_id=" + xhpc_targetid + "&hey_kid_im_a_composer=1&display_context=group&xhpc_context=group&is_permalink=&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&status_text=" + message + "&status=" + message + "&save=1&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=1h&ttstamp=26581721069876105685711711688&__rev=1557661");
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobusLogHelper.log.Error(ex.Message);
+                    }
+                }
                 if (response.Contains("post this because it has a blocked link"))
                 {
                     try
@@ -3842,7 +4426,7 @@ namespace BaseLib
 
                 }
 
-                                                            //http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=100004608395129
+                //http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=100004608395129
                 if (string.IsNullOrEmpty(response))
                 {
                     try
@@ -3883,8 +4467,8 @@ namespace BaseLib
                         }
                         if (response.Contains("Your post has been submitted and is pending approval by an admin"))
                         {
-                            GlobusLogHelper.log.Debug("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
-                            GlobusLogHelper.log.Info("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
+                            GlobusLogHelper.log.Debug("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl + " So Unable To Edit Post");
+                            GlobusLogHelper.log.Info("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl + " So Unable To Edit Post");
                         }
                     }
                     catch (Exception ex)
@@ -3935,879 +4519,416 @@ namespace BaseLib
                     //{
                     //} 
                     #endregion
-                    
+
                 }
-                
+
             }
             catch (Exception ex)
             {
                 GlobusLogHelper.log.Error(ex.StackTrace);
             }
             return isSentPicMessage;
-           
+
         }
 
-       public bool AddaPictureForEditMessage(ref GlobusHttpHelper HttpHelper, string Username, string Password, string localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, string targeturl, string message, ref string status, string pageSource_Home, string xhpc_targetid, string xhpc_composerid, string message_text, string fb_dtsg, string UsreId, string pageSource, ref int tempCountMain,int delay)
-       {
-
-           // string pageSource = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
-           int tempCount = 0;
-       startAgain:
-
-           bool isSentPicMessage = false;
-           //string fb_dtsg = string.Empty;
-           string photo_id = string.Empty;
-           //string UsreId = string.Empty;
-           //xhpc_composerid = string.Empty;
-           //xhpc_targetid = string.Empty;
-           //message_text = string.Empty;
-
-           try
-           {
-               #region commentedCode
-
-
-               //string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri("http://www.facebook.com/home.php"));
-
-               //UsreId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
-               //if (string.IsNullOrEmpty(UsreId))
-               //{
-               //    UsreId = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
-               //}
-
-               //fb_dtsg = GlobusHttpHelper.GetParamValue(pageSource_Home, "fb_dtsg");//pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
-               //if (string.IsNullOrEmpty(fb_dtsg))
-               //{
-               //    fb_dtsg = GlobusHttpHelper.ParseJson(pageSource_Home, "fb_dtsg");
-               //}
-
-
-               //string pageSource_HomeData = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
-               //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
-               //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid"); 
-               #endregion
-
-               string composer_session_id = "";
-
-               string tempresponse1 = "";
-               ///temp post
-               {
-                   string source = "";
-                   string profile_id = "";
-                   string gridID = "";
-                   //  string qn = string.Empty;
-
-                   try
-                   {
-                       string Url = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?composerurihash=1";
-                       string posturl1 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=cameraicon&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=cameraicon&loaded_components[6]=mainprivacywidget&loaded_components[7]=withtaggericon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=i&phstamp=16581688688747595501";    //"fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&istimeline=1&timelinelocation=composer&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=mainprivacywidget&loaded_components[3]=maininput&loaded_components[4]=explicitplaceinput&loaded_components[5]=hiddenplaceinput&loaded_components[6]=placenameinput&loaded_components[7]=hiddensessionid&loaded_components[8]=withtagger&loaded_components[9]=backdatepicker&loaded_components[10]=placetagger&loaded_components[11]=withtaggericon&loaded_components[12]=backdateicon&loaded_components[13]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=18&phstamp=1658168111112559866679";
-                       // string PostUrl = "city_id=" + CityIDS1 + "&city_page_id=" + city_page_id + "&city_name=" + CityName1 + "&is_default=false&session_id=1362404125&__user=" + UsreId + "&__a=1&__dyn=798aD5z5ynU&__req=z&fb_dtsg=" + fb_dtsg + "&phstamp=1658168111112559866165";
-                       string res11 = HttpHelper.postFormData(new Uri(Url), posturl1);
-
-
-                       try
-                       {
-                           source = res11.Substring(res11.IndexOf("source\":"), (res11.IndexOf(",", res11.IndexOf("source\":")) - res11.IndexOf("source\":"))).Replace("source\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error(ex.StackTrace);
-                       }
-                       if (string.IsNullOrEmpty(source))
-                       {
-                           source = Utils.getBetween(res11, "source", "profile_id").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim();
-
-                       }
-                       try
-                       {
-                           profile_id = res11.Substring(res11.IndexOf("profile_id\":"), (res11.IndexOf("}", res11.IndexOf("profile_id\":")) - res11.IndexOf("profile_id\":"))).Replace("profile_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                           if (profile_id.Contains(","))
-                           {
-                               profile_id = ParseEncodedJson(res11, "profile_id");
-                           }
-                           //"gridID":
-                       }
-                       catch { }
-                       if (string.IsNullOrEmpty(profile_id))
-                       {
-                           profile_id = Utils.getBetween(res11, "profile_id", "}").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim();
-                       }
-                       try
-                       {
-                           gridID = res11.Substring(res11.IndexOf("gridID\":"), (res11.IndexOf(",", res11.IndexOf("gridID\":")) - res11.IndexOf("gridID\":"))).Replace("gridID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error(ex.StackTrace);
-                       }
-                       if (string.IsNullOrEmpty(gridID))
-                       {
-                           gridID = Utils.getBetween(res11, "gridID", ",").Replace("\\\"", "").Replace(",", "").Replace(":", "").Trim(); ;
-                       }
-
-
-                       try
-                       {
-                           composer_session_id = res11.Substring(res11.IndexOf("composer_session_id\":"), (res11.IndexOf("}", res11.IndexOf("composer_session_id\":")) - res11.IndexOf("composer_session_id\":"))).Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error(ex.StackTrace);
-                       }
-
-                       try
-                       {
-                           if (string.IsNullOrEmpty(composer_session_id))
-                           {
-                               composer_session_id = res11.Substring(res11.IndexOf("composerID\":"), (res11.IndexOf("}", res11.IndexOf("composerID\":")) - res11.IndexOf("composerID\":"))).Replace("composerID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-
-                           }
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error(ex.StackTrace);
-                       }
-
-                       try
-                       {
-                           qn = getBetween(res11, "qn", "/>");
-                           qn = qn.Replace("\\\\\\\"", "@");
-                           qn = getBetween(qn, "@ value=@", "@");
-                       }
-                       catch (Exception ex)
-                       {
-                           GlobusLogHelper.log.Error(ex.StackTrace);
-                       }
-                   }
-                   catch { }
-
-                   NameValueCollection nvc1 = new NameValueCollection();
-                   try
-                   {
-                       //message = Uri.EscapeDataString(message);
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error(ex.StackTrace);
-                   }
-
-                   //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
-                   //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid");
-                   //-------------------------------
-                   //nvc1.Add("fb_dtsg", fb_dtsg);
-                   //nvc1.Add("source", source);
-                   //nvc1.Add("profile_id", profile_id);
-                   //nvc1.Add("grid_id", gridID);
-                   //nvc1.Add("upload_id", "1024");
-                   //-----------------------------------
-                   nvc1.Add("fb_dtsg", fb_dtsg);
-                   nvc1.Add("source", source);
-                   nvc1.Add("profile_id", profile_id);
-                   nvc1.Add("grid_id", gridID);
-                   nvc1.Add("upload_id", "1024");
-                   nvc1.Add("qn", qn);
-
-                   //nvc1.Add("fb_dtsg", fb_dtsg);
-                   //nvc1.Add("source", source);
-                   //nvc1.Add("profile_id", profile_id);
-                   //nvc1.Add("grid_id", gridID);
-                   //nvc1.Add("upload_id", "1024");
-                   //nvc1.Add("qn", qn);
-
-                   string _rev = getBetween(pageSource, "svn_rev", ",");
-                   _rev = _rev.Replace("\":", string.Empty);
-
-
-                   string uploadURL = "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88Oq9ccmqDxl2u5Fa8HzCqm5Aqbx2mbAKGiBAGm&__req=1t&fb_dtsg=" + fb_dtsg + "&__rev=" + _rev + "";
-                   tempresponse1 = HttpUploadFile_UploadPic_tempforsingle(ref HttpHelper, UsreId, uploadURL, "composer_unpublished_photo[]", "image/jpeg", localImagePath, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                   if (tempresponse1.ToLower().Contains("errorsummary") && tempresponse1.ToLower().Contains("There was a problem with this request. We're working on getting it fixed as soon as we can".ToLower()))
-                   {
-                       if (tempCount < 2)
-                       {
-                           System.Threading.Thread.Sleep(15000);
-                           tempCount++;
-                           goto startAgain;
-                       }
-                       else
-                       {
-                           tempCountMain++;
-                           return false;
-                       }
-                   }
-
-                   //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/timeline/cover/upload/", "pic", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                   //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                   //tempresponse1 = HttpUploadFile_UploadPic_temp(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=l&fb_dtsg=" + fb_dtsg + "", "composer_unpublished_photo[]", "image/jpeg", localImagePath, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-               }
-
-               NameValueCollection nvc = new NameValueCollection();
-               try
-               {
-                   //message = Uri.EscapeDataString(message);
-               }
-               catch { }
-               nvc.Add("fb_dtsg", fb_dtsg);
-               nvc.Add("xhpc_targetid", xhpc_targetid);
-               nvc.Add("xhpc_context", "profile");
-               nvc.Add("xhpc_ismeta", "1");
-               nvc.Add("xhpc_fbx", "1");
-               nvc.Add("xhpc_timeline", "");
-               nvc.Add("xhpc_composerid", xhpc_composerid);
-               nvc.Add("xhpc_message_text", message);
-               nvc.Add("xhpc_message", message);
-               //nvc.Add("name", "file1");
-               //nvc.Add("Content-Type:", "image/jpeg");
-               //nvc.Add("filename=", "");
-
-
-               string composer_unpublished_photo = "";
-               try
-               {
-                   string start_composer_unpublished_photo = Regex.Split(tempresponse1, "},\"")[1];// 
-
-
-
-                   int startIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf(",\"") + ",\"".Length;
-                   int endIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf("\"", startIndex_composer_unpublished_photo + 1);
-
-                   composer_unpublished_photo = start_composer_unpublished_photo.Substring(startIndex_composer_unpublished_photo, endIndex_composer_unpublished_photo - startIndex_composer_unpublished_photo);
-               }
-
-               catch (Exception ex)
-               {
-                   GlobusLogHelper.log.Error(ex.StackTrace);
-               }
-
-               if (tempresponse1.Contains("composer_unpublished_photo"))
-               {
-                   try
-                   {
-                       composer_unpublished_photo = tempresponse1.Substring(tempresponse1.IndexOf("composer_unpublished_photo[]"), tempresponse1.IndexOf("u003Cbutton") - tempresponse1.IndexOf("composer_unpublished_photo[]")).Replace("composer_unpublished_photo[]", "").Replace("value=", "").Replace("\\", "").Replace("\\", "").Replace("/>", "").Replace("\"", "").Trim();
-                       //.Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error(ex.StackTrace);
-                   }
-               }
-               ///New test upload pic post
-               string waterfallid = GlobusHttpHelper.ParseJson(pageSource_Home, "waterfallID");
-
-               if (waterfallid.Contains("ar"))
-               {
-                   waterfallid = qn;
-               }
-
-
-               string newpostURL = "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=r&fb_dtsg=" + fb_dtsg + "";
-               string newPostData = "";
-
-
-               NameValueCollection newnvc = new NameValueCollection();
-               try
-               {
-                   //message = Uri.EscapeDataString(message);
-               }
-               catch (Exception ex)
-               {
-                   GlobusLogHelper.log.Error(ex.StackTrace);
-               }
-
-               newnvc.Add("fb_dtsg", fb_dtsg);
-               newnvc.Add("xhpc_targetid", xhpc_targetid);
-               newnvc.Add("xhpc_context", "profile");
-               newnvc.Add("xhpc_ismeta", "1");
-               newnvc.Add("xhpc_fbx", "1");
-               newnvc.Add("xhpc_timeline", "");
-               newnvc.Add("xhpc_composerid", xhpc_composerid);
-               newnvc.Add("xhpc_message_text",string.Empty);
-               newnvc.Add("xhpc_message", string.Empty);
-
-               newnvc.Add("composer_unpublished_photo[]", composer_unpublished_photo);
-               newnvc.Add("album_type", "128");
-               newnvc.Add("is_file_form", "1");
-               newnvc.Add("oid", "");
-               newnvc.Add("qn", waterfallid);
-               newnvc.Add("application", "composer");
-               newnvc.Add("is_explicit_place", "");
-               newnvc.Add("composertags_place", "");
-               newnvc.Add("composertags_place_name", "");
-               newnvc.Add("composer_session_id", composer_session_id);
-               newnvc.Add("composertags_city", "");
-               newnvc.Add("vzdisable_location_sharing", "false");
-               newnvc.Add("composer_predicted_city", "");
-
-               // string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/timeline/cover/upload/", "pic", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-               // string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-               string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, newpostURL, "file1", "image/jpeg", localImagePath, newnvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);//HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-               string messageId = Utils.getBetween(response, "message_id=", "&");
-               string editUrl = "https://www.facebook.com/ajax/groups/mall/mall_post_menu.php?group_id=" + xhpc_targetid + "&message_id=" + composer_unpublished_photo + "&story_dom_id=" + xhpc_composerid + "&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D";
-               string editPost = "pmid=14&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=19&fb_dtsg="+fb_dtsg+"&ttstamp=26581721069876105685711711688&__rev=1557661";
-
-               if (!response.Contains("Your post has been submitted and is pending approval by an admin"))
-               {
-                   GlobusLogHelper.log.Info("Delaying For " + delay + " Seconds For Editing Post");
-                   Thread.Sleep(delay * 1000);
-                   try
-                   {
-                       string editResp = HttpHelper.postFormData(new Uri(editUrl), editPost);
-
-                       string editResp1 = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/groups/mall/edit"), "fb_dtsg=" + fb_dtsg + "&edited_post_fbid=" + messageId + "&story_dom_id=" + xhpc_composerid + "&parent_story_dom_id=&target_id=" + xhpc_targetid + "&hey_kid_im_a_composer=1&display_context=group&xhpc_context=group&is_permalink=&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&status_text=" + message + "&status=" + message + "&save=1&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=1h&ttstamp=26581721069876105685711711688&__rev=1557661");
-                   }
-                   catch (Exception ex)
-                   { };
-                   try
-                   {
-                       string editAgain = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/feed/edit_post.php"), "display_context=home&post_fbid=" + messageId + "&parent_story_dom_id=" + xhpc_composerid + "&story_dom_id=" + xhpc_composerid + "&target_id=" + UsreId + "&is_permalink=1&is_substory=0&entstory_id=S%3A_I" + UsreId + "%3A" + messageId + "&entstory_context=%7B%22is_viewer_page_admin%22%3Afalse%2C%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A5%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUW5ogDyQqUkBBzEy78S8zU&__req=k&fb_dtsg=" + fb_dtsg + "&ttstamp=26581698589751218677519098&__rev=1562552&ft[tn]=V&ft[fbfeed_location]=5");
-
-                       string editAgainPostMsg = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/edits/save/"), "fb_dtsg=" + fb_dtsg + "&edited_post_fbid=" + messageId + "&story_dom_id=" + xhpc_composerid + "&parent_story_dom_id=&target_id=" + xhpc_targetid + "&hey_kid_im_a_composer=1&display_context=group&xhpc_context=group&is_permalink=&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&status_text=" + message + "&status=" + message + "&save=1&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=1h&ttstamp=26581721069876105685711711688&__rev=1557661");
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error(ex.Message);
-                   }
-
-
-
-               }
-               else
-               {
-                   try
-                   {
-                       string editAgain = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/feed/edit_post.php"), "display_context=home&post_fbid=" + messageId + "&parent_story_dom_id=" + xhpc_composerid + "&story_dom_id=" + xhpc_composerid + "&target_id=" + UsreId + "&is_permalink=1&is_substory=0&entstory_id=S%3A_I" + UsreId + "%3A" + messageId + "&entstory_context=%7B%22is_viewer_page_admin%22%3Afalse%2C%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A5%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&__user=" + UsreId + "&__a=1&__dyn=7nmajEyl2qm9udDgDxyIGzGpUW9ACxO4p9GgSmEVFLFwxBxvyUW5ogDyQqUkBBzEy78S8zU&__req=k&fb_dtsg=" + fb_dtsg + "&ttstamp=26581698589751218677519098&__rev=1562552&ft[tn]=V&ft[fbfeed_location]=5");
-
-                       string editAgainPostMsg = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/edits/save/"), "fb_dtsg=" + fb_dtsg + "&edited_post_fbid=" + messageId + "&story_dom_id=" + xhpc_composerid + "&parent_story_dom_id=&target_id=" + xhpc_targetid + "&hey_kid_im_a_composer=1&display_context=group&xhpc_context=group&is_permalink=&entstory_context=%7B%22fbfeed_context%22%3Atrue%2C%22location_type%22%3A2%2C%22outer_object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22object_element_id%22%3A%22" + xhpc_composerid + "%22%2C%22is_ad_preview%22%3Afalse%2C%22is_editable%22%3Afalse%7D&status_text=" + message + "&status=" + message + "&save=1&__user=" + UsreId + "&__a=1&__dyn=7nm8RW8BgBlynzpQ9UoHaEWCueyp9Esx6iWF3pqzCC-C26m6oKezpUgDyQqUkBBzEy6Kdy8-&__req=1h&ttstamp=26581721069876105685711711688&__rev=1557661");
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error(ex.Message);
-                   }
-               }
-               if (response.Contains("post this because it has a blocked link"))
-               {
-                   try
-                   {
-                       GlobusLogHelper.log.Info("-------blocked link-------");
-                       return false;
-
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error(ex.StackTrace);
-                   }
-
-               }
-
-               //http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=100004608395129
-               if (string.IsNullOrEmpty(response))
-               {
-                   try
-                   {
-                       //response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-                       response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error(ex.StackTrace);
-                   }
-               }
-               string posturl = "https://www.facebook.com/ajax/places/city_sharer_reset.php";
-               string postdata = "__user=" + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=1658167761111108210145";
-               string responsestring = HttpHelper.postFormData(new Uri(posturl), postdata);
-               try
-               {
-                   string okay = HttpHelper.getHtmlfromUrl(new Uri("https://3-pct.channel.facebook.com/pull?channel=p_" + UsreId + "&seq=3&partition=69&clientid=70e140db&cb=8p7w&idle=8&state=active&mode=stream&format=json"));
-               }
-               catch (Exception ex)
-               {
-                   GlobusLogHelper.log.Error(ex.StackTrace);
-               }
-
-               if (!string.IsNullOrEmpty(response) && response.Contains("payload\":{\"photo_fbid"))//response.Contains("photo.php?fbid="))
-               {
-
-                   #region PostData_ForCoverPhotoSelect
-                   //fb_dtsg=AQCLSjCH&photo_id=130869487061841&profile_id=100004163701035&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=100004163701035&__a=1&phstamp=165816776831066772182 
-                   #endregion
-
-                   try
-                   {
-
-                       if (!response.Contains("errorSummary") || !response.Contains("error"))
-                       {
-                           isSentPicMessage = true;
-                       }
-                       if (response.Contains("Your post has been submitted and is pending approval by an admin"))
-                       {
-                           GlobusLogHelper.log.Debug("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl +" So Unable To Edit Post");
-                           GlobusLogHelper.log.Info("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl + " So Unable To Edit Post");
-                       }
-                   }
-                   catch (Exception ex)
-                   {
-                       GlobusLogHelper.log.Error(ex.StackTrace);
-                   }
-                   #region CodeCommented
-                   //    string photo_idValue = response.Substring(response.IndexOf("photo.php?fbid="), response.IndexOf(";", response.IndexOf("photo.php?fbid=")) - response.IndexOf("photo.php?fbid=")).Replace("photo.php?fbid=", string.Empty).Trim();
-                   //    string[] arrphoto_idValue = Regex.Split(photo_idValue, "[^0-9]");
-
-                   //    foreach (string item in arrphoto_idValue)
-                   //    {
-                   //        try
-                   //        {
-                   //            if (item.Length > 6)
-                   //            {
-                   //                photo_id = item;
-                   //                break;
-                   //            }
-                   //        }
-                   //        catch
-                   //        {
-                   //        }
-                   //    }
-
-                   //   // string postData = "fb_dtsg=" + fb_dtsg + "&photo_id=" + photo_id + "&profile_id=" + UsreId + "&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=" + UsreId + "&__a=1&phstamp=165816776831066772182 ";
-                   //   // string postResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/cover_photo_select.php"), postData);
-
-                   //    //if (!postResponse.Contains("error"))
-                   //    //{
-                   //    //    //string ok = "ok";
-                   //    //    isSentPicMessage = true;
-                   //    //}
-                   //    //if (string.IsNullOrEmpty(postResponse) || string.IsNullOrWhiteSpace(postResponse))
-                   //    //{
-                   //    //    status = "Response Is Null !";
-                   //    //}
-                   //    //if (postResponse.Contains("errorSummary"))
-                   //    //{
-                   //    //    string summary = GlobusHttpHelper.ParseJson(postResponse, "errorSummary");
-                   //    //    string errorDescription = GlobusHttpHelper.ParseJson(postResponse, "errorDescription");
-
-                   //    //    status = "Posting Error: " + summary + " | Error Description: " + errorDescription;
-                   //    //    //FanPagePosterLogger("Posting Error: " + summary + " | Error Description: " + errorDescription);
-                   //    //}
-                   //}
-                   //catch
-                   //{
-                   //} 
-                   #endregion
-
-               }
-
-           }
-           catch (Exception ex)
-           {
-               GlobusLogHelper.log.Error(ex.StackTrace);
-           }
-           return isSentPicMessage;
-
-       }
-
-       public bool AddaPicture2(ref GlobusHttpHelper HttpHelper, string Username, string Password, List<string> localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, string targeturl, string message, ref string status, string pageSource_Home, string xhpc_targetid, string xhpc_composerid, string message_text, string fb_dtsg, string UsreId, string pageSource, ref int tempCountMain)
-       {
-           {
-
-               pageSource = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
-               int tempCount = 0;
-           startAgain:
-
-               bool isSentPicMessage = false;
-               //string fb_dtsg = string.Empty;
-               string photo_id = string.Empty;
-               //string UsreId = string.Empty;
-               //xhpc_composerid = string.Empty;
-               //xhpc_targetid = string.Empty;
-               //message_text = string.Empty;
-
-               try
-               {
-                   #region commentedCode
-
-
-                   //string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri("http://www.facebook.com/home.php"));
-
-                   //UsreId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
-                   //if (string.IsNullOrEmpty(UsreId))
-                   //{
-                   //    UsreId = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
-                   //}
-
-                   //fb_dtsg = GlobusHttpHelper.GetParamValue(pageSource_Home, "fb_dtsg");//pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
-                   //if (string.IsNullOrEmpty(fb_dtsg))
-                   //{
-                   //    fb_dtsg = GlobusHttpHelper.ParseJson(pageSource_Home, "fb_dtsg");
-                   //}
-
-
-                   //string pageSource_HomeData = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
-                   //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
-                   //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid"); 
-                   #endregion
-
-                   NameValueCollection newnvcTEMP = new NameValueCollection();
-
-                   string composer_session_id = "";
-
-                   string tempresponse1 = "";
-                   ///temp post
-                   {
-                       string source = "";
-                       string profile_id = "";
-                       string gridID = "";
-                       //  string qn = string.Empty;
-
-                       try
-                       {
-                           string Url = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?composerurihash=1";
-                           string posturl1 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=cameraicon&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=cameraicon&loaded_components[6]=mainprivacywidget&loaded_components[7]=withtaggericon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=i&phstamp=16581688688747595501";    //"fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&istimeline=1&timelinelocation=composer&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=mainprivacywidget&loaded_components[3]=maininput&loaded_components[4]=explicitplaceinput&loaded_components[5]=hiddenplaceinput&loaded_components[6]=placenameinput&loaded_components[7]=hiddensessionid&loaded_components[8]=withtagger&loaded_components[9]=backdatepicker&loaded_components[10]=placetagger&loaded_components[11]=withtaggericon&loaded_components[12]=backdateicon&loaded_components[13]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=18&phstamp=1658168111112559866679";
-                           // string PostUrl = "city_id=" + CityIDS1 + "&city_page_id=" + city_page_id + "&city_name=" + CityName1 + "&is_default=false&session_id=1362404125&__user=" + UsreId + "&__a=1&__dyn=798aD5z5ynU&__req=z&fb_dtsg=" + fb_dtsg + "&phstamp=1658168111112559866165";
-                           string res11 = HttpHelper.postFormData(new Uri(Url), posturl1);
-
-
-                           try
-                           {
-                               source = res11.Substring(res11.IndexOf("source\":"), (res11.IndexOf(",", res11.IndexOf("source\":")) - res11.IndexOf("source\":"))).Replace("source\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                           }
-                           catch { }
-                           try
-                           {
-                               profile_id = res11.Substring(res11.IndexOf("profile_id\":"), (res11.IndexOf("}", res11.IndexOf("profile_id\":")) - res11.IndexOf("profile_id\":"))).Replace("profile_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                               if (profile_id.Contains(","))
-                               {
-                                   profile_id = ParseEncodedJson(res11, "profile_id");
-                               }
-                               //"gridID":
-                           }
-                           catch { }
-                           try
-                           {
-                               gridID = res11.Substring(res11.IndexOf("gridID\":"), (res11.IndexOf(",", res11.IndexOf("gridID\":")) - res11.IndexOf("gridID\":"))).Replace("gridID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                           }
-                           catch { }
-                           try
-                           {
-                               composer_session_id = res11.Substring(res11.IndexOf("composer_session_id\":"), (res11.IndexOf("}", res11.IndexOf("composer_session_id\":")) - res11.IndexOf("composer_session_id\":"))).Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                           }
-                           catch { }
-
-                           try
-                           {
-                               if (string.IsNullOrEmpty(composer_session_id))
-                               {
-                                   composer_session_id = res11.Substring(res11.IndexOf("composerID\":"), (res11.IndexOf("}", res11.IndexOf("composerID\":")) - res11.IndexOf("composerID\":"))).Replace("composerID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-
-                               }
-                           }
-                           catch { }
-
-                           try
-                           {
-                               qn = getBetween(res11, "qn\\\" value=\\\"", "\\\" \\/>");
-                           }
-                           catch { }
-                       }
-                       catch { }
-
-                       NameValueCollection nvc1 = new NameValueCollection();
-                       try
-                       {
-                           //message = Uri.EscapeDataString(message);
-                       }
-                       catch { }
-
-                       //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
-                       //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid");
-                       //-------------------------------
-                       //nvc1.Add("fb_dtsg", fb_dtsg);
-                       //nvc1.Add("source", source);
-                       //nvc1.Add("profile_id", profile_id);
-                       //nvc1.Add("grid_id", gridID);
-                       //nvc1.Add("upload_id", "1024");
-                       //-----------------------------------
-                       nvc1.Add("fb_dtsg", fb_dtsg);
-                       nvc1.Add("source", source);
-                       nvc1.Add("profile_id", profile_id);
-                       nvc1.Add("grid_id", gridID);
-                       nvc1.Add("upload_id", "1024");
-                       nvc1.Add("qn", qn);
-
-                       //nvc1.Add("fb_dtsg", fb_dtsg);
-                       //nvc1.Add("source", source);
-                       //nvc1.Add("profile_id", profile_id);
-                       //nvc1.Add("grid_id", gridID);
-                       //nvc1.Add("upload_id", "1024");
-                       //nvc1.Add("qn", qn);
-
-                       string _rev = getBetween(pageSource, "svn_rev", ",");
-                       _rev = _rev.Replace("\":", string.Empty);
-
-
-                       string uploadURL = "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88Oq9ccmqDxl2u5Fa8HzCqm5Aqbx2mbAKGiBAGm&__req=1t&fb_dtsg=" + fb_dtsg + "&__rev=" + _rev + "";
-                      // string uploadURL = "https://upload.facebook.com/media/upload/photos/composer/?__user=100004602582421&__a=1&__dyn=7n88Oq9caRCFUSt2u5KIGKaExEW9J6yUgByVbGAEGGG&__req=12&fb_dtsg=AQDEsnKQ&ttstamp=2658168691151107581&__rev=1089685&";
-
-                       //foreach (var item in collection)
-                       //{
-
-                       //}
-
-                       foreach (string image in localImagePath)
-                       {
-                           tempresponse1 = HttpUploadFile_UploadPic_temp(ref HttpHelper, UsreId, uploadURL, "composer_unpublished_photo[]", "image/jpeg", image, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                           if (tempresponse1.ToLower().Contains("errorsummary") && tempresponse1.ToLower().Contains("There was a problem with this request. We're working on getting it fixed as soon as we can".ToLower()))
-                           {
-                               if (tempCount < 2)
-                               {
-                                   System.Threading.Thread.Sleep(15000);
-                                   tempCount++;
-                                   goto startAgain;
-                               }
-                               else
-                               {
-                                   tempCountMain++;
-                                   return false;
-                               }
-                           }
-
-                           //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/timeline/cover/upload/", "pic", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                           //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                           //tempresponse1 = HttpUploadFile_UploadPic_temp(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=l&fb_dtsg=" + fb_dtsg + "", "composer_unpublished_photo[]", "image/jpeg", localImagePath, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                           //composer_unpublished_photo
-                           string composer_unpublished_photo = "";
-                           string start_composer_unpublished_photo = Regex.Split(tempresponse1, "},\"")[1];// 
-
-                           int startIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf(",\"") + ",\"".Length;
-                           int endIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf("\"", startIndex_composer_unpublished_photo + 1);
-
-                           composer_unpublished_photo = start_composer_unpublished_photo.Substring(startIndex_composer_unpublished_photo, endIndex_composer_unpublished_photo - startIndex_composer_unpublished_photo);
-
-
-
-                           if (tempresponse1.Contains("composer_unpublished_photo"))
-                           {
-                               try
-                               {
-                                   composer_unpublished_photo = tempresponse1.Substring(tempresponse1.IndexOf("composer_unpublished_photo[]"), tempresponse1.IndexOf("u003Cbutton") - tempresponse1.IndexOf("composer_unpublished_photo[]")).Replace("composer_unpublished_photo[]", "").Replace("value=", "").Replace("\\", "").Replace("\\", "").Replace("/>", "").Replace("\"", "").Trim();
-                                   //.Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                               }
-                               catch { }
-                           }
-
-                           newnvcTEMP.Add("composer_unpublished_photo[]", composer_unpublished_photo);
-                       }
-                       
-                   }
-
-                   NameValueCollection nvc = new NameValueCollection();
-                   try
-                   {
-                       message = message.Replace(",","");
-                      // message = Uri.EscapeDataString(message);
-                   }
-                   catch { }
-                   nvc.Add("fb_dtsg", fb_dtsg);
-                   nvc.Add("xhpc_targetid", xhpc_targetid);
-                   nvc.Add("xhpc_context", "profile");
-                   nvc.Add("xhpc_ismeta", "1");
-                   nvc.Add("xhpc_fbx", "1");
-                   nvc.Add("xhpc_timeline", "");
-                   nvc.Add("xhpc_composerid", xhpc_composerid);
-                   nvc.Add("xhpc_message_text", message);
-                   nvc.Add("xhpc_message", message);
-                   //nvc.Add("name", "file1");
-                   //nvc.Add("Content-Type:", "image/jpeg");
-                   //nvc.Add("filename=", "");
-
-
-                   ////composer_unpublished_photo
-                   //string composer_unpublished_photo = "";
-                   //string start_composer_unpublished_photo = Regex.Split(tempresponse1, "},\"")[1];// 
-
-
-
-                   //int startIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf(",\"") + ",\"".Length;
-                   //int endIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf("\"", startIndex_composer_unpublished_photo + 1);
-
-                   //composer_unpublished_photo = start_composer_unpublished_photo.Substring(startIndex_composer_unpublished_photo, endIndex_composer_unpublished_photo - startIndex_composer_unpublished_photo);
-
-               
-                   
-                   //if (tempresponse1.Contains("composer_unpublished_photo"))
-                   //{
-                   //    try
-                   //    {
-                   //        composer_unpublished_photo = tempresponse1.Substring(tempresponse1.IndexOf("composer_unpublished_photo[]"), tempresponse1.IndexOf("u003Cbutton") - tempresponse1.IndexOf("composer_unpublished_photo[]")).Replace("composer_unpublished_photo[]", "").Replace("value=", "").Replace("\\", "").Replace("\\", "").Replace("/>", "").Replace("\"", "").Trim();
-                   //        //.Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
-                   //    }
-                   //    catch { }
-                   //}
-                   ///New test upload pic post
-                   ///
-               
-                
-
-
-
-                   string waterfallid = GlobusHttpHelper.ParseJson(pageSource_Home, "waterfallID");
-
-                   if (waterfallid.Contains("ar"))
-                   {
-                       waterfallid = qn;
-                   }
-
-
-
-                   string newpostURL = "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=r&fb_dtsg=" + fb_dtsg + "";
-                   string newPostData = "";
-
-
-                   NameValueCollection newnvc = new NameValueCollection();
-                   try
-                   {
-                       //message = Uri.EscapeDataString(message);
-                   }
-                   catch { }
-                   newnvc.Add("fb_dtsg", fb_dtsg);
-                   newnvc.Add("xhpc_targetid", xhpc_targetid);
-                   newnvc.Add("xhpc_context", "profile");
-                   newnvc.Add("xhpc_ismeta", "1");
-                   newnvc.Add("xhpc_fbx", "1");
-                   newnvc.Add("xhpc_timeline", "");
-                   newnvc.Add("xhpc_composerid", xhpc_composerid);
-                   newnvc.Add("xhpc_message_text", message);
-                   newnvc.Add("xhpc_message", message);
-
-                   newnvc.Add(newnvcTEMP);
-                   //newnvc.Add("composer_unpublished_photo[]", composer_unpublished_photo);
-                   newnvc.Add("album_type", "128");
-                   newnvc.Add("is_file_form", "1");
-                   newnvc.Add("oid", "");
-                   newnvc.Add("qn", qn);//newnvc.Add("qn", waterfallid);
-                   newnvc.Add("application", "composer");
-                   newnvc.Add("is_explicit_place", "");
-                   newnvc.Add("composertags_place", "");
-                   newnvc.Add("composertags_place_name", "");
-                   newnvc.Add("composer_session_id", composer_session_id);
-                   newnvc.Add("composertags_city", "");
-                   newnvc.Add("vzdisable_location_sharing", "false");
-                   newnvc.Add("composer_predicted_city", "");
-
-
-
-                   //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, newpostURL, "file1", "image/jpeg", localImagePath, newnvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);//HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-                   string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, newpostURL, "file1", "image/jpeg", localImagePath, newnvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);//HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                   try
-                   {
-                       string chek = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/"));
-                   }
-                   catch { };
-                   //http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=100004608395129
-                   if (string.IsNullOrEmpty(response))
-                   {
-                       try
-                       {
-                           //response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-                           response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
-
-                       }
-                       catch { }
-                   }
-                   string posturl = "https://www.facebook.com/ajax/places/city_sharer_reset.php";
-                   string postdata = "__user=" + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=1658167761111108210145";
-                   string responsestring = HttpHelper.postFormData(new Uri(posturl), postdata);
-                   try
-                   {
-                       string okay = HttpHelper.getHtmlfromUrl(new Uri("https://3-pct.channel.facebook.com/pull?channel=p_" + UsreId + "&seq=3&partition=69&clientid=70e140db&cb=8p7w&idle=8&state=active&mode=stream&format=json"));
-                   }
-                   catch
-                   {
-                   }
-
-                   if (!string.IsNullOrEmpty(response) && response.Contains("payload\":{\"photo_fbid"))//response.Contains("photo.php?fbid="))
-                   {
-
-                       #region PostData_ForCoverPhotoSelect
-                       //fb_dtsg=AQCLSjCH&photo_id=130869487061841&profile_id=100004163701035&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=100004163701035&__a=1&phstamp=165816776831066772182 
-                       #endregion
-
-                       try
-                       {
-
-                           if (!response.Contains("errorSummary") || !response.Contains("error"))
-                           {
-                               isSentPicMessage = true;
-                           }
-                           if (response.Contains("Your post has been submitted and is pending approval by an admin"))
-                           {
-                               GlobusLogHelper.log.Debug("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
-                               GlobusLogHelper.log.Info("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
-                           }
-                       }
-                       catch { }
-                       #region CodeCommented
-                       //    string photo_idValue = response.Substring(response.IndexOf("photo.php?fbid="), response.IndexOf(";", response.IndexOf("photo.php?fbid=")) - response.IndexOf("photo.php?fbid=")).Replace("photo.php?fbid=", string.Empty).Trim();
-                       //    string[] arrphoto_idValue = Regex.Split(photo_idValue, "[^0-9]");
-
-                       //    foreach (string item in arrphoto_idValue)
-                       //    {
-                       //        try
-                       //        {
-                       //            if (item.Length > 6)
-                       //            {
-                       //                photo_id = item;
-                       //                break;
-                       //            }
-                       //        }
-                       //        catch
-                       //        {
-                       //        }
-                       //    }
-
-                       //   // string postData = "fb_dtsg=" + fb_dtsg + "&photo_id=" + photo_id + "&profile_id=" + UsreId + "&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=" + UsreId + "&__a=1&phstamp=165816776831066772182 ";
-                       //   // string postResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/cover_photo_select.php"), postData);
-
-                       //    //if (!postResponse.Contains("error"))
-                       //    //{
-                       //    //    //string ok = "ok";
-                       //    //    isSentPicMessage = true;
-                       //    //}
-                       //    //if (string.IsNullOrEmpty(postResponse) || string.IsNullOrWhiteSpace(postResponse))
-                       //    //{
-                       //    //    status = "Response Is Null !";
-                       //    //}
-                       //    //if (postResponse.Contains("errorSummary"))
-                       //    //{
-                       //    //    string summary = GlobusHttpHelper.ParseJson(postResponse, "errorSummary");
-                       //    //    string errorDescription = GlobusHttpHelper.ParseJson(postResponse, "errorDescription");
-
-                       //    //    status = "Posting Error: " + summary + " | Error Description: " + errorDescription;
-                       //    //    //FanPagePosterLogger("Posting Error: " + summary + " | Error Description: " + errorDescription);
-                       //    //}
-                       //}
-                       //catch
-                       //{
-                       //} 
-                       #endregion
-                   }
-               }
-               catch
-               {
-               }
-               return isSentPicMessage;
-           }
-
-       }
+        public bool AddaPicture2(ref GlobusHttpHelper HttpHelper, string Username, string Password, List<string> localImagePath, string proxyAddress, string proxyPort, string proxyUsername, string proxyPassword, string targeturl, string message, ref string status, string pageSource_Home, string xhpc_targetid, string xhpc_composerid, string message_text, string fb_dtsg, string UsreId, string pageSource, ref int tempCountMain)
+        {
+            {
+
+                pageSource = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
+                int tempCount = 0;
+            startAgain:
+
+                bool isSentPicMessage = false;
+                //string fb_dtsg = string.Empty;
+                string photo_id = string.Empty;
+                //string UsreId = string.Empty;
+                //xhpc_composerid = string.Empty;
+                //xhpc_targetid = string.Empty;
+                //message_text = string.Empty;
+
+                try
+                {
+                    #region commentedCode
+
+
+                    //string pageSource_Home = HttpHelper.getHtmlfromUrl(new Uri("http://www.facebook.com/home.php"));
+
+                    //UsreId = GlobusHttpHelper.GetParamValue(pageSource_Home, "user");
+                    //if (string.IsNullOrEmpty(UsreId))
+                    //{
+                    //    UsreId = GlobusHttpHelper.ParseJson(pageSource_Home, "user");
+                    //}
+
+                    //fb_dtsg = GlobusHttpHelper.GetParamValue(pageSource_Home, "fb_dtsg");//pageSourceHome.Substring(pageSourceHome.IndexOf("fb_dtsg") + 16, 8);
+                    //if (string.IsNullOrEmpty(fb_dtsg))
+                    //{
+                    //    fb_dtsg = GlobusHttpHelper.ParseJson(pageSource_Home, "fb_dtsg");
+                    //}
+
+
+                    //string pageSource_HomeData = HttpHelper.getHtmlfromUrl(new Uri(targeturl));
+                    //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
+                    //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid"); 
+                    #endregion
+
+                    NameValueCollection newnvcTEMP = new NameValueCollection();
+
+                    string composer_session_id = "";
+
+                    string tempresponse1 = "";
+                    ///temp post
+                    {
+                        string source = "";
+                        string profile_id = "";
+                        string gridID = "";
+                        //  string qn = string.Empty;
+
+                        try
+                        {
+                            string Url = "https://www.facebook.com/ajax/composerx/attachment/media/upload/?composerurihash=1";
+                            string posturl1 = "fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&loaded_components[0]=maininput&loaded_components[1]=cameraicon&loaded_components[2]=withtaggericon&loaded_components[3]=placetaggericon&loaded_components[4]=mainprivacywidget&loaded_components[5]=cameraicon&loaded_components[6]=mainprivacywidget&loaded_components[7]=withtaggericon&loaded_components[8]=placetaggericon&loaded_components[9]=maininput&nctr[_mod]=pagelet_group_composer&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=i&phstamp=16581688688747595501";    //"fb_dtsg=" + fb_dtsg + "&composerid=" + xhpc_composerid + "&targetid=" + xhpc_targetid + "&istimeline=1&timelinelocation=composer&loaded_components[0]=maininput&loaded_components[1]=mainprivacywidget&loaded_components[2]=mainprivacywidget&loaded_components[3]=maininput&loaded_components[4]=explicitplaceinput&loaded_components[5]=hiddenplaceinput&loaded_components[6]=placenameinput&loaded_components[7]=hiddensessionid&loaded_components[8]=withtagger&loaded_components[9]=backdatepicker&loaded_components[10]=placetagger&loaded_components[11]=withtaggericon&loaded_components[12]=backdateicon&loaded_components[13]=citysharericon&nctr[_mod]=pagelet_timeline_recent&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=18&phstamp=1658168111112559866679";
+                            // string PostUrl = "city_id=" + CityIDS1 + "&city_page_id=" + city_page_id + "&city_name=" + CityName1 + "&is_default=false&session_id=1362404125&__user=" + UsreId + "&__a=1&__dyn=798aD5z5ynU&__req=z&fb_dtsg=" + fb_dtsg + "&phstamp=1658168111112559866165";
+                            string res11 = HttpHelper.postFormData(new Uri(Url), posturl1);
+
+
+                            try
+                            {
+                                source = res11.Substring(res11.IndexOf("source\":"), (res11.IndexOf(",", res11.IndexOf("source\":")) - res11.IndexOf("source\":"))).Replace("source\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                            }
+                            catch { }
+                            try
+                            {
+                                profile_id = res11.Substring(res11.IndexOf("profile_id\":"), (res11.IndexOf("}", res11.IndexOf("profile_id\":")) - res11.IndexOf("profile_id\":"))).Replace("profile_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                                if (profile_id.Contains(","))
+                                {
+                                    profile_id = ParseEncodedJson(res11, "profile_id");
+                                }
+                                //"gridID":
+                            }
+                            catch { }
+                            try
+                            {
+                                gridID = res11.Substring(res11.IndexOf("gridID\":"), (res11.IndexOf(",", res11.IndexOf("gridID\":")) - res11.IndexOf("gridID\":"))).Replace("gridID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                            }
+                            catch { }
+                            try
+                            {
+                                composer_session_id = res11.Substring(res11.IndexOf("composer_session_id\":"), (res11.IndexOf("}", res11.IndexOf("composer_session_id\":")) - res11.IndexOf("composer_session_id\":"))).Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                            }
+                            catch { }
+
+                            try
+                            {
+                                if (string.IsNullOrEmpty(composer_session_id))
+                                {
+                                    composer_session_id = res11.Substring(res11.IndexOf("composerID\":"), (res11.IndexOf("}", res11.IndexOf("composerID\":")) - res11.IndexOf("composerID\":"))).Replace("composerID\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+
+                                }
+                            }
+                            catch { }
+
+                            try
+                            {
+                                qn = getBetween(res11, "qn\\\" value=\\\"", "\\\" \\/>");
+                            }
+                            catch { }
+                        }
+                        catch { }
+
+                        NameValueCollection nvc1 = new NameValueCollection();
+                        try
+                        {
+                            //message = Uri.EscapeDataString(message);
+                        }
+                        catch { }
+
+                        //xhpc_composerid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "composerid");
+                        //xhpc_targetid = GlobusHttpHelper.GetParamValue(pageSource_HomeData, "xhpc_targetid");
+                        //-------------------------------
+                        //nvc1.Add("fb_dtsg", fb_dtsg);
+                        //nvc1.Add("source", source);
+                        //nvc1.Add("profile_id", profile_id);
+                        //nvc1.Add("grid_id", gridID);
+                        //nvc1.Add("upload_id", "1024");
+                        //-----------------------------------
+                        nvc1.Add("fb_dtsg", fb_dtsg);
+                        nvc1.Add("source", source);
+                        nvc1.Add("profile_id", profile_id);
+                        nvc1.Add("grid_id", gridID);
+                        nvc1.Add("upload_id", "1024");
+                        nvc1.Add("qn", qn);
+
+                        //nvc1.Add("fb_dtsg", fb_dtsg);
+                        //nvc1.Add("source", source);
+                        //nvc1.Add("profile_id", profile_id);
+                        //nvc1.Add("grid_id", gridID);
+                        //nvc1.Add("upload_id", "1024");
+                        //nvc1.Add("qn", qn);
+
+                        string _rev = getBetween(pageSource, "svn_rev", ",");
+                        _rev = _rev.Replace("\":", string.Empty);
+
+
+                        string uploadURL = "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88Oq9ccmqDxl2u5Fa8HzCqm5Aqbx2mbAKGiBAGm&__req=1t&fb_dtsg=" + fb_dtsg + "&__rev=" + _rev + "";
+                        // string uploadURL = "https://upload.facebook.com/media/upload/photos/composer/?__user=100004602582421&__a=1&__dyn=7n88Oq9caRCFUSt2u5KIGKaExEW9J6yUgByVbGAEGGG&__req=12&fb_dtsg=AQDEsnKQ&ttstamp=2658168691151107581&__rev=1089685&";
+
+                        //foreach (var item in collection)
+                        //{
+
+                        //}
+
+                        foreach (string image in localImagePath)
+                        {
+                            tempresponse1 = HttpUploadFile_UploadPic_temp(ref HttpHelper, UsreId, uploadURL, "composer_unpublished_photo[]", "image/jpeg", image, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                            if (tempresponse1.ToLower().Contains("errorsummary") && tempresponse1.ToLower().Contains("There was a problem with this request. We're working on getting it fixed as soon as we can".ToLower()))
+                            {
+                                if (tempCount < 2)
+                                {
+                                    System.Threading.Thread.Sleep(15000);
+                                    tempCount++;
+                                    goto startAgain;
+                                }
+                                else
+                                {
+                                    tempCountMain++;
+                                    return false;
+                                }
+                            }
+
+                            //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/timeline/cover/upload/", "pic", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                            //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                            //tempresponse1 = HttpUploadFile_UploadPic_temp(ref HttpHelper, UsreId, "https://upload.facebook.com/ajax/composerx/attachment/media/saveunpublished?target_id=" + xhpc_targetid + "&__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=l&fb_dtsg=" + fb_dtsg + "", "composer_unpublished_photo[]", "image/jpeg", localImagePath, nvc1, "", proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                            //composer_unpublished_photo
+                            string composer_unpublished_photo = "";
+                            string start_composer_unpublished_photo = Regex.Split(tempresponse1, "},\"")[1];// 
+
+                            int startIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf(",\"") + ",\"".Length;
+                            int endIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf("\"", startIndex_composer_unpublished_photo + 1);
+
+                            composer_unpublished_photo = start_composer_unpublished_photo.Substring(startIndex_composer_unpublished_photo, endIndex_composer_unpublished_photo - startIndex_composer_unpublished_photo);
+
+
+
+                            if (tempresponse1.Contains("composer_unpublished_photo"))
+                            {
+                                try
+                                {
+                                    composer_unpublished_photo = tempresponse1.Substring(tempresponse1.IndexOf("composer_unpublished_photo[]"), tempresponse1.IndexOf("u003Cbutton") - tempresponse1.IndexOf("composer_unpublished_photo[]")).Replace("composer_unpublished_photo[]", "").Replace("value=", "").Replace("\\", "").Replace("\\", "").Replace("/>", "").Replace("\"", "").Trim();
+                                    //.Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                                }
+                                catch { }
+                            }
+
+                            newnvcTEMP.Add("composer_unpublished_photo[]", composer_unpublished_photo);
+                        }
+
+                    }
+
+                    NameValueCollection nvc = new NameValueCollection();
+                    try
+                    {
+                        message = message.Replace(",", "");
+                        // message = Uri.EscapeDataString(message);
+                    }
+                    catch { }
+                    nvc.Add("fb_dtsg", fb_dtsg);
+                    nvc.Add("xhpc_targetid", xhpc_targetid);
+                    nvc.Add("xhpc_context", "profile");
+                    nvc.Add("xhpc_ismeta", "1");
+                    nvc.Add("xhpc_fbx", "1");
+                    nvc.Add("xhpc_timeline", "");
+                    nvc.Add("xhpc_composerid", xhpc_composerid);
+                    nvc.Add("xhpc_message_text", message);
+                    nvc.Add("xhpc_message", message);
+                    //nvc.Add("name", "file1");
+                    //nvc.Add("Content-Type:", "image/jpeg");
+                    //nvc.Add("filename=", "");
+
+
+                    ////composer_unpublished_photo
+                    //string composer_unpublished_photo = "";
+                    //string start_composer_unpublished_photo = Regex.Split(tempresponse1, "},\"")[1];// 
+
+
+
+                    //int startIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf(",\"") + ",\"".Length;
+                    //int endIndex_composer_unpublished_photo = start_composer_unpublished_photo.IndexOf("\"", startIndex_composer_unpublished_photo + 1);
+
+                    //composer_unpublished_photo = start_composer_unpublished_photo.Substring(startIndex_composer_unpublished_photo, endIndex_composer_unpublished_photo - startIndex_composer_unpublished_photo);
+
+
+
+                    //if (tempresponse1.Contains("composer_unpublished_photo"))
+                    //{
+                    //    try
+                    //    {
+                    //        composer_unpublished_photo = tempresponse1.Substring(tempresponse1.IndexOf("composer_unpublished_photo[]"), tempresponse1.IndexOf("u003Cbutton") - tempresponse1.IndexOf("composer_unpublished_photo[]")).Replace("composer_unpublished_photo[]", "").Replace("value=", "").Replace("\\", "").Replace("\\", "").Replace("/>", "").Replace("\"", "").Trim();
+                    //        //.Replace("composer_session_id\":", string.Empty).Replace("<dd>", string.Empty).Replace("\\", string.Empty).Replace("\"", string.Empty).Trim();
+                    //    }
+                    //    catch { }
+                    //}
+                    ///New test upload pic post
+                    ///
+
+
+
+
+
+                    string waterfallid = GlobusHttpHelper.ParseJson(pageSource_Home, "waterfallID");
+
+                    if (waterfallid.Contains("ar"))
+                    {
+                        waterfallid = qn;
+                    }
+
+
+
+                    string newpostURL = "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88QoAMNoBwXAw&__req=r&fb_dtsg=" + fb_dtsg + "";
+                    string newPostData = "";
+
+
+                    NameValueCollection newnvc = new NameValueCollection();
+                    try
+                    {
+                        //message = Uri.EscapeDataString(message);
+                    }
+                    catch { }
+                    newnvc.Add("fb_dtsg", fb_dtsg);
+                    newnvc.Add("xhpc_targetid", xhpc_targetid);
+                    newnvc.Add("xhpc_context", "profile");
+                    newnvc.Add("xhpc_ismeta", "1");
+                    newnvc.Add("xhpc_fbx", "1");
+                    newnvc.Add("xhpc_timeline", "");
+                    newnvc.Add("xhpc_composerid", xhpc_composerid);
+                    newnvc.Add("xhpc_message_text", message);
+                    newnvc.Add("xhpc_message", message);
+
+                    newnvc.Add(newnvcTEMP);
+                    //newnvc.Add("composer_unpublished_photo[]", composer_unpublished_photo);
+                    newnvc.Add("album_type", "128");
+                    newnvc.Add("is_file_form", "1");
+                    newnvc.Add("oid", "");
+                    newnvc.Add("qn", qn);//newnvc.Add("qn", waterfallid);
+                    newnvc.Add("application", "composer");
+                    newnvc.Add("is_explicit_place", "");
+                    newnvc.Add("composertags_place", "");
+                    newnvc.Add("composertags_place_name", "");
+                    newnvc.Add("composer_session_id", composer_session_id);
+                    newnvc.Add("composertags_city", "");
+                    newnvc.Add("vzdisable_location_sharing", "false");
+                    newnvc.Add("composer_predicted_city", "");
+
+
+
+                    //string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, newpostURL, "file1", "image/jpeg", localImagePath, newnvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);//HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+                    string response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, newpostURL, "file1", "image/jpeg", localImagePath, newnvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);//HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "http://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                    try
+                    {
+                        string chek = HttpHelper.getHtmlfromUrl(new Uri("https://www.facebook.com/"));
+                    }
+                    catch { };
+                    //http://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=100004608395129
+                    if (string.IsNullOrEmpty(response))
+                    {
+                        try
+                        {
+                            //response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__a=1&__adt=3&__iframe=true&__user=" + UsreId, "file1", "image/jpeg", localImagePath, nvc, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+                            response = HttpUploadFile_UploadPic(ref HttpHelper, UsreId, "https://upload.facebook.com/media/upload/photos/composer/?__user=" + UsreId + "&__a=1&__dyn=7n88O49ccm9o-2Ki&__req=1c&fb_dtsg=" + fb_dtsg + "", "file1", "image/jpeg", localImagePath, nvc, targeturl, proxyAddress, Convert.ToInt32(0), proxyUsername, proxyPassword);
+
+                        }
+                        catch { }
+                    }
+                    string posturl = "https://www.facebook.com/ajax/places/city_sharer_reset.php";
+                    string postdata = "__user=" + UsreId + "&__a=1&fb_dtsg=" + fb_dtsg + "&phstamp=1658167761111108210145";
+                    string responsestring = HttpHelper.postFormData(new Uri(posturl), postdata);
+                    try
+                    {
+                        string okay = HttpHelper.getHtmlfromUrl(new Uri("https://3-pct.channel.facebook.com/pull?channel=p_" + UsreId + "&seq=3&partition=69&clientid=70e140db&cb=8p7w&idle=8&state=active&mode=stream&format=json"));
+                    }
+                    catch
+                    {
+                    }
+
+                    if (!string.IsNullOrEmpty(response) && response.Contains("payload\":{\"photo_fbid"))//response.Contains("photo.php?fbid="))
+                    {
+
+                        #region PostData_ForCoverPhotoSelect
+                        //fb_dtsg=AQCLSjCH&photo_id=130869487061841&profile_id=100004163701035&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=100004163701035&__a=1&phstamp=165816776831066772182 
+                        #endregion
+
+                        try
+                        {
+
+                            if (!response.Contains("errorSummary") || !response.Contains("error"))
+                            {
+                                isSentPicMessage = true;
+                            }
+                            if (response.Contains("Your post has been submitted and is pending approval by an admin"))
+                            {
+                                GlobusLogHelper.log.Debug("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
+                                GlobusLogHelper.log.Info("Your post has been submitted and is pending approval by an admin." + "GroupUrl >>>" + targeturl);
+                            }
+                        }
+                        catch { }
+                        #region CodeCommented
+                        //    string photo_idValue = response.Substring(response.IndexOf("photo.php?fbid="), response.IndexOf(";", response.IndexOf("photo.php?fbid=")) - response.IndexOf("photo.php?fbid=")).Replace("photo.php?fbid=", string.Empty).Trim();
+                        //    string[] arrphoto_idValue = Regex.Split(photo_idValue, "[^0-9]");
+
+                        //    foreach (string item in arrphoto_idValue)
+                        //    {
+                        //        try
+                        //        {
+                        //            if (item.Length > 6)
+                        //            {
+                        //                photo_id = item;
+                        //                break;
+                        //            }
+                        //        }
+                        //        catch
+                        //        {
+                        //        }
+                        //    }
+
+                        //   // string postData = "fb_dtsg=" + fb_dtsg + "&photo_id=" + photo_id + "&profile_id=" + UsreId + "&photo_offset=0&video_id=&save=Save%20Changes&nctr[_mod]=pagelet_main_column_personal&__user=" + UsreId + "&__a=1&phstamp=165816776831066772182 ";
+                        //   // string postResponse = HttpHelper.postFormData(new Uri("https://www.facebook.com/ajax/timeline/cover_photo_select.php"), postData);
+
+                        //    //if (!postResponse.Contains("error"))
+                        //    //{
+                        //    //    //string ok = "ok";
+                        //    //    isSentPicMessage = true;
+                        //    //}
+                        //    //if (string.IsNullOrEmpty(postResponse) || string.IsNullOrWhiteSpace(postResponse))
+                        //    //{
+                        //    //    status = "Response Is Null !";
+                        //    //}
+                        //    //if (postResponse.Contains("errorSummary"))
+                        //    //{
+                        //    //    string summary = GlobusHttpHelper.ParseJson(postResponse, "errorSummary");
+                        //    //    string errorDescription = GlobusHttpHelper.ParseJson(postResponse, "errorDescription");
+
+                        //    //    status = "Posting Error: " + summary + " | Error Description: " + errorDescription;
+                        //    //    //FanPagePosterLogger("Posting Error: " + summary + " | Error Description: " + errorDescription);
+                        //    //}
+                        //}
+                        //catch
+                        //{
+                        //} 
+                        #endregion
+                    }
+                }
+                catch
+                {
+                }
+                return isSentPicMessage;
+            }
+
+        }
 
 
         public string HttpUploadFile_UploadPic(ref GlobusHttpHelper HttpHelper, string userid, string url, string paramName, string contentType, string localImagePath, NameValueCollection nvc, string referer, string proxyAddress, int proxyPort, string proxyUsername, string proxyPassword)
@@ -5342,7 +5463,7 @@ namespace BaseLib
                             byte[] formitembytes = System.Text.Encoding.UTF8.GetBytes(formitem);
                             rs.Write(formitembytes, 0, formitembytes.Length);
                         }
-                       
+
                     }
                     rs.Write(boundarybytes, 0, boundarybytes.Length);
 
@@ -5760,7 +5881,7 @@ namespace BaseLib
             return responseStr;
 
         }
-    
+
 
         public List<string> GetTextDataByTagAndAttributeName(string pageSrcHtml, string TagName, string AttributeName)
         {
@@ -5993,6 +6114,170 @@ namespace BaseLib
                 gRequest.AllowAutoRedirect = true;
                 //gRequest.ServicePoint.Expect100Continue = false;
                 gRequest.CookieContainer = new CookieContainer(); //gCookiesContainer;
+
+                //gRequest.Timeout=120*1000;
+
+                #region CookieManagment
+
+                if (this.gCookies != null && this.gCookies.Count > 0)
+                {
+                    gRequest.CookieContainer.Add(gCookies);
+                }
+                #endregion
+
+                using (Stream rs = gRequest.GetRequestStream())
+                {
+                    rs.Write(FirstBoundaryBytes, 0, FirstBoundaryBytes.Length);
+                    temp += boundary + "\r\n";
+                    string file = string.Empty;
+                    string ContentType = string.Empty;
+                    string formdataTemplate = "Content-Disposition: form-data; name=\"{0}\"\r\n\r\n{1}";
+                    foreach (string key in nvc.Keys)
+                    {
+                        try
+                        {
+                            if (key.Equals(AppKey))
+                            {
+                                ContentType = Regex.Split(nvc[key], "<:><:><:>")[1];
+                                file = Regex.Split(nvc[key], "<:><:><:>")[0];
+                                if (key.Equals(LastKey))
+                                {
+
+                                    string headerTemplate = "Content-Disposition: form-data; name=\"{0}\"; filename=\"{1}\"\r\nContent-Type: {2}\r\n\r\n";
+                                    string[] filename = Regex.Split(file, "\\\\");
+                                    string header = string.Format(headerTemplate, key, filename[filename.Length - 1], ContentType);
+                                    byte[] headerbytes = System.Text.Encoding.UTF8.GetBytes(header);
+                                    temp += header;
+                                    rs.Write(headerbytes, 0, headerbytes.Length);
+                                    try
+                                    {
+                                        FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+                                        byte[] buffer = new byte[4096];
+                                        int bytesRead = 0;
+                                        while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) != 0)
+                                        {
+                                            rs.Write(buffer, 0, bytesRead);
+                                        }
+                                        fileStream.Close();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error(ex.StackTrace);
+                                    }
+                                }
+                                else
+                                {
+                                    ContentType = Regex.Split(nvc[key], "<:><:><:>")[1];
+                                    file = Regex.Split(nvc[key], "<:><:><:>")[0];
+                                    string headerTemplate = "Content-Disposition: form-data; name=\"{0}\"; filename=\"{1}\"\r\nContent-Type: {2}\r\n\r\n";
+                                    string[] filename = Regex.Split(file, "\\\\");
+                                    string header = string.Format(headerTemplate, key, filename[filename.Length - 1], ContentType);
+                                    byte[] headerbytes = System.Text.Encoding.UTF8.GetBytes(header);
+                                    temp += header;
+                                    rs.Write(headerbytes, 0, headerbytes.Length);
+                                    try
+                                    {
+                                        FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+                                        byte[] buffer = new byte[1000];
+                                        int bytesRead = 0;
+                                        while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) != 0)
+                                        {
+                                            rs.Write(buffer, 0, bytesRead);
+                                        }
+                                        fileStream.Close();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        GlobusLogHelper.log.Error(ex.StackTrace);
+                                    }
+                                    rs.Write(boundarybytes, 0, boundarybytes.Length);
+                                    temp += "\r\n" + boundary + "\r\n";
+                                }
+                            }
+                            else
+                            {
+                                string formitem = string.Format(formdataTemplate, key, nvc[key]);
+                                byte[] formitembytes = System.Text.Encoding.UTF8.GetBytes(formitem);
+                                rs.Write(formitembytes, 0, formitembytes.Length);
+                                temp += formitem;
+                                if (key.Equals(LastKey))
+                                {
+
+                                }
+                                else
+                                {
+                                    rs.Write(boundarybytes, 0, boundarybytes.Length);
+                                    temp += "\r\n" + boundary + "\r\n";
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            GlobusLogHelper.log.Error(ex.StackTrace);
+                        }
+                    }
+                    byte[] trailer = System.Text.Encoding.ASCII.GetBytes("\r\n" + boundary + "--\r\n");
+                    rs.Write(trailer, 0, trailer.Length);
+                    temp += "\r\n" + boundary + "--\r\n";
+                }
+                WebResponse wresp = null;
+                try
+                {
+                    wresp = gRequest.GetResponse();
+                    Stream stream2 = wresp.GetResponseStream();
+                    using (StreamReader reader2 = new StreamReader(stream2))
+                    {
+                        responseStr = reader2.ReadToEnd();
+                    }
+                    return responseStr;
+                }
+                catch (Exception ex)
+                {
+                    if (wresp != null)
+                    {
+                        wresp.Close();
+                        wresp = null;
+                    }
+                }
+                finally
+                {
+                    gRequest = null;
+                }
+                return responseStr;
+
+            }
+            catch (Exception ex)
+            {
+                GlobusLogHelper.log.Error(ex.StackTrace);
+            }
+            return responseStr;
+        }
+
+        public string UploadImageWaterfallModel(string URL, string Referer, NameValueCollection nvc, string LastKey, string AppKey, string proxyAdd, int port, string username, string password)
+        {
+            string responseStr = string.Empty;
+            string temp = string.Empty;
+            try
+            {
+                string boundary = "------WebKitFormBoundary" + DateTime.Now.Ticks.ToString("x");
+                byte[] FirstBoundaryBytes = System.Text.Encoding.ASCII.GetBytes(boundary + "\r\n");
+                byte[] boundarybytes = System.Text.Encoding.ASCII.GetBytes("\r\n" + boundary + "\r\n");
+                gRequest = (HttpWebRequest)WebRequest.Create(URL);
+                gRequest.KeepAlive = true;
+                gRequest.Headers["Cache-Control"] = "max-age=0";
+                gRequest.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+                gRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.104 Safari/537.36";
+                gRequest.ContentType = "multipart/form-data; boundary=" + boundary.Replace("------", "----");
+                gRequest.Referer = Referer;
+                gRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                gRequest.Headers["Accept-Language"] = "en-US,en;q=0.8";
+                gRequest.Method = "POST";
+                gRequest.Credentials = System.Net.CredentialCache.DefaultCredentials;
+                ChangeProxy(proxyAdd, port, proxyUsername, proxyPassword);
+                gRequest.AllowAutoRedirect = true;
+                //gRequest.ServicePoint.Expect100Continue = false;
+                gRequest.CookieContainer = new CookieContainer(); //gCookiesContainer;
+
                 //gRequest.Timeout=120*1000;
 
                 #region CookieManagment
